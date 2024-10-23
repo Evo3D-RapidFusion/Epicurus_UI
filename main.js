@@ -45,7 +45,7 @@ async function fetchData(url, options) {
 function updateObjectModel() {
   return new Promise(async (resolve, reject) => {
     try {
-      const data = await fetchData("https://192.168.1.64/machine/status"); // HTTPS (Self-Signed SSL Certificate)
+      const data = await fetchData("http://localhost:8080/machine/status"); // HTTPS (Self-Signed SSL Certificate)
 
       // FUNCTION: Find configured heaters in Duet Object Model
       function findHeaters(targetObject) {
@@ -416,7 +416,7 @@ function updateObjectModel() {
 // FUNCTION: send G-code to Duet via HTTP POST request
 async function sendGcode(gcode) {
   try {
-    const responseText = await fetchData("https://192.168.1.64/machine/code", {
+    const responseText = await fetchData("http://localhost:8080/machine/code", {
       // HTTPS (Self-Signed SSL Certificate)
       method: "POST",
       headers: {
