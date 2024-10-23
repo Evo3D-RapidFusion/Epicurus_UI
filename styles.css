@@ -1,0 +1,75 @@
+body {
+  overflow-y: hidden;
+  overflow-x: auto;
+}
+
+.material-data-name-input {
+  display: flex;
+  justify-content: center; /* This can be adjusted */
+  align-items: center;
+  width: 180px;
+  overflow: visible;
+  font-family: Roboto;
+  font-size: 24px;
+  line-height: 54.5px;
+  text-align: center;
+  color: #ffffff;
+  /* border: none; /* Remove borders */
+  outline: none; /* Remove the outline when focused (optional) */
+  background-color: transparent; /* Remove background color */
+  padding: 0; /* Remove padding */
+  margin: 0; /* Remove margin */
+}
+
+.material-data-temp-input {
+  display: flex;
+  justify-content: center; /* This can be adjusted */
+  align-items: center;
+  width: 80px;
+  overflow: visible;
+  font-family: Roboto;
+  font-size: 24px;
+  line-height: 54.5px;
+  text-align: center;
+  color: #ffffff;
+  /* border: none; /* Remove borders */
+  outline: none; /* Remove the outline when focused (optional) */
+  background-color: transparent; /* Remove background color */
+  padding: 0; /* Remove padding */
+  margin: 0; /* Remove margin */
+}
+
+.userInput::placeholder {
+  /* color: #ffffff; */
+}
+
+/*General Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 17px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: rgba(0, 0, 0, 0.2);
+  -webkit-border-radius: 20px;
+  border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb {
+  -webkit-border-radius: 20px;
+  border-radius: 20px;
+  background: #ffffff;
+}
+
+/*Light Purple Scrollbar Styling */
+.light-purple::-webkit-scrollbar-thumb {
+  -webkit-border-radius: 20px;
+  border-radius: 20px;
+  background: #a74e9e;
+}
+
+/*Dark Purple Scrollbar Styling */
+.dark-purple::-webkit-scrollbar-thumb {
+  -webkit-border-radius: 20px;
+  border-radius: 20px;
+  background: #75366f;
+}
