@@ -121,7 +121,11 @@ function updateObjectModel() {
                 : outputData[index].replace(/^\w/, (c) => c.toUpperCase()) +
                   endText;
           } else {
-            element.textContent = outputData[index] + endText;
+            if (Math.abs(outputData[index] + 273.1) < 0.0001) {
+              element.textContent = "0" + endText;
+            } else {
+              element.textContent = outputData[index] + endText;
+            }
           }
         });
         return outputData; // Output extracted values
