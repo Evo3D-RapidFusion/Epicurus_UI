@@ -1,13 +1,13 @@
-<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Wed Oct 23 2024 15:47:14 GMT+0000 (Coordinated Universal Time)  -->
-<html data-wf-page="6718b6115312dd3dea1131ad" data-wf-site="6718b6115312dd3dea1131b7">
+<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Thu Nov 07 2024 13:17:52 GMT+0000 (Coordinated Universal Time)  -->
+<html data-wf-page="6655b5b32a1c6ab9c376d69a" data-wf-site="6655b5b32a1c6ab9c376d696">
 <head>
   <meta charset="utf-8">
-  <title>Zeus UI</title>
+  <title>PE320 UI dev remote</title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta content="Webflow" name="generator">
   <link href="css/normalize.css" rel="stylesheet" type="text/css">
   <link href="css/webflow.css" rel="stylesheet" type="text/css">
-  <link href="css/zeus-ui.webflow.css" rel="stylesheet" type="text/css">
+  <link href="css/pe320-ui-dev-remote.webflow.css" rel="stylesheet" type="text/css">
   <link href="https://fonts.googleapis.com" rel="preconnect">
   <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin="anonymous">
   <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js" type="text/javascript"></script>
@@ -17,24 +17,520 @@
   <link href="images/webclip.png" rel="apple-touch-icon"><!--  Include jQuery  -->
   <script defer="" src="https://code.jquery.com/jquery-3.7.1.min.js" type="text/javascript"></script>
   <!--  Include Keyboard plugin  -->
-  <script defer="" src="http://localhost:8080/keyboard/jquery.keyboard.js" type="text/javascript"></script>
+  <script defer="" src="https://fk6x9w-5000.csb.app/keyboard/jquery.keyboard.js" type="text/javascript"></script>
   <!--  Include Keyboard CSS  -->
-  <link defer="" href="http://localhost:8080/keyboard/keyboard-dark.css" rel="stylesheet" type="text/css">
+  <link defer="" href="https://fk6x9w-5000.csb.app/keyboard/keyboard-dark.css" rel="stylesheet" type="text/css">
   <!--  Main CSS  -->
-  <link defer="" href="http://localhost:8080/styles.css" rel="stylesheet" type="text/css">
+  <link defer="" href="https://fk6x9w-5000.csb.app/styles.css" rel="stylesheet" type="text/css">
   <!--  Main JavaScript  -->
-  <script defer="" src="http://localhost:8080/main.js" type="text/javascript"></script>
+  <script defer="" src="https://fk6x9w-5000.csb.app/main.js" type="text/javascript"></script>
 </head>
 <body class="rapid-fusion-pe-320-ui">
+  <div id="settings-popup-space" data-w-id="29ca74d9-060c-44e8-d1be-ac2d0c0fd14f" style="display:none" class="settings-popup-space"></div>
+  <div id="e-stop-popup-space" class="e-stop-popup-space"></div>
+  <div id="e-stop-popup" class="e-stop-popup">
+    <div class="e-stop-notification-background">
+      <div class="user-notification-content-2">
+        <div class="div-block-3"><img width="36" height="36" alt="" src="images/Vectors-Wrapper.svg" loading="lazy" class="warning-icon">
+          <div class="e-stop-text-title">EMERGENCY STOP ACTIVE</div><img width="36" height="36" alt="" src="images/Vectors-Wrapper.svg" loading="lazy" class="warning-icon">
+        </div>
+        <div class="e-stop-text-content">Investigate root cause &amp; Reset safety to resume operation</div>
+      </div>
+    </div>
+  </div>
+  <div class="settings-popup-container">
+    <div id="settings-popup" data-w-id="018ddf80-5939-592f-2205-93be8c100f79" style="-webkit-transform:translate3d(0, 0, 0) scale3d(0, 0, 0) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);-moz-transform:translate3d(0, 0, 0) scale3d(0, 0, 0) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);-ms-transform:translate3d(0, 0, 0) scale3d(0, 0, 0) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);transform:translate3d(0, 0, 0) scale3d(0, 0, 0) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);transform-style:preserve-3d;display:none" class="settings-popup">
+      <div class="main-header">
+        <div id="cnc-heading" class="heading">Settings</div>
+        <div id="close-settings" data-w-id="e69d0d94-c015-9b09-0023-32b173a687de" class="close-settings"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewbox="0 0 24 24" fill="none" app="ikonik" class="ikonik-2bx8ck">
+            <path d="M17 17L7 7.00002M17 7L7.00001 17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" app="ikonik" class="path-b7eis"></path>
+          </svg></div>
+      </div>
+      <div class="main-container">
+        <div data-current="System Info" data-easing="ease-in-out" data-duration-in="0" data-duration-out="0" class="settings-tabs w-tabs">
+          <div class="settings-tabs-menu w-tab-menu">
+            <a data-w-tab="System Info" id="system-info" hr="" class="settings-tab-link w-inline-block w-tab-link w--current">
+              <div>System Info</div>
+            </a>
+            <a data-w-tab="Tool Status" id="tool-status" class="settings-tab-link w-inline-block w-tab-link">
+              <div>Tool Status</div>
+            </a>
+            <a data-w-tab="Developer Settings" id="developer-settings" data-w-id="11fb8e41-d6a7-db4b-9b6c-8d4fa7d6964b" style="display:none" class="settings-tab-link w-inline-block w-tab-link">
+              <div>Developer Settings</div>
+            </a>
+          </div>
+          <div class="settings-tabs-content w-tab-content">
+            <div data-w-tab="System Info" class="tab-pane-system-info w-tab-pane w--tab-active">
+              <div class="settings-main-content">
+                <div class="text-container-row">
+                  <div class="text-title bold">
+                    <div class="settings-table-heading">Hardware</div>
+                  </div>
+                </div>
+                <div class="text-container-row">
+                  <div class="text-title">
+                    <div class="settings-title-text">Controller:</div>
+                  </div>
+                  <div class="text-content">
+                    <div id="controller-version" class="settings-content-text">Epicurus Controller</div>
+                  </div>
+                </div>
+                <div class="text-container-row">
+                  <div class="text-title">
+                    <div class="settings-title-text">Product Family:</div>
+                  </div>
+                  <div class="text-content">
+                    <div id="product-family" class="settings-content-text">PE320</div>
+                  </div>
+                </div>
+                <div class="text-container-row">
+                  <div class="text-title">
+                    <div class="settings-title-text">Compatible Tools:</div>
+                  </div>
+                  <div class="text-content">
+                    <div id="product-family-tools" class="settings-content-text">PE320 Pellet Extruder</div>
+                  </div>
+                </div>
+                <div class="text-container-row">
+                  <div class="text-title">
+                    <div class="settings-title-text">Beds:</div>
+                  </div>
+                  <div class="text-content">
+                    <div id="bed-count" class="settings-content-text italic">null</div>
+                    <div class="settings-content-text">Heated Beds</div>
+                  </div>
+                </div>
+              </div>
+              <div class="settings-main-content">
+                <div class="text-container-row">
+                  <div class="text-title bold">
+                    <div class="settings-table-heading">System</div>
+                  </div>
+                </div>
+                <div class="text-container-row">
+                  <div class="text-title">
+                    <div class="settings-title-text">UI Version:</div>
+                  </div>
+                  <div class="text-content">
+                    <div id="software-version" class="settings-content-text italic">xxxx-xxxx-xxxx-xxxx</div>
+                  </div>
+                </div>
+                <div class="text-container-row">
+                  <div class="text-title">
+                    <div class="settings-title-text">Firmware Version:</div>
+                  </div>
+                  <div class="text-content">
+                    <div id="firmware-version" class="settings-content-text italic">xxxx-xxxx-xxxx-xxxx</div>
+                  </div>
+                </div>
+                <div class="text-container-row">
+                  <div class="text-title">
+                    <div class="settings-title-text">Controller Uptime:</div>
+                  </div>
+                  <div class="text-content">
+                    <div id="uptime-count" class="settings-content-text italic">null</div>
+                    <div class="settings-content-text">HH:MM:SS</div>
+                  </div>
+                </div>
+              </div>
+              <div class="settings-button-container">
+                <aside id="check-for-updates" class="settings-white-button" data-ix="new-interaction">
+                  <div class="user-input-temp">Check for Updates</div>
+                </aside>
+                <aside id="restart-firmware" class="settings-white-button" data-ix="new-interaction">
+                  <div class="user-input-temp">Restart Firmware</div>
+                </aside>
+              </div>
+            </div>
+            <div data-w-tab="Tool Status" class="tab-pane-tool-status w-tab-pane">
+              <div id="connected-tool-container" data-w-id="98b3faa9-c2b4-2bc1-f905-008f9f01a7b1" style="display:none" class="connected-tool-main-title">
+                <div class="text-container-row">
+                  <div class="text-title bold">
+                    <div class="settings-table-heading purple">Connected Tool:</div>
+                    <div class="text-content">
+                      <div id="connected-tool" class="settings-content-text italic connected-tool">null</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="extruder-state-container" class="settings-main-content">
+                <div class="text-container-row">
+                  <div class="text-title bold">
+                    <div class="settings-table-heading">PE320 Pellet Extruder</div>
+                  </div>
+                  <div class="text-content"></div>
+                </div>
+                <div class="text-container-row">
+                  <div class="text-title">
+                    <div class="settings-title-text">State:</div>
+                  </div>
+                  <div class="text-content">
+                    <div id="extruder-state" class="settings-content-text italic">null</div>
+                  </div>
+                </div>
+                <div data-w-id="3fd8d665-7e14-01d2-e808-5c550294247a" style="display:none" class="text-container-row">
+                  <div class="text-title">
+                    <div class="settings-title-text">Runtime:</div>
+                  </div>
+                  <div class="text-content">
+                    <div id="extruder-runtime" class="settings-content-text italic">null</div>
+                    <div class="settings-content-text">HH:MM:SS</div>
+                  </div>
+                </div>
+                <div class="text-container-row">
+                  <div class="text-title">
+                    <div class="settings-title-text">Material Sensor LEFT:</div>
+                  </div>
+                  <div class="text-content">
+                    <div id="material-sensor-left" class="settings-content-text italic">null</div>
+                  </div>
+                </div>
+                <div class="text-container-row">
+                  <div class="text-title">
+                    <div class="settings-title-text">Material Sensor RIGHT:</div>
+                  </div>
+                  <div class="text-content">
+                    <div id="material-sensor-right" class="settings-content-text italic">null</div>
+                  </div>
+                </div>
+                <div class="text-container-row">
+                  <div class="text-title">
+                    <div class="w-embed w-script"><!--  Typography and Dropdown Styling  -->
+                      <style>
+  /* Styling for the heatsink fan dropdown */
+  .heatsink-fan-dropdown {
+    position: relative;
+    display: inline-block;
+  }
+  /* Button styling that shows the selected option */
+  .heatsink-fan-button {
+    background-color: #a74e9e;
+    color: white;
+    padding: 10px 20px;
+    font-size: 24px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
+    display: flex;
+    align-items: center;
+  }
+  /* Styling the dropdown content (hidden by default) */
+  .heatsink-fan-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    border-radius: 20px;
+    z-index: 1;
+    margin-top: 10px; /* Adds a gap of 10px between button and dropdown */
+  }
+  /* Styling each dropdown item */
+  .heatsink-fan-content div {
+    color: #a74e9e;
+    padding: 20px;
+    font-size: 24px;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
+    cursor: pointer;
+  }
+  /* Hover effect for dropdown items */
+  .heatsink-fan-content div:hover {
+    background-color: #f1f1f1;
+    border-radius: 20px;
+  }
+  /* Show the dropdown content when clicking on the dropdown */
+  .heatsink-fan-dropdown.open .heatsink-fan-content {
+    display: block;
+  }
+</style>
+                      <div class="heatsink-fan-dropdown">
+                        <button id="heatsink-fan-selection" class="heatsink-fan-button" onclick="toggleHeatsinkFanDropdown()">
+                          <div id="heatsink-fan-selection-text">Heatsink Fan 1</div>
+                          <!--  SVG Down Chevron Icon  -->
+                          <svg width="24" height="24" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7 10L12 15L17 10H7Z" fill="white"></path>
+                          </svg>
+                        </button>
+                        <div class="heatsink-fan-content">
+                          <div id="heatsink-fan-1" onclick="selectHeatsinkFanOption('Heatsink Fan 1')">Heatsink Fan 1</div>
+                          <div id="heatsink-fan-2" onclick="selectHeatsinkFanOption('Heatsink Fan 2')">Heatsink Fan 2</div>
+                          <div id="heatsink-fan-3" onclick="selectHeatsinkFanOption('Heatsink Fan 3')">Heatsink Fan 3</div>
+                          <div id="heatsink-fan-4" onclick="selectHeatsinkFanOption('Heatsink Fan 4')">Heatsink Fan 4</div>
+                        </div>
+                      </div>
+                      <!--  Dropdown Toggle Script  -->
+                      <script>
+  function toggleHeatsinkFanDropdown() {
+    document.querySelector('.heatsink-fan-dropdown').classList.toggle('open');
+  }
+  function selectHeatsinkFanOption(optionText) {
+    document.getElementById('heatsink-fan-selection-text').textContent = optionText;
+    document.querySelector('.heatsink-fan-dropdown').classList.remove('open');
+  }
+  // Close the dropdown if clicked outside
+  window.onclick = function(event) {
+    if (!event.target.matches('.heatsink-fan-button') && !event.target.closest('.heatsink-fan-dropdown')) {
+      document.querySelector('.heatsink-fan-dropdown').classList.remove('open');
+    }
+  }
+</script>
+                    </div>
+                  </div>
+                  <div class="text-content">
+                    <div id="heatsink-fan-tach" class="settings-content-text italic">null</div>
+                    <div class="settings-content-text">RPM</div>
+                  </div>
+                  <div class="button-content">
+                    <div id="heatsink-fan-off" class="settings-push-button">
+                      <div class="white-button-text-2">0%</div>
+                    </div>
+                    <div id="heatsink-fan-half" class="settings-push-button">
+                      <div class="white-button-text-2">50%</div>
+                    </div>
+                    <div id="heatsink-fan-full" class="settings-push-button">
+                      <div class="white-button-text-2">100%</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-container-row">
+                  <div class="text-title">
+                    <div class="w-embed w-script"><!--  Typography and Dropdown Styling  -->
+                      <style>
+  /* Styling for the barrel fan dropdown */
+  .barrel-fan-dropdown {
+    position: relative;
+    display: inline-block;
+  }
+  /* Button styling that shows the selected option */
+  .barrel-fan-button {
+    background-color: #a74e9e;
+    color: white;
+    padding: 10px 20px;
+    font-size: 24px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
+    display: flex;
+    align-items: center;
+  }
+  /* Styling the dropdown content (hidden by default) */
+  .barrel-fan-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    border-radius: 20px;
+    z-index: 1;
+    margin-top: 10px; /* Adds a gap of 10px between button and dropdown */
+  }
+  /* Styling each dropdown item */
+  .barrel-fan-content div {
+    color: #a74e9e;
+    padding: 20px;
+    font-size: 24px;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
+    cursor: pointer;
+  }
+  /* Hover effect for dropdown items */
+  .barrel-fan-content div:hover {
+    background-color: #f1f1f1;
+    border-radius: 20px;
+  }
+  /* Show the dropdown content when clicking on the dropdown */
+  .barrel-fan-dropdown.open .barrel-fan-content {
+    display: block;
+  }
+</style>
+                      <div class="barrel-fan-dropdown">
+                        <button id="barrel-fan-selection" class="barrel-fan-button" onclick="toggleBarrelFanDropdown()">
+                          <div>Barrel Fan 1</div>
+                          <!--  SVG Down Chevron Icon  -->
+                          <svg width="24" height="24" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7 10L12 15L17 10H7Z" fill="white"></path>
+                          </svg>
+                        </button>
+                        <div class="barrel-fan-content">
+                          <div id="barrel-fan-1" onclick="selectBarrelFanOption('Barrel Fan 1')">Barrel Fan 1</div>
+                          <div id="barrel-fan-2" onclick="selectBarrelFanOption('Barrel Fan 2')">Barrel Fan 2</div>
+                          <div id="barrel-fan-3" onclick="selectBarrelFanOption('Barrel Fan 3')">Barrel Fan 3</div>
+                        </div>
+                      </div>
+                      <!--  Dropdown Toggle Script  -->
+                      <script>
+  function toggleBarrelFanDropdown() {
+    document.querySelector('.barrel-fan-dropdown').classList.toggle('open');
+  }
+  function selectBarrelFanOption(optionText) {
+    document.querySelector('.barrel-fan-button div').textContent = optionText;
+    document.querySelector('.barrel-fan-dropdown').classList.remove('open');
+  }
+  // Close the dropdown if clicked outside
+  window.onclick = function(event) {
+    if (!event.target.matches('.barrel-fan-button') && !event.target.closest('.barrel-fan-dropdown')) {
+      document.querySelector('.barrel-fan-dropdown').classList.remove('open');
+    }
+  }
+</script>
+                    </div>
+                  </div>
+                  <div class="text-content">
+                    <div id="barrel-fan-tach" class="settings-content-text italic">null</div>
+                    <div class="settings-content-text">RPM</div>
+                  </div>
+                  <div class="button-content">
+                    <div id="barrel-fan-off" class="settings-push-button">
+                      <div class="white-button-text-2">0%</div>
+                    </div>
+                    <div id="barrel-fan-half" class="settings-push-button">
+                      <div class="white-button-text-2">50%</div>
+                    </div>
+                    <div id="barrel-fan-full" class="settings-push-button">
+                      <div class="white-button-text-2">100%</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="cnc-state-container" data-w-id="2f0ee616-8155-7bfc-6305-4162f78ab95c" style="display:none" class="settings-main-content">
+                <div class="text-container-row">
+                  <div class="text-title bold">
+                    <div class="settings-table-heading">CNC Mill</div>
+                  </div>
+                  <div class="text-content"></div>
+                </div>
+                <div class="text-container-row">
+                  <div class="text-title">
+                    <div class="settings-title-text">State:</div>
+                  </div>
+                  <div class="text-content">
+                    <div id="cnc-state" class="settings-content-text italic">null</div>
+                  </div>
+                </div>
+                <div data-w-id="fa329b4f-f3c7-011b-0607-d3ddf76b6728" style="display:none" class="text-container-row">
+                  <div class="text-title">
+                    <div class="settings-title-text">Runtime:</div>
+                  </div>
+                  <div class="text-content">
+                    <div id="cnc-runtime" class="settings-content-text italic">null</div>
+                    <div class="settings-content-text">HH:MM:SS</div>
+                  </div>
+                </div>
+                <div class="text-container-row"></div>
+                <div class="text-container-row">
+                  <div class="text-title">
+                    <div class="settings-title-text">Spindle Speed:</div>
+                  </div>
+                  <div class="text-content">
+                    <div id="cnc-speed" class="settings-content-text italic">null</div>
+                    <div class="settings-content-text">RPM</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div data-w-tab="Developer Settings" class="tab-pane-developer-settings w-tab-pane">
+              <div class="settings-main-content">
+                <div class="text-container-row">
+                  <div class="text-title bold">
+                    <div class="settings-table-heading">System Family</div>
+                  </div>
+                </div>
+                <div class="text-container-row">
+                  <div data-current="PE320" data-easing="ease-in-out" data-duration-in="0" data-duration-out="0" class="settings-tabs product-family w-tabs">
+                    <div class="settings-tabs-menu w-tab-menu">
+                      <a data-w-tab="PE320" id="system-pe320" hr="" class="settings-tab-link w-inline-block w-tab-link w--current">
+                        <div>PE320</div>
+                      </a>
+                      <a data-w-tab="Apollo" id="system-apollo" class="settings-tab-link w-inline-block w-tab-link">
+                        <div>Apollo</div>
+                      </a>
+                      <a data-w-tab="Zeus" id="system-zeus" class="settings-tab-link w-inline-block w-tab-link">
+                        <div>Zeus</div>
+                      </a>
+                    </div>
+                    <div class="settings-tabs-content product-family w-tab-content">
+                      <div data-w-tab="PE320" class="tab-pane-pe320 w-tab-pane w--tab-active"></div>
+                      <div data-w-tab="Apollo" class="tab-pane-apollo w-tab-pane"></div>
+                      <div data-w-tab="Zeus" class="tab-pane-zeus w-tab-pane"></div>
+                      <div data-w-tab="Tab 4" class="tab-pane-tab-4 w-tab-pane"></div>
+                      <div data-w-tab="Tab 5" class="tab-pane-tab-5 w-tab-pane"></div>
+                      <div data-w-tab="Tab 6" class="tab-pane-tab-6 w-tab-pane"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="settings-main-content">
+                <div class="text-container-row">
+                  <div class="text-title bold">
+                    <div class="settings-table-heading">Developer Options</div>
+                  </div>
+                </div>
+                <div class="text-container-row">
+                  <div class="text-title">
+                    <div class="settings-title-text">Tool Detection</div>
+                  </div>
+                  <div class="text-content">
+                    <div id="tool-detection-on" class="settings-push-button">
+                      <div class="white-button-text-2">On</div>
+                    </div>
+                    <div id="tool-detection-off" class="settings-push-button">
+                      <div class="white-button-text-2">Off</div>
+                    </div>
+                  </div>
+                </div>
+                <div id="aisync-slicer-option" data-w-id="4f00ccbd-25aa-cbfb-8c74-1bc6e5633968" style="display:none" class="text-container-row">
+                  <div class="text-title">
+                    <div class="settings-title-text">AiSync Slicer</div>
+                  </div>
+                  <div class="text-content">
+                    <div id="aisync-on" class="settings-push-button">
+                      <div class="white-button-text-2">On</div>
+                    </div>
+                    <div id="aisync-off" class="settings-push-button">
+                      <div class="white-button-text-2">Off</div>
+                    </div>
+                  </div>
+                </div>
+                <div id="cnc-mill-option" data-w-id="05d0af20-f4c7-e735-50a5-f0dad7fb0ea8" style="display:none" class="text-container-row">
+                  <div class="text-title">
+                    <div class="settings-title-text">CNC Mill</div>
+                  </div>
+                  <div class="text-content">
+                    <div id="cnc-on" class="settings-push-button">
+                      <div class="white-button-text-2">On</div>
+                    </div>
+                    <div id="cnc-off" class="settings-push-button">
+                      <div class="white-button-text-2">Off</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div data-w-tab="Tab 4" class="tab-pane-tab-4 w-tab-pane"></div>
+            <div data-w-tab="Tab 5" class="tab-pane-tab-5 w-tab-pane"></div>
+            <div data-w-tab="Tab 6" class="tab-pane-tab-6 w-tab-pane"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="header">
     <div class="rf-logo-container"><img src="images/Rapid-Fusion-Logo.png" loading="lazy" width="327" height="82" alt="" class="rapid-fusion-logo">
-      <div class="logo-text">- ZEUS</div>
+      <div id="logo-text" data-w-id="6712a91b-46d7-71b8-879e-8c4d1008f770" style="display:none" class="logo-text">- PE320</div>
     </div>
     <div id="emergency-stop" data-w-id="fcdda57b-0418-1160-e491-e78b6b48fb41" class="e-stop-button"><img src="images/Vectors-Wrapper.svg" loading="lazy" width="36" height="36" alt="" class="vectors-wrapper">
       <div class="e-stop-text-container">
         <div class="e-stop-text">Emergency Stop</div>
       </div>
     </div>
+    <div id="open-settings" data-w-id="de5ced2d-2f10-5732-7642-8aa5befbd3cd" class="settings-icon"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewbox="0 0 1024 1024" app="ikonik" class="ikonik-1ibmf">
+        <path fill="currentColor" d="M924.8 625.7l-65.5-56c3.1-19 4.7-38.4 4.7-57.8s-1.6-38.8-4.7-57.8l65.5-56a32.03 32.03 0 0 0 9.3-35.2l-.9-2.6a443.74 443.74 0 0 0-79.7-137.9l-1.8-2.1a32.12 32.12 0 0 0-35.1-9.5l-81.3 28.9c-30-24.6-63.5-44-99.7-57.6l-15.7-85a32.05 32.05 0 0 0-25.8-25.7l-2.7-.5c-52.1-9.4-106.9-9.4-159 0l-2.7.5a32.05 32.05 0 0 0-25.8 25.7l-15.8 85.4a351.86 351.86 0 0 0-99 57.4l-81.9-29.1a32 32 0 0 0-35.1 9.5l-1.8 2.1a446.02 446.02 0 0 0-79.7 137.9l-.9 2.6c-4.5 12.5-.8 26.5 9.3 35.2l66.3 56.6c-3.1 18.8-4.6 38-4.6 57.1 0 19.2 1.5 38.4 4.6 57.1L99 625.5a32.03 32.03 0 0 0-9.3 35.2l.9 2.6c18.1 50.4 44.9 96.9 79.7 137.9l1.8 2.1a32.12 32.12 0 0 0 35.1 9.5l81.9-29.1c29.8 24.5 63.1 43.9 99 57.4l15.8 85.4a32.05 32.05 0 0 0 25.8 25.7l2.7.5a449.4 449.4 0 0 0 159 0l2.7-.5a32.05 32.05 0 0 0 25.8-25.7l15.7-85a350 350 0 0 0 99.7-57.6l81.3 28.9a32 32 0 0 0 35.1-9.5l1.8-2.1c34.8-41.1 61.6-87.5 79.7-137.9l.9-2.6c4.5-12.3.8-26.3-9.3-35zM788.3 465.9c2.5 15.1 3.8 30.6 3.8 46.1s-1.3 31-3.8 46.1l-6.6 40.1 74.7 63.9a370.03 370.03 0 0 1-42.6 73.6L721 702.8l-31.4 25.8c-23.9 19.6-50.5 35-79.3 45.8l-38.1 14.3-17.9 97a377.5 377.5 0 0 1-85 0l-17.9-97.2-37.8-14.5c-28.5-10.8-55-26.2-78.7-45.7l-31.4-25.9-93.4 33.2c-17-22.9-31.2-47.6-42.6-73.6l75.5-64.5-6.5-40c-2.4-14.9-3.7-30.3-3.7-45.5 0-15.3 1.2-30.6 3.7-45.5l6.5-40-75.5-64.5c11.3-26.1 25.6-50.7 42.6-73.6l93.4 33.2 31.4-25.9c23.7-19.5 50.2-34.9 78.7-45.7l37.9-14.3 17.9-97.2c28.1-3.2 56.8-3.2 85 0l17.9 97 38.1 14.3c28.7 10.8 55.4 26.2 79.3 45.8l31.4 25.8 92.8-32.9c17 22.9 31.2 47.6 42.6 73.6L781.8 426l6.5 39.9zM512 326c-97.2 0-176 78.8-176 176s78.8 176 176 176 176-78.8 176-176-78.8-176-176-176zm79.2 255.2A111.6 111.6 0 0 1 512 614c-29.9 0-58-11.7-79.2-32.8A111.6 111.6 0 0 1 400 502c0-29.9 11.7-58 32.8-79.2C454 401.6 482.1 390 512 390c29.9 0 58 11.6 79.2 32.8A111.6 111.6 0 0 1 624 502c0 29.9-11.7 58-32.8 79.2z" app="ikonik" class="path-nt6j5"></path>
+      </svg></div>
   </div>
   <div class="content">
     <div class="tabs-container">
@@ -60,9 +556,9 @@
       <div class="temp-popup-container">
         <div data-w-id="858012f7-bd5e-9b10-21e5-2ca9d8e810ac" class="temp-popup-space"></div>
         <div class="temp-popup">
-          <div data-current="Heating Profiles" data-easing="ease" data-duration-in="0" data-duration-out="0" class="tool-temp-tabs w-tabs">
+          <div data-current="Top" data-easing="ease" data-duration-in="0" data-duration-out="0" class="tool-temp-tabs w-tabs">
             <div class="tool-temp-tabs-menu w-tab-menu">
-              <a data-w-tab="Top" class="temp-tab-link heater w-inline-block w-tab-link">
+              <a data-w-tab="Top" class="temp-tab-link heater w-inline-block w-tab-link w--current">
                 <div>Top</div>
               </a>
               <a data-w-tab="Middle" class="temp-tab-link heater w-inline-block w-tab-link">
@@ -75,612 +571,20 @@
                 <div>Nozzle</div>
               </a>
               <a data-w-tab="Bed0" class="temp-tab-link heater w-inline-block w-tab-link">
-                <div>Bed 0</div>
-              </a>
-              <a data-w-tab="Bed1" class="temp-tab-link heater w-inline-block w-tab-link">
                 <div>Bed 1</div>
               </a>
-              <a data-w-tab="Bed2" class="temp-tab-link heater w-inline-block w-tab-link">
+              <a data-w-tab="Bed1" class="temp-tab-link heater w-inline-block w-tab-link">
                 <div>Bed 2</div>
               </a>
-              <a data-w-tab="Bed3" class="temp-tab-link heater w-inline-block w-tab-link">
+              <a data-w-tab="Bed2" class="temp-tab-link heater w-inline-block w-tab-link">
                 <div>Bed 3</div>
+              </a>
+              <a data-w-tab="Bed3" class="temp-tab-link heater w-inline-block w-tab-link">
+                <div>Bed 4</div>
               </a>
             </div>
             <div class="tabs-content w-tab-content">
-              <div data-w-tab="Heating Profiles" class="tab-pane-heating-profiles-popup w-tab-pane w--tab-active">
-                <div class="heating-profiles-popup-container">
-                  <div class="heating-profiles-heading">
-                    <div class="heating-profiles-heading-container">
-                      <div class="heading-2">Material</div>
-                    </div>
-                    <div class="heating-profiles-header-columns">
-                      <div class="top-heater-heading">Top</div>
-                    </div>
-                    <div class="heating-profiles-header-columns">
-                      <div class="middle-heater-heading">Middle</div>
-                    </div>
-                    <div class="heating-profiles-header-columns">
-                      <div class="bottom-heater-heading">Bottom</div>
-                    </div>
-                    <div class="heating-profiles-header-columns">
-                      <div class="nozzle-heater-heading">Nozzle</div>
-                    </div>
-                    <div class="heating-profiles-header-columns">
-                      <div class="bed-heater-heading">Bed</div>
-                    </div>
-                    <div class="heating-profiles-header-columns-action popup">
-                      <div class="action-heading">Action</div>
-                    </div>
-                  </div>
-                  <div class="heating-profiles-content popup">
-                    <div class="heating-profile-material dark-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">1.</div>
-                        <div class="heating-profiles-text material">PLA</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material light-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">2.</div>
-                        <div class="heating-profiles-text material">ABS</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material dark-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">3.</div>
-                        <div class="heating-profiles-text material">PETG</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material light-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">4.</div>
-                        <div class="heating-profiles-text material">CF-ABS</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material dark-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">5.</div>
-                        <div class="heating-profiles-text material">CF-ABS</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material light-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">6.</div>
-                        <div class="heating-profiles-text material">Nylon</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material dark-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">7.</div>
-                        <div class="heating-profiles-text material">PEEK</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material light-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">6.</div>
-                        <div class="heating-profiles-text material">Nylon</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material dark-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">7.</div>
-                        <div class="heating-profiles-text material">PEEK</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material light-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">6.</div>
-                        <div class="heating-profiles-text material">Nylon</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material dark-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">7.</div>
-                        <div class="heating-profiles-text material">PEEK</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material light-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">6.</div>
-                        <div class="heating-profiles-text material">Nylon</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material dark-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">7.</div>
-                        <div class="heating-profiles-text material">PEEK</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material light-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">6.</div>
-                        <div class="heating-profiles-text material">Nylon</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material dark-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">7.</div>
-                        <div class="heating-profiles-text material">PEEK</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material light-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">6.</div>
-                        <div class="heating-profiles-text material">Nylon</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material dark-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">7.</div>
-                        <div class="heating-profiles-text material">PEEK</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material light-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">6.</div>
-                        <div class="heating-profiles-text material">Nylon</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material dark-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">7.</div>
-                        <div class="heating-profiles-text material">PEEK</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="heating-profile-material light-purple">
-                      <div class="material-name">
-                        <div class="heating-profiles-text profile-number">6.</div>
-                        <div class="heating-profiles-text material">Nylon</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text top-temp">180</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text middle-temp">190</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bottom-temp">200</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text nozzle-temp">210</div>
-                      </div>
-                      <div class="popup-temp">
-                        <div class="heating-profiles-text bed-temp">210</div>
-                      </div>
-                      <div class="popup-action-container">
-                        <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
-                        </div>
-                        <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
-                      </div>
-                    </div>
-                    <div class="add-icon-container">
-                      <div class="add-profile"><img width="24.678714752197266" height="24.720680236816406" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="add-icon-button"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div data-w-tab="Top" class="tab-pane-top w-tab-pane">
+              <div data-w-tab="Top" class="tab-pane-top w-tab-pane w--tab-active">
                 <div class="temp-popup-content">
                   <div class="temp-popup-heading-container">
                     <div class="temp-popup-heading">Top Heater :</div>
@@ -706,47 +610,47 @@
                   <div class="number-pad-container">
                     <div class="number-pad">
                       <div class="numpad-row">
-                        <div id="Num1" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div id="Num1" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">1</div>
                         </div>
-                        <div id="Num2" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div id="Num2" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">2</div>
                           <div class="numpad-text-purple">2</div>
                         </div>
-                        <div id="Num3" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div id="Num3" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">3</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div id="Num4" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div id="Num4" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">4</div>
                         </div>
-                        <div id="Num5" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div id="Num5" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">5</div>
                         </div>
-                        <div id="Num6" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div id="Num6" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">6</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div id="Num7" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div id="Num7" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">7</div>
                         </div>
-                        <div id="Num8" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div id="Num8" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">8</div>
                         </div>
-                        <div id="Num9" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div id="Num9" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">9</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-white">C</div>
                         </div>
-                        <div id="Num0" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div id="Num0" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">0</div>
                         </div>
-                        <div id="Num11" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle"><img width="40" height="40" alt="" src="images/Vectors-Wrapper_3.svg" loading="lazy" class="vectors-wrapper-7"></div>
+                        <div id="Num11" class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle"><img width="40" height="40" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="vectors-wrapper-7"></div>
                       </div>
                     </div>
                   </div>
@@ -778,46 +682,46 @@
                   <div class="number-pad-container">
                     <div class="number-pad">
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">1</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">2</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-2">3</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">4</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">5</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-2">6</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">7</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">8</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-2">9</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-white">C</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">0</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle"><img width="40" height="40" alt="" src="images/Vectors-Wrapper_3.svg" loading="lazy" class="vectors-wrapper-7"></div>
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle"><img width="40" height="40" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="vectors-wrapper-7"></div>
                       </div>
                     </div>
                   </div>
@@ -849,46 +753,46 @@
                   <div class="number-pad-container">
                     <div class="number-pad">
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">1</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">2</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-2">3</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">4</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">5</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-2">6</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">7</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">8</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-2">9</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-white">C</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">0</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle"><img width="40" height="40" alt="" src="images/Vectors-Wrapper_3.svg" loading="lazy" class="vectors-wrapper-7"></div>
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle"><img width="40" height="40" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="vectors-wrapper-7"></div>
                       </div>
                     </div>
                   </div>
@@ -920,123 +824,52 @@
                   <div class="number-pad-container">
                     <div class="number-pad">
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">1</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">2</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-2">3</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">4</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">5</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-2">6</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">7</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">8</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-2">9</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-white">C</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">0</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle"><img width="40" height="40" alt="" src="images/Vectors-Wrapper_3.svg" loading="lazy" class="vectors-wrapper-7"></div>
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle"><img width="40" height="40" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="vectors-wrapper-7"></div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
               <div data-w-tab="Bed0" class="tab-pane-bed0 w-tab-pane">
-                <div class="temp-popup-content">
-                  <div class="temp-popup-heading-container">
-                    <div class="temp-popup-heading">Bed Heater 0:</div>
-                    <div class="temp-popup-heading-content">________ °C</div>
-                    <div class="temp-popup-user-input">0</div>
-                  </div>
-                  <div class="set-temp-container">
-                    <div class="set-container">
-                      <div class="temp-popup-heading">Set :</div>
-                    </div>
-                    <div class="set-button-container">
-                      <div class="temp-button-container">
-                        <div class="content-text">Active</div>
-                      </div>
-                      <div class="temp-button-container">
-                        <div class="content-text">Preheat</div>
-                      </div>
-                      <div class="temp-button-container">
-                        <div class="content-text">Both</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="number-pad-container">
-                    <div class="number-pad">
-                      <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
-                          <div class="numpad-text-purple">1</div>
-                        </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
-                          <div class="numpad-text-purple">2</div>
-                        </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
-                          <div class="numpad-text-2">3</div>
-                        </div>
-                      </div>
-                      <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
-                          <div class="numpad-text-purple">4</div>
-                        </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
-                          <div class="numpad-text-purple">5</div>
-                        </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
-                          <div class="numpad-text-2">6</div>
-                        </div>
-                      </div>
-                      <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
-                          <div class="numpad-text-purple">7</div>
-                        </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
-                          <div class="numpad-text-purple">8</div>
-                        </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
-                          <div class="numpad-text-2">9</div>
-                        </div>
-                      </div>
-                      <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle">
-                          <div class="numpad-text-white">C</div>
-                        </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
-                          <div class="numpad-text-purple">0</div>
-                        </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle"><img width="40" height="40" alt="" src="images/Vectors-Wrapper_3.svg" loading="lazy" class="vectors-wrapper-7"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div data-w-tab="Bed1" class="tab-pane-bed1 w-tab-pane">
                 <div class="temp-popup-content">
                   <div class="temp-popup-heading-container">
                     <div class="temp-popup-heading">Bed Heater 1:</div>
@@ -1062,52 +895,52 @@
                   <div class="number-pad-container">
                     <div class="number-pad">
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">1</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">2</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-2">3</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">4</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">5</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-2">6</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">7</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">8</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-2">9</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-white">C</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">0</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle"><img width="40" height="40" alt="" src="images/Vectors-Wrapper_3.svg" loading="lazy" class="vectors-wrapper-7"></div>
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle"><img width="40" height="40" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="vectors-wrapper-7"></div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div data-w-tab="Bed2" class="tab-pane-bed2 w-tab-pane">
+              <div data-w-tab="Bed1" class="tab-pane-bed1 w-tab-pane">
                 <div class="temp-popup-content">
                   <div class="temp-popup-heading-container">
                     <div class="temp-popup-heading">Bed Heater 2:</div>
@@ -1133,52 +966,52 @@
                   <div class="number-pad-container">
                     <div class="number-pad">
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">1</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">2</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-2">3</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">4</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">5</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-2">6</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">7</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">8</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-2">9</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-white">C</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">0</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle"><img width="40" height="40" alt="" src="images/Vectors-Wrapper_3.svg" loading="lazy" class="vectors-wrapper-7"></div>
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle"><img width="40" height="40" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="vectors-wrapper-7"></div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div data-w-tab="Bed3" class="tab-pane-bed3 w-tab-pane">
+              <div data-w-tab="Bed2" class="tab-pane-bed2 w-tab-pane">
                 <div class="temp-popup-content">
                   <div class="temp-popup-heading-container">
                     <div class="temp-popup-heading">Bed Heater 3:</div>
@@ -1204,46 +1037,117 @@
                   <div class="number-pad-container">
                     <div class="number-pad">
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">1</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">2</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-2">3</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">4</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">5</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-2">6</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">7</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">8</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-2">9</div>
                         </div>
                       </div>
                       <div class="numpad-row">
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-white">C</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="number-circle">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
                           <div class="numpad-text-purple">0</div>
                         </div>
-                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle"><img width="40" height="40" alt="" src="images/Vectors-Wrapper_3.svg" loading="lazy" class="vectors-wrapper-7"></div>
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle"><img width="40" height="40" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="vectors-wrapper-7"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div data-w-tab="Bed3" class="tab-pane-bed3 w-tab-pane">
+                <div class="temp-popup-content">
+                  <div class="temp-popup-heading-container">
+                    <div class="temp-popup-heading">Bed Heater 4:</div>
+                    <div class="temp-popup-heading-content">________ °C</div>
+                    <div class="temp-popup-user-input">0</div>
+                  </div>
+                  <div class="set-temp-container">
+                    <div class="set-container">
+                      <div class="temp-popup-heading">Set :</div>
+                    </div>
+                    <div class="set-button-container">
+                      <div class="temp-button-container">
+                        <div class="content-text">Active</div>
+                      </div>
+                      <div class="temp-button-container">
+                        <div class="content-text">Preheat</div>
+                      </div>
+                      <div class="temp-button-container">
+                        <div class="content-text">Both</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="number-pad-container">
+                    <div class="number-pad">
+                      <div class="numpad-row">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
+                          <div class="numpad-text-purple">1</div>
+                        </div>
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
+                          <div class="numpad-text-purple">2</div>
+                        </div>
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
+                          <div class="numpad-text-2">3</div>
+                        </div>
+                      </div>
+                      <div class="numpad-row">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
+                          <div class="numpad-text-purple">4</div>
+                        </div>
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
+                          <div class="numpad-text-purple">5</div>
+                        </div>
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
+                          <div class="numpad-text-2">6</div>
+                        </div>
+                      </div>
+                      <div class="numpad-row">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
+                          <div class="numpad-text-purple">7</div>
+                        </div>
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
+                          <div class="numpad-text-purple">8</div>
+                        </div>
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
+                          <div class="numpad-text-2">9</div>
+                        </div>
+                      </div>
+                      <div class="numpad-row">
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle">
+                          <div class="numpad-text-white">C</div>
+                        </div>
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="number-circle">
+                          <div class="numpad-text-purple">0</div>
+                        </div>
+                        <div class="number-container"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle"><img width="40" height="40" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="vectors-wrapper-7"></div>
                       </div>
                     </div>
                   </div>
@@ -1276,11 +1180,14 @@
               <div class="heating-profiles-header-columns edit-popup">
                 <div class="bed-heater-heading">Bed</div>
               </div>
+              <div id="cnc-profile-heading-popup" data-w-id="593b56f8-7d3b-498b-eba5-b72938283e5c" style="display:none" class="heating-profiles-header-columns edit-popup">
+                <div class="cnc-profile-heading">CNC</div>
+              </div>
               <div class="heating-profiles-header-columns-action edit-popup">
                 <div class="action-heading">Action</div>
               </div>
             </div>
-            <div class="heating-profile-material dark-purple input">
+            <div class="heating-profile-material dark-purple-input input">
               <div class="material-name">
                 <div class="material-data-input-container w-embed"><input type="text" class="material-data-name-input user-input" id="material-name-input" name="material-name-input" placeholder="Material Name:"></div>
               </div>
@@ -1299,7 +1206,10 @@
               <div class="popup-temp">
                 <div class="material-data-input-container w-embed"><input type="text" class="material-data-temp-input user-input" id="bed-heater-temp-input" name="bed-heater-temp-input" placeholder="Temp:"></div>
               </div>
-              <div class="popup-action-container">
+              <div id="cnc-user-input-popup" data-w-id="a8b0260b-1240-4892-241a-96f6a06167f0" style="display:none" class="popup-temp">
+                <div class="material-data-input-container w-embed"><input type="text" class="material-data-temp-input user-input" id="cnc-input" name="cnc-input" placeholder="Speed:"></div>
+              </div>
+              <div class="popup-action-container-popup">
                 <div data-w-id="858012f7-bd5e-9b10-21e5-2ca9d8e815c7" class="save-profile-edit">
                   <div class="white-button-text-2">Save</div>
                 </div>
@@ -1311,26 +1221,35 @@
           </div>
         </div>
       </div>
-      <div data-current="Tool Temp" data-easing="ease-in-out" data-duration-in="0" data-duration-out="0" class="main-tabs w-tabs">
+      <div data-current="Extruder Temp" data-easing="ease-in-out" data-duration-in="0" data-duration-out="0" class="main-tabs w-tabs">
         <div class="main-tabs-menu w-tab-menu">
-          <a data-w-tab="Tool Temp" hr="" class="main-tab-link w-inline-block w-tab-link w--current">
-            <div>Extruder Temperatures</div>
+          <a data-w-tab="Extruder Temp" id="default-tab" hr="" class="main-tab-link w-inline-block w-tab-link w--current">
+            <div class="flex-tab-link">
+              <div class="tab-heading">Extruder Temps</div>
+              <div id="extruder-hot-icon" class="hot-icon"><img width="Auto" sizes="(max-width: 991px) 33.79999923706055px, 3vw" alt="" src="images/istockphoto-1158829520-612x612-removebg-preview.png" loading="eager" srcset="images/istockphoto-1158829520-612x612-removebg-preview-p-500.png 500w, images/istockphoto-1158829520-612x612-removebg-preview.png 526w" class="hot-surface-icon"></div>
+            </div>
           </a>
           <a data-w-tab="Bed Temp" class="main-tab-link w-inline-block w-tab-link">
-            <div>Bed Temperatures</div>
+            <div class="flex-tab-link">
+              <div class="tab-heading">Bed Temps</div>
+              <div id="bed-hot-icon" class="hot-icon"><img width="Auto" sizes="39.9375px" alt="" src="images/istockphoto-1158829520-612x612-removebg-preview.png" loading="eager" srcset="images/istockphoto-1158829520-612x612-removebg-preview-p-500.png 500w, images/istockphoto-1158829520-612x612-removebg-preview.png 526w" class="hot-surface-icon"></div>
+            </div>
           </a>
-          <a data-w-tab="Heating Profiles" class="main-tab-link w-inline-block w-tab-link">
-            <div>Heating Profiles</div>
+          <a data-w-tab="Material Profiles" class="main-tab-link w-inline-block w-tab-link">
+            <div class="tab-heading">Material Profiles</div>
           </a>
-          <a data-w-tab="CNC Control" class="main-tab-link w-inline-block w-tab-link">
-            <div>CNC Control</div>
+          <a data-w-tab="Spindle Control" id="cnc-mill" data-w-id="858012f7-bd5e-9b10-21e5-2ca9d8e815d8" style="display:none" class="main-tab-link w-inline-block w-tab-link">
+            <div class="flex-tab-link">
+              <div class="tab-heading">Spindle Control</div>
+              <div id="cnc-running-icon" class="hot-icon"><img width="Auto" loading="eager" alt="" src="images/Cutting-warning-icon.png" class="cutting-warning-icon"></div>
+            </div>
           </a>
-          <a data-w-tab="Slice" class="main-tab-link w-inline-block w-tab-link">
-            <div>AiSync Slicer</div>
+          <a data-w-tab="Slice" id="aisync-slicer" data-w-id="858012f7-bd5e-9b10-21e5-2ca9d8e815de" style="display:none" class="main-tab-link w-inline-block w-tab-link">
+            <div class="tab-heading">AiSync Slicer</div>
           </a>
         </div>
         <div class="main-tabs-content w-tab-content">
-          <div data-w-tab="Tool Temp" class="tab-pane-tool-temp w-tab-pane w--tab-active">
+          <div data-w-tab="Extruder Temp" class="tab-pane-extruder-temp w-tab-pane w--tab-active">
             <div class="main">
               <div class="extruder-container"><img id="radial-gradient-background-white" loading="eager" alt="" src="images/Radial-Gradient-Background.png" class="radial-gradient-background extruder"><img id="radial-gradient-background-red" loading="eager" alt="" src="images/Radial-gradient-background-red.png" class="radial-gradient-background-red extruder"><img id="radial-gradient-background-orange" loading="eager" alt="" src="images/Radial-gradient-background-orange.png" class="radial-gradient-background-orange extruder">
                 <div class="part-cooling-hue-container"><img style="opacity:0.2" loading="eager" alt="" src="images/Radial-gradient-background-blue.png" class="radial-gradient-background-blue"><img style="opacity:0.2" loading="eager" alt="" src="images/Radial-gradient-background-blue.png" class="radial-gradient-background-blue-2"><img style="opacity:0.2" loading="eager" alt="" src="images/Radial-gradient-background-blue.png" class="radial-gradient-background-blue-3"></div><img loading="eager" height="706" alt="" src="images/PE-320-Extruder.png" class="pe-320-extruder">
@@ -1339,10 +1258,19 @@
               </div>
               <div class="tool-temperature-container">
                 <div class="main-header">
-                  <div class="heading">Extruder Temperatures</div>
-                  <div data-w-id="af6bff04-0d86-c7bd-d6d4-3674b9c62b69" class="toggle-container-button">
-                    <div id="part-cooling-on" data-w-id="af6bff04-0d86-c7bd-d6d4-3674b9c62b6a" class="part-cooling-on">Part Cooling On</div>
-                    <div id="part-cooling-off" data-w-id="05fc9c98-5f6e-c3b3-fdca-28fd1e563012" class="part-cooling-off">Part Cooling Off</div><img src="images/material-symbols-light_toggle-on_1material-symbols-light_toggle-on.png" loading="lazy" id="part-cooling-on-icon" alt="" class="toggle-on"><img src="images/material-symbols-light_toggle-off-outline_1material-symbols-light_toggle-off-outline.png" loading="lazy" id="part-cooling-off-icon" alt="" class="toggle-off">
+                  <div class="div-block-4">
+                    <div class="heading">Extruder Temperatures</div>
+                    <div id="extruder-detection-container" data-w-id="b7fb9adf-cf16-22e9-b900-a50931db5618" style="display:none" class="tool-detection-container">
+                      <div id="tool-detection-pe320" data-w-id="5e087257-3b97-c3ad-5ab7-e53b6fbe17a2" style="display:none" class="tool-detection-heading"> - ???</div>
+                      <div id="extruder-warning-icon" data-w-id="ad216de2-ecda-f55d-2fc9-2f5926622ea0" style="display:none" class="amber-warning-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="40" height="40" viewbox="0 0 256 256" app="ikonik" class="ikonik-i8w3bl">
+                          <path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z" app="ikonik"></path>
+                          <rect width="256" height="256" fill="none" app="ikonik"></rect>
+                        </svg></div>
+                    </div>
+                  </div>
+                  <div id="part-cooling-toggle" data-w-id="af6bff04-0d86-c7bd-d6d4-3674b9c62b69" class="toggle-container-button">
+                    <div id="part-cooling-on" data-w-id="af6bff04-0d86-c7bd-d6d4-3674b9c62b6a" class="toggle-text-on">Part Cooling On</div>
+                    <div id="part-cooling-off" data-w-id="05fc9c98-5f6e-c3b3-fdca-28fd1e563012" class="toggle-text-off">Part Cooling Off</div><img src="images/material-symbols-light_toggle-on_1material-symbols-light_toggle-on.png" loading="lazy" data-w-id="003441cc-0fbf-85b1-2583-bb46fd5299f1" id="part-cooling-on-icon" alt="" class="toggle-on"><img src="images/material-symbols-light_toggle-off-outline_1material-symbols-light_toggle-off-outline.png" loading="lazy" data-w-id="45a23204-7b2a-3c80-8367-faa1c95b44ef" id="part-cooling-off-icon" alt="" class="toggle-off">
                   </div>
                 </div>
                 <div class="main-container">
@@ -1368,7 +1296,7 @@
                     <div class="column-text">
                       <div class="table-heading">State</div>
                       <div class="temp-state-container">
-                        <div id="temp-state-top" class="temp-state extruder">Active</div><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewbox="0 0 24 24" app="ikonik" class="temp-state-icon">
+                        <div id="temp-state-top" class="temp-state extruder">???</div><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewbox="0 0 24 24" app="ikonik" class="temp-state-icon">
                           <g data-name="Circle Chev Left" app="ikonik">
                             <g app="ikonik">
                               <path d="M12,21.933A9.933,9.933,0,1,1,21.933,12,9.944,9.944,0,0,1,12,21.933ZM12,3.067A8.933,8.933,0,1,0,20.933,12,8.943,8.943,0,0,0,12,3.067Z" fill="currentColor" app="ikonik" class="path-uj3x4"></path>
@@ -1378,7 +1306,7 @@
                         </svg>
                       </div>
                       <div class="temp-state-container">
-                        <div id="temp-state-middle" class="temp-state extruder">Preheat</div><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewbox="0 0 24 24" app="ikonik" class="temp-state-icon">
+                        <div id="temp-state-middle" class="temp-state extruder">???</div><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewbox="0 0 24 24" app="ikonik" class="temp-state-icon">
                           <g data-name="Circle Chev Left" app="ikonik">
                             <g app="ikonik">
                               <path d="M12,21.933A9.933,9.933,0,1,1,21.933,12,9.944,9.944,0,0,1,12,21.933ZM12,3.067A8.933,8.933,0,1,0,20.933,12,8.943,8.943,0,0,0,12,3.067Z" fill="currentColor" app="ikonik" class="path-uj3x4"></path>
@@ -1388,7 +1316,7 @@
                         </svg>
                       </div>
                       <div class="temp-state-container">
-                        <div id="temp-state-bottom" class="temp-state extruder">Off</div><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewbox="0 0 24 24" app="ikonik" class="temp-state-icon">
+                        <div id="temp-state-bottom" class="temp-state extruder">???</div><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewbox="0 0 24 24" app="ikonik" class="temp-state-icon">
                           <g data-name="Circle Chev Left" app="ikonik">
                             <g app="ikonik">
                               <path d="M12,21.933A9.933,9.933,0,1,1,21.933,12,9.944,9.944,0,0,1,12,21.933ZM12,3.067A8.933,8.933,0,1,0,20.933,12,8.943,8.943,0,0,0,12,3.067Z" fill="currentColor" app="ikonik" class="path-uj3x4"></path>
@@ -1398,7 +1326,7 @@
                         </svg>
                       </div>
                       <div class="temp-state-container">
-                        <div id="temp-state-nozzle" class="temp-state extruder">Fault</div><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewbox="0 0 24 24" app="ikonik" class="temp-state-icon">
+                        <div id="temp-state-nozzle" class="temp-state extruder">???</div><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewbox="0 0 24 24" app="ikonik" class="temp-state-icon">
                           <g data-name="Circle Chev Left" app="ikonik">
                             <g app="ikonik">
                               <path d="M12,21.933A9.933,9.933,0,1,1,21.933,12,9.944,9.944,0,0,1,12,21.933ZM12,3.067A8.933,8.933,0,1,0,20.933,12,8.943,8.943,0,0,0,12,3.067Z" fill="currentColor" app="ikonik" class="path-uj3x4"></path>
@@ -1409,36 +1337,36 @@
                       </div>
                     </div>
                     <div class="column-text">
-                      <div class="table-heading">Current</div>
-                      <div id="top-heater-temp" class="temp-data extruder">0°C</div>
-                      <div id="bottom-heater-temp" class="temp-data extruder">0°C</div>
-                      <div id="nozzle-heater-temp" class="temp-data extruder">0°C</div>
-                      <div id="heater6-heater-temp" class="temp-data extruder">0°C</div>
+                      <div class="table-heading">Live</div>
+                      <div id="top-heater-temp" class="temp-data extruder">???</div>
+                      <div id="bottom-heater-temp" class="temp-data extruder">???</div>
+                      <div id="nozzle-heater-temp" class="temp-data extruder">???</div>
+                      <div id="heater6-heater-temp" class="temp-data extruder">???</div>
                     </div>
                     <div class="column-text">
                       <div class="table-heading">Active</div>
                       <div data-delay="0" data-hover="false" class="dropdown-wrapper active top w-dropdown">
                         <div class="dropdown-trigger w-dropdown-toggle">
                           <div class="dropdown-icon w-icon-dropdown-toggle"></div>
-                          <div id="user-input-active-top" class="user-input-temp top-heater active">0</div>
+                          <div id="user-input-active-top" class="user-input-temp top-heater active">???</div>
                         </div>
                       </div>
                       <div data-delay="0" data-hover="false" class="dropdown-wrapper active middle w-dropdown">
                         <div class="dropdown-trigger w-dropdown-toggle">
                           <div class="dropdown-icon w-icon-dropdown-toggle"></div>
-                          <div id="user-input-active-middle" class="user-input-temp middle-heater active">0</div>
+                          <div id="user-input-active-middle" class="user-input-temp middle-heater active">???</div>
                         </div>
                       </div>
                       <div data-delay="0" data-hover="false" class="dropdown-wrapper active bottom w-dropdown">
                         <div class="dropdown-trigger w-dropdown-toggle">
                           <div class="dropdown-icon w-icon-dropdown-toggle"></div>
-                          <div id="user-input-active-bottom" class="user-input-temp bottom-heater active">0</div>
+                          <div id="user-input-active-bottom" class="user-input-temp bottom-heater active">???</div>
                         </div>
                       </div>
                       <div data-delay="0" data-hover="false" class="dropdown-wrapper active nozzle w-dropdown">
                         <div class="dropdown-trigger w-dropdown-toggle">
                           <div class="dropdown-icon w-icon-dropdown-toggle"></div>
-                          <div id="user-input-active-nozzle" class="user-input-temp nozzle-heater active">0</div>
+                          <div id="user-input-active-nozzle" class="user-input-temp nozzle-heater active">???</div>
                         </div>
                       </div>
                     </div>
@@ -1447,31 +1375,31 @@
                       <div data-delay="0" data-hover="false" class="dropdown-wrapper preheat top w-dropdown">
                         <div class="dropdown-trigger w-dropdown-toggle">
                           <div class="dropdown-icon w-icon-dropdown-toggle"></div>
-                          <div id="user-input-preheat-top" class="user-input-temp top-heater preheat">0</div>
+                          <div id="user-input-preheat-top" class="user-input-temp top-heater preheat">???</div>
                         </div>
                       </div>
                       <div data-delay="0" data-hover="false" class="dropdown-wrapper preheat middle w-dropdown">
                         <div class="dropdown-trigger w-dropdown-toggle">
                           <div class="dropdown-icon w-icon-dropdown-toggle"></div>
-                          <div id="user-input-preheat-middle" class="user-input-temp middle-heater preheat">0</div>
+                          <div id="user-input-preheat-middle" class="user-input-temp middle-heater preheat">???</div>
                         </div>
                       </div>
                       <div data-delay="0" data-hover="false" class="dropdown-wrapper preheat bottom w-dropdown">
                         <div class="dropdown-trigger w-dropdown-toggle">
                           <div class="dropdown-icon w-icon-dropdown-toggle"></div>
-                          <div id="user-input-preheat-bottom" class="user-input-temp bottom-heater preheat">0</div>
+                          <div id="user-input-preheat-bottom" class="user-input-temp bottom-heater preheat">???</div>
                         </div>
                       </div>
                       <div data-delay="0" data-hover="false" class="dropdown-wrapper preheat nozzle w-dropdown">
                         <div class="dropdown-trigger w-dropdown-toggle">
                           <div class="dropdown-icon w-icon-dropdown-toggle"></div>
-                          <div id="user-input-preheat-nozzle" class="user-input-temp nozzle-heater preheat">0</div>
+                          <div id="user-input-preheat-nozzle" class="user-input-temp nozzle-heater preheat">???</div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div><img width="168" height="505" alt="" src="images/Vectors-Wrapper_1.svg" loading="lazy" class="heater-label-pointers">
+              </div><img width="168" height="304" alt="" src="images/Heaters-Pointer.png" loading="lazy" class="heater-label-pointers">
             </div>
           </div>
           <div data-w-tab="Bed Temp" class="tab-pane-bed-temp w-tab-pane">
@@ -1480,26 +1408,35 @@
               <div class="heating-profiles-container">
                 <div class="main-header">
                   <div class="heading">Bed Temperatures</div>
-                  <aside id="bed-heaters-off" class="purple-button">
-                    <div class="purple-button-text">Bed Heaters Off</div>
-                  </aside>
-                  <aside id="preheat-bed" class="purple-button">
-                    <div class="purple-button-text">Preheat Bed</div>
-                  </aside>
+                  <div id="bed-fixture-plate-toggle" data-w-id="69721089-3abf-7689-f818-212b6170d0df" class="toggle-container-button">
+                    <div id="bed-fixture-plate-on" data-w-id="69721089-3abf-7689-f818-212b6170d0e0" style="display:none" class="toggle-text-on">Bed Fixture Plate ON</div>
+                    <div id="bed-fixture-plate-off" data-w-id="69721089-3abf-7689-f818-212b6170d0e2" class="toggle-text-off">Bed Fixture Plate OFF</div><img style="display:none" data-w-id="69721089-3abf-7689-f818-212b6170d0e4" alt="" src="images/material-symbols-light_toggle-on_1material-symbols-light_toggle-on.png" loading="lazy" id="bed-fixture-plate-on-icon" class="toggle-on"><img data-w-id="69721089-3abf-7689-f818-212b6170d0e5" id="bed-fixture-plate-off-icon" alt="" src="images/material-symbols-light_toggle-off-outline_1material-symbols-light_toggle-off-outline.png" loading="lazy" class="toggle-off">
+                  </div>
                 </div>
                 <div class="main-container">
+                  <div class="button-container">
+                    <aside class="purple-button empty">
+                      <div class="purple-button-text">Bed Heaters Off</div>
+                    </aside>
+                    <aside id="bed-heaters-off" class="purple-button">
+                      <div class="purple-button-text">Bed Heaters Off</div>
+                    </aside>
+                    <aside id="preheat-bed" class="purple-button">
+                      <div class="purple-button-text">Preheat Bed</div>
+                    </aside>
+                  </div>
                   <div class="temp-table">
                     <div class="column-text">
                       <div class="table-heading">Heaters</div>
-                      <div class="body-4 bed0">Bed 0</div>
-                      <div class="body-5 bed1">Bed 1</div>
-                      <div class="body-6 bed2">Bed 2</div>
-                      <div class="body-7 bed3">Bed 3</div>
+                      <div class="body-4 bed0">Bed 1</div>
+                      <div class="body-5 bed1">Bed 2</div>
+                      <div class="body-6 bed2">Bed 3</div>
+                      <div class="body-7 bed3">Bed 4</div>
                     </div>
                     <div class="column-text">
                       <div class="table-heading">State</div>
                       <div class="temp-state-container bed0">
-                        <div id="temp-state-bed" class="temp-state bed">Active</div><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewbox="0 0 24 24" app="ikonik" class="temp-state-icon">
+                        <div id="temp-state-bed" class="temp-state bed">null</div><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewbox="0 0 24 24" app="ikonik" class="temp-state-icon">
                           <g data-name="Circle Chev Left" app="ikonik">
                             <g app="ikonik">
                               <path d="M12,21.933A9.933,9.933,0,1,1,21.933,12,9.944,9.944,0,0,1,12,21.933ZM12,3.067A8.933,8.933,0,1,0,20.933,12,8.943,8.943,0,0,0,12,3.067Z" fill="currentColor" app="ikonik" class="path-uj3x4"></path>
@@ -1509,7 +1446,7 @@
                         </svg>
                       </div>
                       <div class="temp-state-container bed1">
-                        <div id="temp-state-chamber" class="temp-state bed">Preheat</div><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewbox="0 0 24 24" app="ikonik" class="temp-state-icon">
+                        <div id="temp-state-chamber" class="temp-state bed">null</div><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewbox="0 0 24 24" app="ikonik" class="temp-state-icon">
                           <g data-name="Circle Chev Left" app="ikonik">
                             <g app="ikonik">
                               <path d="M12,21.933A9.933,9.933,0,1,1,21.933,12,9.944,9.944,0,0,1,12,21.933ZM12,3.067A8.933,8.933,0,1,0,20.933,12,8.943,8.943,0,0,0,12,3.067Z" fill="currentColor" app="ikonik" class="path-uj3x4"></path>
@@ -1519,7 +1456,7 @@
                         </svg>
                       </div>
                       <div class="temp-state-container bed2">
-                        <div id="temp-state-heater7" class="temp-state bed">Off</div><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewbox="0 0 24 24" app="ikonik" class="temp-state-icon">
+                        <div id="temp-state-heater7" class="temp-state bed">null</div><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewbox="0 0 24 24" app="ikonik" class="temp-state-icon">
                           <g data-name="Circle Chev Left" app="ikonik">
                             <g app="ikonik">
                               <path d="M12,21.933A9.933,9.933,0,1,1,21.933,12,9.944,9.944,0,0,1,12,21.933ZM12,3.067A8.933,8.933,0,1,0,20.933,12,8.943,8.943,0,0,0,12,3.067Z" fill="currentColor" app="ikonik" class="path-uj3x4"></path>
@@ -1529,7 +1466,7 @@
                         </svg>
                       </div>
                       <div class="temp-state-container bed3">
-                        <div id="temp-state-heater8" class="temp-state bed">Fault</div><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewbox="0 0 24 24" app="ikonik" class="temp-state-icon">
+                        <div id="temp-state-heater8" class="temp-state bed">null</div><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewbox="0 0 24 24" app="ikonik" class="temp-state-icon">
                           <g data-name="Circle Chev Left" app="ikonik">
                             <g app="ikonik">
                               <path d="M12,21.933A9.933,9.933,0,1,1,21.933,12,9.944,9.944,0,0,1,12,21.933ZM12,3.067A8.933,8.933,0,1,0,20.933,12,8.943,8.943,0,0,0,12,3.067Z" fill="currentColor" app="ikonik" class="path-uj3x4"></path>
@@ -1540,11 +1477,11 @@
                       </div>
                     </div>
                     <div class="column-text">
-                      <div class="table-heading">Current</div>
-                      <div id="bed-heater-temp" class="temp-data bed bed0">0°C</div>
-                      <div id="chamber-heater-temp" class="temp-data bed bed1">0°C</div>
-                      <div id="heater7-heater-temp" class="temp-data bed bed2">0°C</div>
-                      <div id="heater8-heater-temp" class="temp-data bed bed3">0°C</div>
+                      <div class="table-heading">Live</div>
+                      <div id="bed-heater-temp" class="temp-data bed bed0">null</div>
+                      <div id="chamber-heater-temp" class="temp-data bed bed1">null</div>
+                      <div id="heater7-heater-temp" class="temp-data bed bed2">null</div>
+                      <div id="heater8-heater-temp" class="temp-data bed bed3">null</div>
                     </div>
                     <div class="column-text">
                       <div class="table-heading">Active</div>
@@ -1605,7 +1542,7 @@
               </div>
             </div>
           </div>
-          <div data-w-tab="Heating Profiles" class="tab-pane-heating-profiles w-tab-pane">
+          <div data-w-tab="Material Profiles" class="tab-pane-material-profiles w-tab-pane">
             <div class="main">
               <div class="extruder-container"><img loading="eager" src="images/Radial-Gradient-Background.png" alt="" class="radial-gradient-background extruder"><img loading="eager" src="images/Radial-gradient-background-red.png" alt="" class="radial-gradient-background-red extruder"><img loading="eager" src="images/Radial-gradient-background-orange.png" alt="" class="radial-gradient-background-orange extruder">
                 <div class="part-cooling-hue-container"><img style="opacity:0.2" loading="eager" alt="" src="images/Radial-gradient-background-blue.png" class="radial-gradient-background-blue"><img style="opacity:0.2" loading="eager" alt="" src="images/Radial-gradient-background-blue.png" class="radial-gradient-background-blue-2"><img style="opacity:0.2" loading="eager" alt="" src="images/Radial-gradient-background-blue.png" class="radial-gradient-background-blue-3"></div><img loading="eager" height="706" alt="" src="images/PE-320-Extruder.png" class="pe-320-extruder">
@@ -1614,7 +1551,7 @@
               </div>
               <div class="heating-profiles-container">
                 <div class="main-header">
-                  <div class="heading">Heating Profiles</div>
+                  <div class="heading">Material Profiles</div>
                   <aside id="reset-profiles" class="purple-button">
                     <div class="purple-button-text">Reset to Default</div>
                   </aside>
@@ -1639,12 +1576,15 @@
                     <div class="heating-profiles-header-columns main-profile">
                       <div class="bed-heater-heading">Bed</div>
                     </div>
-                    <div class="heating-profiles-header-columns-action main-profile">
+                    <div id="cnc-profile-heading" data-w-id="f32b91f7-21cd-9823-7c5d-3d81ddcb730c" style="display:none" class="heating-profiles-header-columns main-profile">
+                      <div class="cnc-profile-heading">CNC</div>
+                    </div>
+                    <div id="heating-profiles-action-header" class="heating-profiles-header-columns-action main-profile">
                       <div class="action-heading">Action</div>
                     </div>
                   </div>
                   <div class="heating-profiles-content" data-ix="new-interaction">
-                    <div class="heating-profile-material dark-purple">
+                    <div style="display:none" class="heating-profile-material dark-purple">
                       <div class="material-name">
                         <div class="heating-profiles-text profile-number">1.</div>
                         <div class="heating-profiles-text material">PLA</div>
@@ -1664,15 +1604,21 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">60</div>
                       </div>
+                      <div data-w-id="5ffeb66f-836e-6c4d-f620-e7fda4988745" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material light-purple">
+                    <div style="display:none" class="heating-profile-material light-purple">
                       <div class="material-name">
                         <div class="heating-profiles-text profile-number">2.</div>
                         <div class="heating-profiles-text material">ABS</div>
@@ -1692,15 +1638,21 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">100</div>
                       </div>
+                      <div data-w-id="920e1c72-aa36-ef82-db9e-74e4d703598c" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">21000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material dark-purple">
+                    <div style="display:none" class="heating-profile-material dark-purple">
                       <div class="material-name">
                         <div class="heating-profiles-text profile-number">3.</div>
                         <div class="heating-profiles-text material">PETG</div>
@@ -1720,15 +1672,21 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">90</div>
                       </div>
+                      <div data-w-id="fc9bf815-89a6-608d-c632-5f7c5f4cbb4e" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material light-purple">
+                    <div style="display:none" class="heating-profile-material light-purple">
                       <div class="material-name">
                         <div class="heating-profiles-text profile-number">4.</div>
                         <div class="heating-profiles-text material">CF-ABS</div>
@@ -1748,15 +1706,21 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">210</div>
                       </div>
+                      <div data-w-id="b176771d-b935-129f-0540-ce8c3130867f" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material dark-purple">
+                    <div style="display:none" class="heating-profile-material dark-purple">
                       <div class="material-name">
                         <div class="heating-profiles-text profile-number">5.</div>
                         <div class="heating-profiles-text material">CF-ABS</div>
@@ -1776,15 +1740,21 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">100</div>
                       </div>
+                      <div data-w-id="cf9e03e5-920e-849c-6d9b-20fc2e764151" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material light-purple">
+                    <div style="display:none" class="heating-profile-material light-purple">
                       <div class="material-name">
                         <div class="heating-profiles-text profile-number">6.</div>
                         <div class="heating-profiles-text material">Nylon</div>
@@ -1804,15 +1774,21 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">210</div>
                       </div>
+                      <div data-w-id="fad70830-2480-97ac-db8f-7f5beda3a2c5" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material dark-purple">
+                    <div style="display:none" class="heating-profile-material dark-purple">
                       <div class="material-name">
                         <div class="heating-profiles-text profile-number">7.</div>
                         <div class="heating-profiles-text material">PEEK</div>
@@ -1832,17 +1808,23 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">100</div>
                       </div>
+                      <div data-w-id="ab0af0b5-8df2-31ec-8da8-c4d20424cd14" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material light-purple">
+                    <div style="display:none" class="heating-profile-material light-purple">
                       <div class="material-name">
-                        <div class="heating-profiles-text profile-number">6.</div>
+                        <div class="heating-profiles-text profile-number">8.</div>
                         <div class="heating-profiles-text material">Nylon</div>
                       </div>
                       <div class="popup-temp">
@@ -1860,17 +1842,23 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">210</div>
                       </div>
+                      <div data-w-id="77773aaa-bb1c-e508-2482-6c607c705702" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material dark-purple">
+                    <div style="display:none" class="heating-profile-material dark-purple">
                       <div class="material-name">
-                        <div class="heating-profiles-text profile-number">7.</div>
+                        <div class="heating-profiles-text profile-number">9.</div>
                         <div class="heating-profiles-text material">PEEK</div>
                       </div>
                       <div class="popup-temp">
@@ -1888,17 +1876,23 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">210</div>
                       </div>
+                      <div data-w-id="7cb36787-ada5-1438-b9e9-8be5565e0120" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material light-purple">
+                    <div style="display:none" class="heating-profile-material light-purple">
                       <div class="material-name">
-                        <div class="heating-profiles-text profile-number">6.</div>
+                        <div class="heating-profiles-text profile-number">10.</div>
                         <div class="heating-profiles-text material">Nylon</div>
                       </div>
                       <div class="popup-temp">
@@ -1916,17 +1910,23 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">210</div>
                       </div>
+                      <div data-w-id="5e283fbd-1777-9d3e-790b-ec45f6aaa582" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material dark-purple">
+                    <div style="display:none" class="heating-profile-material dark-purple">
                       <div class="material-name">
-                        <div class="heating-profiles-text profile-number">7.</div>
+                        <div class="heating-profiles-text profile-number">11.</div>
                         <div class="heating-profiles-text material">PEEK</div>
                       </div>
                       <div class="popup-temp">
@@ -1944,17 +1944,23 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">210</div>
                       </div>
+                      <div data-w-id="8f8f5609-13f0-3201-f1c4-6454564babb8" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material light-purple">
+                    <div style="display:none" class="heating-profile-material light-purple">
                       <div class="material-name">
-                        <div class="heating-profiles-text profile-number">6.</div>
+                        <div class="heating-profiles-text profile-number">12.</div>
                         <div class="heating-profiles-text material">Nylon</div>
                       </div>
                       <div class="popup-temp">
@@ -1972,17 +1978,23 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">210</div>
                       </div>
+                      <div data-w-id="04f0785b-68a9-7dc9-3d52-c6cc9dd0a117" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material dark-purple">
+                    <div style="display:none" class="heating-profile-material dark-purple">
                       <div class="material-name">
-                        <div class="heating-profiles-text profile-number">7.</div>
+                        <div class="heating-profiles-text profile-number">13.</div>
                         <div class="heating-profiles-text material">PEEK</div>
                       </div>
                       <div class="popup-temp">
@@ -2000,17 +2012,23 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">210</div>
                       </div>
+                      <div data-w-id="f9cc6870-9084-9750-df92-6ddb3e64ae2c" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material light-purple">
+                    <div style="display:none" class="heating-profile-material light-purple">
                       <div class="material-name">
-                        <div class="heating-profiles-text profile-number">6.</div>
+                        <div class="heating-profiles-text profile-number">14.</div>
                         <div class="heating-profiles-text material">Nylon</div>
                       </div>
                       <div class="popup-temp">
@@ -2028,17 +2046,23 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">210</div>
                       </div>
+                      <div data-w-id="04ca1e85-c95b-7393-e9bf-25d2864937c1" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material dark-purple">
+                    <div style="display:none" class="heating-profile-material dark-purple">
                       <div class="material-name">
-                        <div class="heating-profiles-text profile-number">7.</div>
+                        <div class="heating-profiles-text profile-number">15.</div>
                         <div class="heating-profiles-text material">PEEK</div>
                       </div>
                       <div class="popup-temp">
@@ -2056,17 +2080,23 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">210</div>
                       </div>
+                      <div data-w-id="6419845f-cd07-c95d-b58f-8fe99c9755f6" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material light-purple">
+                    <div style="display:none" class="heating-profile-material light-purple">
                       <div class="material-name">
-                        <div class="heating-profiles-text profile-number">6.</div>
+                        <div class="heating-profiles-text profile-number">16.</div>
                         <div class="heating-profiles-text material">Nylon</div>
                       </div>
                       <div class="popup-temp">
@@ -2084,17 +2114,23 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">210</div>
                       </div>
+                      <div data-w-id="0274c35a-c266-477c-6ee2-5149ab9b7856" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material dark-purple">
+                    <div style="display:none" class="heating-profile-material dark-purple">
                       <div class="material-name">
-                        <div class="heating-profiles-text profile-number">7.</div>
+                        <div class="heating-profiles-text profile-number">17.</div>
                         <div class="heating-profiles-text material">PEEK</div>
                       </div>
                       <div class="popup-temp">
@@ -2112,17 +2148,23 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">210</div>
                       </div>
+                      <div data-w-id="9db33871-df71-2339-714f-89ec498d92f9" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material light-purple">
+                    <div style="display:none" class="heating-profile-material light-purple">
                       <div class="material-name">
-                        <div class="heating-profiles-text profile-number">6.</div>
+                        <div class="heating-profiles-text profile-number">18.</div>
                         <div class="heating-profiles-text material">Nylon</div>
                       </div>
                       <div class="popup-temp">
@@ -2140,17 +2182,23 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">210</div>
                       </div>
+                      <div data-w-id="d4bbdcb2-32ea-b8a7-afb3-4e2d32979010" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material dark-purple">
+                    <div style="display:none" class="heating-profile-material dark-purple">
                       <div class="material-name">
-                        <div class="heating-profiles-text profile-number">7.</div>
+                        <div class="heating-profiles-text profile-number">19.</div>
                         <div class="heating-profiles-text material">PEEK</div>
                       </div>
                       <div class="popup-temp">
@@ -2168,17 +2216,23 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">210</div>
                       </div>
+                      <div data-w-id="4cc0945c-2ee3-8aa1-51d5-2a3aec95cdf6" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
-                    <div class="heating-profile-material light-purple">
+                    <div style="display:none" class="heating-profile-material light-purple">
                       <div class="material-name">
-                        <div class="heating-profiles-text profile-number">6.</div>
+                        <div class="heating-profiles-text profile-number">20.</div>
                         <div class="heating-profiles-text material">Nylon</div>
                       </div>
                       <div class="popup-temp">
@@ -2196,12 +2250,18 @@
                       <div class="popup-temp">
                         <div class="heating-profiles-text bed-temp">210</div>
                       </div>
+                      <div data-w-id="49e993af-a7c6-793d-502a-0979d96b45d0" style="display:none" class="popup-temp cnc-container">
+                        <div class="heating-profiles-text cnc">18000</div>
+                      </div>
                       <div class="popup-action-container">
                         <div class="set-profile-button">
-                          <div class="white-button-text-2">Set</div>
+                          <div class="white-button-text-2">Set Temps</div>
+                        </div>
+                        <div class="set-cnc-profile-button">
+                          <div class="white-button-text-2">Set CNC</div>
                         </div>
                         <div class="edit-profile"><img width="27" height="27" alt="" src="images/Vectors-Wrapper_2.svg" loading="lazy" class="vectors-wrapper-9"></div>
-                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_4.svg" loading="lazy" class="vectors-wrapper-14"></div>
+                        <div class="delete-profile"><img width="32" height="32" alt="" src="images/Vectors-Wrapper_6.svg" loading="lazy" class="vectors-wrapper-14"></div>
                       </div>
                     </div>
                     <div class="add-icon-container"></div>
@@ -2210,12 +2270,21 @@
               </div>
             </div>
           </div>
-          <div data-w-tab="CNC Control" class="tab-pane-cnc-control w-tab-pane">
+          <div data-w-tab="Spindle Control" class="tab-pane-spindle-control w-tab-pane">
             <div class="main">
-              <div class="extruder-container"><img id="radial-gradient-background-cnc-white" loading="eager" alt="" src="images/Radial-Gradient-Background.png" class="radial-gradient-background cnc"><img id="radial-gradient-background-cnc-red" loading="eager" alt="" src="images/Radial-gradient-background-red.png" class="radial-gradient-background-red cnc"><img sizes="100vw" srcset="images/Zeus-Cell-Assy-v4-p-500.png 500w, images/Zeus-Cell-Assy-v4-p-800.png 800w, images/Zeus-Cell-Assy-v4.png 872w" alt="" src="images/Zeus-Cell-Assy-v4.png" loading="lazy" class="image"></div>
+              <div class="extruder-container"><img id="radial-gradient-background-cnc-white" loading="eager" alt="" src="images/Radial-Gradient-Background.png" class="radial-gradient-background cnc"><img id="radial-gradient-background-cnc-red" loading="eager" alt="" src="images/Radial-gradient-background-red.png" class="radial-gradient-background-red cnc"><img sizes="401px" srcset="images/Zeus-Cell-Assy-v4-p-500.png 500w, images/Zeus-Cell-Assy-v4-p-800.png 800w, images/Zeus-Cell-Assy-v4.png 872w" alt="" src="images/Zeus-Cell-Assy-v4.png" loading="lazy" class="image"></div>
               <div class="tool-temperature-container">
                 <div class="main-header">
-                  <div class="heading">CNC Control</div>
+                  <div class="div-block-5">
+                    <div id="cnc-heading" class="heading">Spindle Control</div>
+                    <div id="cnc-detection-container" data-w-id="e58df8c6-65d0-7b09-e9ea-8f1199603010" class="tool-detection-container">
+                      <div id="tool-detection-cnc" data-w-id="e58df8c6-65d0-7b09-e9ea-8f1199603011" class="tool-detection-heading"> - ???</div>
+                      <div id="cnc-warning-icon" data-w-id="e58df8c6-65d0-7b09-e9ea-8f1199603013" class="amber-warning-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="40" height="40" viewbox="0 0 256 256" app="ikonik" class="ikonik-i8w3bl">
+                          <path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z" app="ikonik"></path>
+                          <rect width="256" height="256" fill="none" app="ikonik"></rect>
+                        </svg></div>
+                    </div>
+                  </div>
                   <aside id="reset-speed" class="purple-button">
                     <div class="purple-button-text">Reset Speed</div>
                   </aside>
@@ -2345,7 +2414,7 @@
     background-color: white;
     padding: 15px;
     font-size: 20px;
-    color: #75366f;
+    color: #a74e9e;
     cursor: pointer;
     border-radius: 10px;
     width: 200px;
@@ -2357,7 +2426,7 @@
     background-color: #f0f0f0;
   }
   .control-button.active {
-    background-color: #75366f;
+    background-color: #a74e9e;
     color: white;
     cursor: default;
   }
@@ -2407,7 +2476,7 @@
     background-color: white;
     padding: 10px;
     font-size: 20px;
-    color: #75366f;
+    color: #a74e9e;
     cursor: pointer;
     border-radius: 5px;
     margin: 10px;
@@ -2427,6 +2496,9 @@
   }
   .grayed-out {
     color: #888 !important; /* Force the gray color */
+  }
+  .start-text {
+    font-weight: bold;
   }
 </style>
                       <script>
@@ -2617,31 +2689,31 @@
                       </div>
                       <div class="material-data-tabs w-tab-content">
                         <div data-w-tab="FGF Recycled PLA" class="tab-pane-fgf-recycled-pla w-tab-pane">
-                          <div class="exit-button"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle">
+                          <div class="exit-button"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle">
                             <div class="cancel-text">×</div>
                           </div>
                           <div id="FGF-Recycled-PLA" class="pdf-container w-embed w-iframe"><iframe src="https://192.168.1.64:8443/Pellet%20Datasheets/FGF%20Recycled%20PLA%20-%20UK.pdf" width="100%" height="100%" frameborder="0" allowfullscreen="" loading="eager"></iframe></div>
                         </div>
                         <div data-w-tab="FGF Recycled PP Glassfibre (30%)" class="tab-pane-fgf-recycled-pp-glassfibre-30 w-tab-pane">
-                          <div class="exit-button"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle">
+                          <div class="exit-button"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle">
                             <div class="cancel-text">×</div>
                           </div>
                           <div id="FGF-Recycled-PP-Glassfibre-30" class="pdf-container w-embed w-iframe"><iframe src="https://192.168.1.64:8443/Pellet%20Datasheets/FGF%20Recycled%20PP%20Glassfibre%2030%25%20-%20UK.pdf" width="100%" height="100%" frameborder="0" allowfullscreen="" loading="eager"></iframe></div>
                         </div>
                         <div data-w-tab="FGF Recycled PETG" class="tab-pane-fgf-recycled-petg w-tab-pane">
-                          <div class="exit-button"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle">
+                          <div class="exit-button"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle">
                             <div class="cancel-text">×</div>
                           </div>
                           <div id="FGF-Recycled-PETG" class="pdf-container w-embed w-iframe"><iframe src="https://192.168.1.64:8443/Pellet%20Datasheets/FGF%20Recycled%20PET-G%20-%20UK.pdf" width="100%" height="100%" frameborder="0" allowfullscreen="" loading="eager"></iframe></div>
                         </div>
                         <div data-w-tab="FGF Carbon-P" class="tab-pane-fgf-carbon-p w-tab-pane">
-                          <div class="exit-button"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle">
+                          <div class="exit-button"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle">
                             <div class="cancel-text">×</div>
                           </div>
                           <div id="FGF-Carbon-P" class="pdf-container w-embed w-iframe"><iframe src="https://192.168.1.64:8443/Pellet%20Datasheets/FGF%20Carbon-P%20-%20UK.pdf" width="100%" height="100%" frameborder="0" allowfullscreen="" loading="eager"></iframe></div>
                         </div>
                         <div data-w-tab="FGF PIPG Glassfibre (30%)" class="tab-pane-fgf-pipg-glassfibre-30 w-tab-pane w--tab-active">
-                          <div class="exit-button"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_5.svg" loading="lazy" class="number-circle">
+                          <div class="exit-button"><img width="70" height="70" alt="" src="images/Vectors-Wrapper_7.svg" loading="lazy" class="number-circle">
                             <div class="cancel-text">×</div>
                           </div>
                           <div id="FGF-PIPG-Glassfibre-30" class="pdf-container w-embed w-iframe"><iframe src="https://mcpp-3dp.com/PDF/TDS/FGF%20Recycled%20PP%20Glassfibre%2030%25%20-%20UK.pdf" width="100%" height="100%" frameborder="0" allowfullscreen="" loading="eager"></iframe></div>
@@ -2657,7 +2729,7 @@
       </div>
     </div>
   </div>
-  <script src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js?site=6718b6115312dd3dea1131b7" type="text/javascript" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+  <script src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js?site=6655b5b32a1c6ab9c376d696" type="text/javascript" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
   <script src="js/webflow.js" type="text/javascript"></script>
 </body>
 </html>
