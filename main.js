@@ -428,20 +428,22 @@ function updateObjectModel() {
 
       if (data.global.EstopFault === true) {
         popupSpace.style.display = "flex"; // Show Background blur
-        popup.classList.remove('shrink'); // Remove shrink class if present
-        popup.classList.add('grow'); // Add grow class to trigger open animation
         popup.style.display = "flex"; // Ensure popup is visible
+        // popup.classList.remove('shrink'); // Remove shrink class if present
+        // popup.classList.add('grow'); // Add grow class to trigger open animation
       } else {
-        popup.classList.remove('grow'); // Remove grow class
-        popup.classList.add('shrink'); // Add shrink class to trigger close animation
-        
-        // Hide the popup completely after the shrink animation
-        popup.addEventListener('animationend', () => {
-          if (!popup.classList.contains('grow')) {
-            popup.style.display = "none"; // Hide after shrink animation completes
-          }
-        }, { once: true }); // Use once to ensure the listener is added only once
         popupSpace.style.display = "none"; // Remove Background blur
+        popup.style.display = "none"; // Disable popup
+        // popup.classList.remove('grow'); // Remove grow class
+        // popup.classList.add('shrink'); // Add shrink class to trigger close animation
+        
+        // // Hide the popup completely after the shrink animation
+        // popup.addEventListener('animationend', () => {
+        //   if (!popup.classList.contains('grow')) {
+        //     popup.style.display = "none"; // Hide after shrink animation completes
+        //   }
+        // }, { once: true }); // Use once to ensure the listener is added only once
+        // popupSpace.style.display = "none"; // Remove Background blur
       }      
 
       // Fault Detection - PE320 Servo Drive Fault Popup
@@ -859,7 +861,7 @@ async function sendCommandsOnce() {
 async function sendGcode(gcode) {
   while (true) {
     try {
-      const response = await fetchData("https://192.168.1.64/machine/code", {
+      const response = await fetchData("http://localhost/machine/code", {
         method: "POST",
         headers: {
           "Content-Type": "text/plain",
@@ -1148,7 +1150,7 @@ sendGcode(`M5`);
 // ================================================ Github Repo =================================================
 
 async function fetchLatestTag() {
-  const url = 'http://localhost/Epicurus_UI/tags.txt'; // Local server URL to tags.txt
+  const url = 'http://localhost:8080/tags.txt'; // Local server URL to tags.txt
 
   try {
       const response = await fetch(url);
@@ -1159,40 +1161,42 @@ async function fetchLatestTag() {
 
       document.getElementById('software-version').textContent = `${latestTag}`;
   } catch (error) {
-      console.error('Error fetching latest tag:', error);
-      document.getElementById('software-version').textContent = 'Failed to fetch version';
+      console.error('Error fetching latest tag from local server:', error);
+      
+      // Fallback to check machine status and fetch version from GitHub if necessary
+      const result = await fetchData("https://192.168.1.64/machine/status");
+      if (result) {
+          // If `fetchData` is successful, try fetching from GitHub
+          fetchLatestVersion();
+      } else {
+          document.getElementById('software-version').textContent = 'Failed to fetch version';
+      }
+  }
+}
+
+async function fetchLatestVersion() {
+  const owner = "Evo3D-RapidFusion";
+  const repo = "Epicurus_UI";
+
+  try {
+      const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
+      
+      if (!response.ok) {
+          throw new Error("Network response was not ok");
+      }
+      
+      const data = await response.json();
+      const versionName = data.tag_name; // Extract the version tag name
+      document.getElementById("software-version").textContent = versionName; // Display the version
+  } catch (error) {
+      console.error("Error fetching GitHub version:", error);
+      document.getElementById("software-version").textContent = 'Failed to fetch version';
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   fetchLatestTag();
 });
-
-// document.addEventListener("DOMContentLoaded", () => {
-//   // Define the repository owner and name
-//   const owner = "Evo3D-RapidFusion";
-//   const repo = "PE320_UI";
-
-//   // Async function to fetch the latest release information
-//   async function fetchLatestVersion() {
-//       try {
-//           const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
-          
-//           if (!response.ok) {
-//               throw new Error("Network response was not ok");
-//           }
-          
-//           const data = await response.json();
-//           const versionName = data.tag_name; // Extract the version tag name
-//           document.getElementById("software-version").textContent = versionName; // Display the version
-//       } catch (error) {
-//           console.error("Error fetching GitHub version:", error);
-//       }
-//   }
-
-//   // Call the async function
-//   fetchLatestVersion();
-// });
 
 // ================================================ Developer Settings =================================================
 
@@ -1405,8 +1409,8 @@ buttonIds.forEach((buttonId) => {
       case "aisync-on":
         const elementOn = document.getElementById("aisync-slicer");
         elementOn.style.display = "block";
-        document.getElementById("aisync-on").style.backgroundColor = "#a8a8a8"; // Pressed State
-        document.getElementById("aisync-off").style.backgroundColor = ""; // Default State
+        document.getElementById("aisync-on").style.backgroundColor = ""; // Pressed State (default)
+        document.getElementById("aisync-off").style.backgroundColor = "#a8a8a8"; // Inactive State
         document.getElementById("aisync-slicer").click();
         // Save state to local storage
         localStorage.setItem("aisyncState", "on");
@@ -1414,8 +1418,8 @@ buttonIds.forEach((buttonId) => {
       case "aisync-off":
         const elementOff = document.getElementById("aisync-slicer");
         elementOff.style.display = "none";
-        document.getElementById("aisync-on").style.backgroundColor = ""; // Default State
-        document.getElementById("aisync-off").style.backgroundColor = "#a8a8a8"; // Pressed State
+        document.getElementById("aisync-on").style.backgroundColor = "#a8a8a8"; // Inactive State
+        document.getElementById("aisync-off").style.backgroundColor = ""; // Pressed State (default)
         // Save state to local storage
         localStorage.setItem("aisyncState", "off");
         document.getElementById("default-tab").click();
@@ -1433,8 +1437,8 @@ buttonIds.forEach((buttonId) => {
         document.getElementById("tool-detection-on").click();
         const cncOn = document.getElementById("cnc-mill");
         cncOn.style.display = "block";
-        document.getElementById("cnc-on").style.backgroundColor = "#a8a8a8"; // Pressed State
-        document.getElementById("cnc-off").style.backgroundColor = ""; // Default State
+        document.getElementById("cnc-on").style.backgroundColor = ""; // Pressed State (default)
+        document.getElementById("cnc-off").style.backgroundColor = "#a8a8a8"; // Inactive State
         document.getElementById("cnc-mill").click();
         // Display CNC
         document.getElementById("cnc-profile-heading").style.display = "flex";
@@ -1464,8 +1468,8 @@ buttonIds.forEach((buttonId) => {
       case "cnc-off":
         const cncOff = document.getElementById("cnc-mill");
         cncOff.style.display = "none";
-        document.getElementById("cnc-on").style.backgroundColor = ""; // Default State
-        document.getElementById("cnc-off").style.backgroundColor = "#a8a8a8"; // Pressed State
+        document.getElementById("cnc-on").style.backgroundColor = "#a8a8a8"; // Inactive State
+        document.getElementById("cnc-off").style.backgroundColor = ""; // Pressed State (default)
         // Hide CNC
         document.getElementById("cnc-profile-heading").style.display = "none";
         document.getElementById("cnc-user-input-popup").style.display = "none";
@@ -1562,10 +1566,8 @@ buttonIds.forEach((buttonId) => {
         document.getElementById("extruder-detection-container").style.display = "flex";
         document.getElementById("cnc-detection-container").style.display = "flex";
         document.getElementById("tool-detection-cnc").style.display = "flex";
-        document.getElementById("tool-detection-on").style.backgroundColor =
-          "#a8a8a8"; // Pressed State
-        document.getElementById("tool-detection-off").style.backgroundColor =
-          ""; // Default State
+        document.getElementById("tool-detection-on").style.backgroundColor = ""; // Pressed State (default)
+        document.getElementById("tool-detection-off").style.backgroundColor = "#a8a8a8"; // Inactive State
         document.getElementById("connected-tool-container").style.display = "flex";
         // Save state to local storage
         localStorage.setItem("toolDetectionState", "on");
@@ -1574,9 +1576,8 @@ buttonIds.forEach((buttonId) => {
         document.getElementById("extruder-detection-container").style.display = "none";
         document.getElementById("cnc-detection-container").style.display = "none";
         document.getElementById("tool-detection-cnc").style.display = "none";
-        document.getElementById("tool-detection-on").style.backgroundColor = ""; // Default State
-        document.getElementById("tool-detection-off").style.backgroundColor =
-          "#a8a8a8"; // Pressed State
+        document.getElementById("tool-detection-on").style.backgroundColor = "#a8a8a8"; // Inactive State
+        document.getElementById("tool-detection-off").style.backgroundColor = ""; // Pressed State (default)
         document.getElementById("connected-tool-container").style.display = "none";
         // Save state to local storage
         localStorage.setItem("toolDetectionState", "off");
@@ -1608,7 +1609,7 @@ buttonIds.forEach((buttonId) => {
         sendGcode(`M106 P${selectedHeatsinkFan} S0`);
         break;
       case "heatsink-fan-half":
-        sendGcode(`M106 P${selectedHeatsinkFan} S0.67`);
+        sendGcode(`M106 P${selectedHeatsinkFan} S0.54`);
         break;
       case "heatsink-fan-full":
         sendGcode(`M106 P${selectedHeatsinkFan} S1`);
