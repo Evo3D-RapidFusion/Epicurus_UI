@@ -1148,7 +1148,7 @@ sendGcode(`M5`);
 // ================================================ Github Repo =================================================
 
 async function fetchLatestTag() {
-  const url = 'http://localhost:8080/Epicurus_UI/tags.txt'; // Local server URL to tags.txt
+  const url = 'http://localhost:8080/tags.txt'; // Local server URL to tags.txt
 
   try {
       const response = await fetch(url);
