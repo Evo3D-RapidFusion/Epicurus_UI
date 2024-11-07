@@ -1147,31 +1147,52 @@ sendGcode(`M5`);
 
 // ================================================ Github Repo =================================================
 
-document.addEventListener("DOMContentLoaded", () => {
-  // Define the repository owner and name
-  const owner = "Evo3D-RapidFusion";
-  const repo = "PE320_UI";
+async function fetchLatestTag() {
+  const url = 'http://localhost/Epicurus_UI/tags.txt'; // Local server URL to tags.txt
 
-  // Async function to fetch the latest release information
-  async function fetchLatestVersion() {
-      try {
-          const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
-          
-          if (!response.ok) {
-              throw new Error("Network response was not ok");
-          }
-          
-          const data = await response.json();
-          const versionName = data.tag_name; // Extract the version tag name
-          document.getElementById("software-version").textContent = versionName; // Display the version
-      } catch (error) {
-          console.error("Error fetching GitHub version:", error);
-      }
+  try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch tags file');
+
+      const text = await response.text();
+      const latestTag = text.split('\n')[0].trim(); // Get the first line (latest tag)
+
+      document.getElementById('software-version').textContent = `${latestTag}`;
+  } catch (error) {
+      console.error('Error fetching latest tag:', error);
+      document.getElementById('software-version').textContent = 'Failed to fetch version';
   }
+}
 
-  // Call the async function
-  fetchLatestVersion();
+document.addEventListener("DOMContentLoaded", () => {
+  fetchLatestTag();
 });
+
+// document.addEventListener("DOMContentLoaded", () => {
+//   // Define the repository owner and name
+//   const owner = "Evo3D-RapidFusion";
+//   const repo = "PE320_UI";
+
+//   // Async function to fetch the latest release information
+//   async function fetchLatestVersion() {
+//       try {
+//           const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
+          
+//           if (!response.ok) {
+//               throw new Error("Network response was not ok");
+//           }
+          
+//           const data = await response.json();
+//           const versionName = data.tag_name; // Extract the version tag name
+//           document.getElementById("software-version").textContent = versionName; // Display the version
+//       } catch (error) {
+//           console.error("Error fetching GitHub version:", error);
+//       }
+//   }
+
+//   // Call the async function
+//   fetchLatestVersion();
+// });
 
 // ================================================ Developer Settings =================================================
 
