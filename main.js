@@ -1160,7 +1160,7 @@ async function fetchLatestTag() {
       document.getElementById('software-version').textContent = `${latestTag}`;
   } catch (error) {
       console.error('Error fetching latest tag:', error);
-      document.getElementById('software-version').textContent = 'Failed to fetch local version.';
+      document.getElementById('software-version').textContent = 'Failed to fetch version';
   }
 }
 
