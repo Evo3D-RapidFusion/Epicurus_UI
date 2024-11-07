@@ -50,7 +50,7 @@ async function fetchData(url, options) {
 function updateObjectModel() {
   return new Promise(async (resolve, reject) => {
     try {
-      const data = await fetchData("https://192.168.1.64/machine/status"); // HTTPS (Self-Signed SSL Certificate)
+      const data = await fetchData("http://localhost/machine/status"); // HTTPS (Self-Signed SSL Certificate)
 
       // FUNCTION: Find configured heaters in Duet Object Model
       function findHeaters(targetObject) {
@@ -783,7 +783,7 @@ async function pollServerAndSendOnceOnStateChange() {
 
   while (true) {
     try {
-      const response = await fetchData("https://192.168.1.64/machine/status");
+      const response = await fetchData("http://localhost/machine/status");
 
       // Check if response includes a 503 status
       if (response.status && response.status === 503) {
