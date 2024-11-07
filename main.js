@@ -859,7 +859,7 @@ async function sendCommandsOnce() {
 async function sendGcode(gcode) {
   while (true) {
     try {
-      const response = await fetchData("https://192.168.1.64/machine/code", {
+      const response = await fetchData("http://localhost/machine/code", {
         method: "POST",
         headers: {
           "Content-Type": "text/plain",
