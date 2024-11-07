@@ -429,21 +429,9 @@ function updateObjectModel() {
       if (data.global.EstopFault === true) {
         popupSpace.style.display = "flex"; // Show Background blur
         popup.style.display = "flex"; // Ensure popup is visible
-        // popup.classList.remove('shrink'); // Remove shrink class if present
-        // popup.classList.add('grow'); // Add grow class to trigger open animation
       } else {
         popupSpace.style.display = "none"; // Remove Background blur
         popup.style.display = "none"; // Disable popup
-        // popup.classList.remove('grow'); // Remove grow class
-        // popup.classList.add('shrink'); // Add shrink class to trigger close animation
-        
-        // // Hide the popup completely after the shrink animation
-        // popup.addEventListener('animationend', () => {
-        //   if (!popup.classList.contains('grow')) {
-        //     popup.style.display = "none"; // Hide after shrink animation completes
-        //   }
-        // }, { once: true }); // Use once to ensure the listener is added only once
-        // popupSpace.style.display = "none"; // Remove Background blur
       }      
 
       // Fault Detection - PE320 Servo Drive Fault Popup
@@ -1179,18 +1167,18 @@ async function fetchLatestVersion() {
   const repo = "Epicurus_UI";
 
   try {
-      const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
+      const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases?per_page=1`); // Fetch releases (including pre-releases)
       
       if (!response.ok) {
           throw new Error("Network response was not ok");
       }
       
       const data = await response.json();
-      const versionName = data.tag_name; // Extract the version tag name
+      const versionName = data[0]?.tag_name || "No releases found"; // Extract the latest release (including pre-releases)
       document.getElementById("software-version").textContent = versionName; // Display the version
   } catch (error) {
       console.error("Error fetching GitHub version:", error);
-      document.getElementById("software-version").textContent = 'Failed to fetch version';
+      document.getElementById("software-version").textContent = 'Failed to fetch version from GitHub';
   }
 }
 
