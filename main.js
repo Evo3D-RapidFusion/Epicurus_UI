@@ -1607,7 +1607,7 @@ buttonIds.forEach((buttonId) => {
         sendGcode(`M106 P${selectedHeatsinkFan} S0`);
         break;
       case "heatsink-fan-half":
-        sendGcode(`M106 P${selectedHeatsinkFan} S0.67`);
+        sendGcode(`M106 P${selectedHeatsinkFan} S0.54`);
         break;
       case "heatsink-fan-full":
         sendGcode(`M106 P${selectedHeatsinkFan} S1`);
