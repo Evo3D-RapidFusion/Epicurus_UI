@@ -426,23 +426,25 @@ function updateObjectModel() {
       const popup = document.getElementById('e-stop-popup');
       const popupSpace = document.getElementById('e-stop-popup-space');
 
-      if (data.global.EstopFault === true) {
-        popupSpace.style.display = "flex"; // Show Background blur
-        popup.classList.remove('shrink'); // Remove shrink class if present
-        popup.classList.add('grow'); // Add grow class to trigger open animation
-        popup.style.display = "flex"; // Ensure popup is visible
-      } else {
-        popup.classList.remove('grow'); // Remove grow class
-        popup.classList.add('shrink'); // Add shrink class to trigger close animation
-        
-        // Hide the popup completely after the shrink animation
-        popup.addEventListener('animationend', () => {
-          if (!popup.classList.contains('grow')) {
-            popup.style.display = "none"; // Hide after shrink animation completes
-          }
-        }, { once: true }); // Use once to ensure the listener is added only once
-        popupSpace.style.display = "none"; // Remove Background blur
-      }      
+      // Ensure that the 'animationend' event listener is added only once
+      popup.addEventListener('animationend', () => {
+        if (!popup.classList.contains('grow')) {
+          popup.style.display = "none"; // Hide after shrink animation completes
+        }
+      }, { once: true });
+
+      function handleEstopPopup(data) {
+        if (data.global.EstopFault === true) {
+          popupSpace.style.display = "flex"; // Show Background blur
+          popup.classList.remove('shrink'); // Remove shrink class if present
+          popup.classList.add('grow'); // Add grow class to trigger open animation
+          popup.style.display = "flex"; // Ensure popup is visible
+        } else {
+          popup.classList.remove('grow'); // Remove grow class
+          popup.classList.add('shrink'); // Add shrink class to trigger close animation
+          popupSpace.style.display = "none"; // Remove Background blur
+        }
+      }    
 
       // Fault Detection - PE320 Servo Drive Fault Popup
       // if (data.global.ExtruderFault === true) {
