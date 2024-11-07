@@ -432,11 +432,14 @@ function updateObjectModel() {
         popup.classList.remove('shrink'); // Clean up the shrink class
       }
 
-      // Main function to handle the E-stop popup visibility
-      function handleEstopPopup(data) {
+      // Loop to check EstopFault status and update the popup accordingly
+      setInterval(() => {
+        // Replace this with actual logic to get the status of EstopFault
+        const data = { global: { EstopFault: checkEstopStatus() }}; // Example placeholder function
+        
         if (data.global.EstopFault === true) {
           popupSpace.style.display = "flex"; // Show Background blur
-          popup.classList.remove('shrink'); // Ensure shrink class is removed
+          popup.classList.remove('shrink'); // Remove shrink class if present
           popup.classList.add('grow'); // Add grow class to trigger open animation
           popup.style.display = "flex"; // Ensure popup is visible
 
@@ -446,19 +449,12 @@ function updateObjectModel() {
           popup.classList.remove('grow'); // Remove grow class
           popup.classList.add('shrink'); // Add shrink class to trigger close animation
 
-          // Add 'animationend' listener to hide popup after shrink animation
+          // Add 'animationend' listener only when the popup is closing
           popup.addEventListener('animationend', hidePopupAfterShrink, { once: true });
-          
-          // Fallback timeout to hide popup in case 'animationend' doesn't fire
-          setTimeout(() => {
-            if (!popup.classList.contains('grow')) {
-              hidePopupAfterShrink();
-            }
-          }, 500); // Adjust this timeout to match the length of your shrink animation
 
           popupSpace.style.display = "none"; // Remove Background blur
         }
-      }
+      }, 500); // Adjust the interval time as needed
 
 
       // Fault Detection - PE320 Servo Drive Fault Popup
