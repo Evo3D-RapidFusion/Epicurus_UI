@@ -1405,8 +1405,8 @@ buttonIds.forEach((buttonId) => {
       case "aisync-on":
         const elementOn = document.getElementById("aisync-slicer");
         elementOn.style.display = "block";
-        document.getElementById("aisync-on").style.backgroundColor = "#a8a8a8"; // Pressed State
-        document.getElementById("aisync-off").style.backgroundColor = ""; // Default State
+        document.getElementById("aisync-on").style.backgroundColor = ""; // Pressed State (default)
+        document.getElementById("aisync-off").style.backgroundColor = "#a8a8a8"; // Inactive State
         document.getElementById("aisync-slicer").click();
         // Save state to local storage
         localStorage.setItem("aisyncState", "on");
@@ -1414,8 +1414,8 @@ buttonIds.forEach((buttonId) => {
       case "aisync-off":
         const elementOff = document.getElementById("aisync-slicer");
         elementOff.style.display = "none";
-        document.getElementById("aisync-on").style.backgroundColor = ""; // Default State
-        document.getElementById("aisync-off").style.backgroundColor = "#a8a8a8"; // Pressed State
+        document.getElementById("aisync-on").style.backgroundColor = "#a8a8a8"; // Inactive State
+        document.getElementById("aisync-off").style.backgroundColor = ""; // Pressed State (default)
         // Save state to local storage
         localStorage.setItem("aisyncState", "off");
         document.getElementById("default-tab").click();
@@ -1433,8 +1433,8 @@ buttonIds.forEach((buttonId) => {
         document.getElementById("tool-detection-on").click();
         const cncOn = document.getElementById("cnc-mill");
         cncOn.style.display = "block";
-        document.getElementById("cnc-on").style.backgroundColor = "#a8a8a8"; // Pressed State
-        document.getElementById("cnc-off").style.backgroundColor = ""; // Default State
+        document.getElementById("cnc-on").style.backgroundColor = ""; // Pressed State (default)
+        document.getElementById("cnc-off").style.backgroundColor = "#a8a8a8"; // Inactive State
         document.getElementById("cnc-mill").click();
         // Display CNC
         document.getElementById("cnc-profile-heading").style.display = "flex";
@@ -1464,8 +1464,8 @@ buttonIds.forEach((buttonId) => {
       case "cnc-off":
         const cncOff = document.getElementById("cnc-mill");
         cncOff.style.display = "none";
-        document.getElementById("cnc-on").style.backgroundColor = ""; // Default State
-        document.getElementById("cnc-off").style.backgroundColor = "#a8a8a8"; // Pressed State
+        document.getElementById("cnc-on").style.backgroundColor = "#a8a8a8"; // Inactive State
+        document.getElementById("cnc-off").style.backgroundColor = ""; // Pressed State (default)
         // Hide CNC
         document.getElementById("cnc-profile-heading").style.display = "none";
         document.getElementById("cnc-user-input-popup").style.display = "none";
@@ -1562,10 +1562,8 @@ buttonIds.forEach((buttonId) => {
         document.getElementById("extruder-detection-container").style.display = "flex";
         document.getElementById("cnc-detection-container").style.display = "flex";
         document.getElementById("tool-detection-cnc").style.display = "flex";
-        document.getElementById("tool-detection-on").style.backgroundColor =
-          "#a8a8a8"; // Pressed State
-        document.getElementById("tool-detection-off").style.backgroundColor =
-          ""; // Default State
+        document.getElementById("tool-detection-on").style.backgroundColor = ""; // Pressed State (default)
+        document.getElementById("tool-detection-off").style.backgroundColor = "#a8a8a8"; // Inactive State
         document.getElementById("connected-tool-container").style.display = "flex";
         // Save state to local storage
         localStorage.setItem("toolDetectionState", "on");
@@ -1574,9 +1572,8 @@ buttonIds.forEach((buttonId) => {
         document.getElementById("extruder-detection-container").style.display = "none";
         document.getElementById("cnc-detection-container").style.display = "none";
         document.getElementById("tool-detection-cnc").style.display = "none";
-        document.getElementById("tool-detection-on").style.backgroundColor = ""; // Default State
-        document.getElementById("tool-detection-off").style.backgroundColor =
-          "#a8a8a8"; // Pressed State
+        document.getElementById("tool-detection-on").style.backgroundColor = "#a8a8a8"; // Inactive State
+        document.getElementById("tool-detection-off").style.backgroundColor = ""; // Pressed State (default)
         document.getElementById("connected-tool-container").style.display = "none";
         // Save state to local storage
         localStorage.setItem("toolDetectionState", "off");
