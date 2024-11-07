@@ -423,42 +423,31 @@ function updateObjectModel() {
       }
 
       // Fault Detection - E-stop Popup
-      const popup = document.getElementById('e-stop-popup');
-      const popupSpace = document.getElementById('e-stop-popup-space');
-
-      // Function to hide the popup completely after the shrink animation
-      function hidePopupAfterShrink() {
-        popup.style.display = "none"; // Hide popup after shrink animation completes
-        popup.classList.remove('shrink'); // Clean up the shrink class
-      }
-
-      // Continuously check EstopFault status in a loop
-      setInterval(() => {
-        // Assume `data` is available within this scope and `data.global.EstopFault` gets updated in real-time.
-        // You might be fetching `data` from an API or another source within the loop.
-
-        if (data.global.EstopFault === true) {
-          // Show the popup with the open animation
-          popupSpace.style.display = "flex"; // Show Background blur
-          popup.classList.remove('shrink'); // Remove shrink class if present
-          popup.classList.add('grow'); // Add grow class to trigger open animation
+      setInterval(() => {  
+        // Select popup elements
+        const popup = document.getElementById('e-stop-popup');
+        const popupSpace = document.getElementById('e-stop-popup-space');
+      
+        // Handle popup logic based on EstopFault status
+        if (data.global.EstopFault) {
+          popupSpace.style.display = "flex"; // Show background blur
+          popup.classList.remove('shrink'); // Ensure grow/shrink classes are correct
+          popup.classList.add('grow');
           popup.style.display = "flex"; // Ensure popup is visible
-
-          // Remove any previous 'animationend' listener to prevent duplication
-          popup.removeEventListener('animationend', hidePopupAfterShrink);
         } else {
-          // Close the popup with the close animation
-          popup.classList.remove('grow'); // Remove grow class
-          popup.classList.add('shrink'); // Add shrink class to trigger close animation
-
-          // Add 'animationend' listener to hide popup after shrink animation
-          popup.addEventListener('animationend', hidePopupAfterShrink, { once: true });
-
-          popupSpace.style.display = "none"; // Remove Background blur
+          popup.classList.remove('grow');
+          popup.classList.add('shrink');
+          popupSpace.style.display = "none"; // Hide background blur after shrink
         }
-      }, 500); // Adjust the interval time as needed
-
-
+      
+        // Add a one-time animationend event to hide popup after shrink animation
+        popup.addEventListener('animationend', () => {
+          if (!popup.classList.contains('grow')) {
+            popup.style.display = "none";
+          }
+        }, { once: true });
+      
+      }, 500); // Run every 500 ms, adjust as needed
 
       // Fault Detection - PE320 Servo Drive Fault Popup
       // if (data.global.ExtruderFault === true) {
