@@ -125,7 +125,11 @@ function updateObjectModel() {
                 : outputData[index].toUpperCase() + endText;
             element.style.color = outputData[index] === "Fault" ? "red" : "white";
           } else {
-            element.textContent = outputData[index] + endText;
+            if (Math.round(Number(element.textContent)) === -273) {
+              element.textContent = "0" + endText;
+            } else {
+              element.textContent = outputData[index] + endText;
+            }
           }
         });
         return outputData; // Output extracted values
