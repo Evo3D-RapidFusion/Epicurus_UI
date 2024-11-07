@@ -11,21 +11,22 @@ let settings, heatProfiles;
 let spindleSpeed = document.getElementById("speedValue").textContent;
 let spindleOff = true;
 let cncCurrentRPM = "";
+let updatedSpindleSpeed = "";
+let selectedHeatsinkFan = "0";
+let selectedBarrelFan = "0";
 // let spindleRunning = false; // already declared in embedded code
-
-// =====================================================================================================================
 
 // ========================================== HTTP requests with Duet Mainboard ========================================
 
 // FUNCTION: HTTPS async GET/POST requests to Duet Mainboard
+// Enhanced fetchData function to handle various error cases
 async function fetchData(url, options) {
   try {
     const response = await fetch(url, options);
 
     if (!response.ok) {
-      throw new Error(
-        `Network response was not ok. Status: ${response.status}`
-      );
+      console.error(`Error: Network response was not ok. Status: ${response.status}`);
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
     const contentType = response.headers.get("content-type");
@@ -36,7 +37,11 @@ async function fetchData(url, options) {
 
     return data;
   } catch (error) {
-    console.error("There has been a problem with your fetch operation:", error);
+    if (error.name === 'TypeError') {
+      console.error("Network or SSL error, unable to fetch data. Please check your connection or SSL settings.");
+    } else {
+      console.error("There has been a problem with your fetch operation:", error);
+    }
     throw error;
   }
 }
@@ -45,7 +50,7 @@ async function fetchData(url, options) {
 function updateObjectModel() {
   return new Promise(async (resolve, reject) => {
     try {
-      const data = await fetchData("http://localhost/machine/status"); // HTTPS (Self-Signed SSL Certificate)
+      const data = await fetchData("https://192.168.1.64/machine/status"); // HTTPS (Self-Signed SSL Certificate)
 
       // FUNCTION: Find configured heaters in Duet Object Model
       function findHeaters(targetObject) {
@@ -115,17 +120,12 @@ function updateObjectModel() {
       function updateText(heater, outputData, endText) {
         heater.forEach((element, index) => {
           if (typeof outputData[index] === "string") {
-            element.textContent =
-              outputData[index] === "standby"
-                ? "Preheat"
-                : outputData[index].replace(/^\w/, (c) => c.toUpperCase()) +
-                  endText;
+            element.textContent = outputData[index] === "standby"
+                ? "PREHEAT"
+                : outputData[index].toUpperCase() + endText;
+            element.style.color = outputData[index] === "Fault" ? "red" : "white";
           } else {
-            if (Math.abs(outputData[index] + 273.1) < 0.0001) {
-              element.textContent = "0" + endText;
-            } else {
-              element.textContent = outputData[index] + endText;
-            }
+            element.textContent = outputData[index] + endText;
           }
         });
         return outputData; // Output extracted values
@@ -280,10 +280,7 @@ function updateObjectModel() {
       };
 
       // Change extruder glow
-      if (
-        extruderHeaterStates.includes("active") ||
-        extruderHeaterStates.includes("standby")
-      ) {
+      if (extruderHeaterStates.includes("active") || extruderHeaterStates.includes("standby") || extruderHeaterStates.includes("tuning")) {
         document
           .querySelectorAll(".radial-gradient-background.extruder")
           .forEach((element) => (element.style.display = "none"));
@@ -293,6 +290,8 @@ function updateObjectModel() {
         document
           .querySelectorAll(".radial-gradient-background-red.extruder")
           .forEach((element) => (element.style.display = "inline-block"));
+        // Warning On
+        document.getElementById("extruder-hot-icon").style.display = "flex";
       } else {
         if (extruderHeaterTemps.some((temp) => temp > 50 && temp < 2000)) {
           // cool temp = 50 °C
@@ -305,6 +304,8 @@ function updateObjectModel() {
           document
             .querySelectorAll(".radial-gradient-background-orange.extruder")
             .forEach((element) => (element.style.display = "inline-block"));
+          // Warning On
+          document.getElementById("extruder-hot-icon").style.display = "flex";
         } else {
           document
             .querySelectorAll(".radial-gradient-background-red.extruder")
@@ -315,14 +316,13 @@ function updateObjectModel() {
           document
             .querySelectorAll(".radial-gradient-background.extruder")
             .forEach((element) => (element.style.display = "inline-block"));
+          // Warning Off
+          document.getElementById("extruder-hot-icon").style.display = "none";
         }
       }
 
       // Change bed glow
-      if (
-        bedHeaterStates.includes("active") ||
-        bedHeaterStates.includes("standby")
-      ) {
+      if (bedHeaterStates.includes("active") || bedHeaterStates.includes("standby") || bedHeaterStates.includes("tuning")) {
         document
           .querySelectorAll(".radial-gradient-background.bed")
           .forEach((element) => (element.style.display = "none"));
@@ -332,6 +332,8 @@ function updateObjectModel() {
         document
           .querySelectorAll(".radial-gradient-background-red.bed")
           .forEach((element) => (element.style.display = "inline-block"));
+        // Warning On
+        document.getElementById("bed-hot-icon").style.display = "flex";
       } else {
         if (bedHeaterTemps.some((temp) => temp > 50 && temp < 2000)) {
           // cool temp = 50 °C
@@ -344,6 +346,8 @@ function updateObjectModel() {
           document
             .querySelectorAll(".radial-gradient-background-orange.bed")
             .forEach((element) => (element.style.display = "inline-block"));
+          // Warning On
+          document.getElementById("bed-hot-icon").style.display = "flex";
         } else {
           document
             .querySelectorAll(".radial-gradient-background-red.bed")
@@ -354,6 +358,8 @@ function updateObjectModel() {
           document
             .querySelectorAll(".radial-gradient-background.bed")
             .forEach((element) => (element.style.display = "inline-block"));
+          // Warning Off
+          document.getElementById("bed-hot-icon").style.display = "none";
         }
       }
 
@@ -383,17 +389,20 @@ function updateObjectModel() {
         document.getElementById(
           "radial-gradient-background-cnc-red"
         ).style.display = "inline-block";
+        // Warning On
+        document.getElementById("cnc-running-icon").style.display = "flex";
 
         // Update Spindle RPM from Duet Object Model
         // document.getElementById("speedSlider").value = cncSpindle.current;
         // updateSliderBackground();
         // spindleSpeed = cncSpindle.current;
 
-        let updatedSpindleSpeed =
+        updatedSpindleSpeed =
           document.getElementById("speedValue").textContent;
         sendGcode(`M3 P0 S${spindleSpeed}`); // run spindle clockwise at slider rpm
         spindleSpeed = updatedSpindleSpeed;
         spindleOff == false;
+
       } else {
         document.getElementById(
           "radial-gradient-background-cnc-red"
@@ -401,12 +410,360 @@ function updateObjectModel() {
         document.getElementById(
           "radial-gradient-background-cnc-white"
         ).style.display = "inline-block";
+        // Warning Off
+        document.getElementById("cnc-running-icon").style.display = "none";
         if (spindleOff == false) {
           sendGcode(`M5`);
           spindleOff == true;
         }
       }
 
+      // Fault Detection - E-stop Popup
+      const popup = document.getElementById('e-stop-popup');
+      const popupSpace = document.getElementById('e-stop-popup-space');
+
+      if (data.global.EstopFault === true) {
+        popupSpace.style.display = "flex"; // Show Background blur
+        popup.classList.remove('shrink'); // Remove shrink class if present
+        popup.classList.add('grow'); // Add grow class to trigger open animation
+        popup.style.display = "flex"; // Ensure popup is visible
+      } else {
+        popup.classList.remove('grow'); // Remove grow class
+        popup.classList.add('shrink'); // Add shrink class to trigger close animation
+        
+        // Hide the popup completely after the shrink animation
+        popup.addEventListener('animationend', () => {
+          if (!popup.classList.contains('grow')) {
+            popup.style.display = "none"; // Hide after shrink animation completes
+          }
+        }, { once: true }); // Use once to ensure the listener is added only once
+        popupSpace.style.display = "none"; // Remove Background blur
+      }      
+
+      // Fault Detection - PE320 Servo Drive Fault Popup
+      // if (data.global.ExtruderFault === true) {
+      // }
+
+      // Fault Detection - CNC Mill Fault Popup
+      if (data.global.CNCFault === true) {
+        sendGcode(`M5`);
+        confirmationModal.style.display = 'none';
+        slider.disabled = true; // Ensure slider is disabled on page load
+        speedControlTitle.textContent = 'Speed Control Locked'; // Set initial state to locked
+        sliderUnlocked = false; // Initial state is locked
+        updateLockIcon(); // Ensure icon is correctly set on load
+        speedValueDisplay.classList.add('grayed-out');
+        spindleOff == true;
+      }
+
+      switch (data.global.toolState) {
+        case "PE320":
+          console.log("Tool state: PE320 Pellet Extruder Connected");
+          document.getElementById("tool-detection-pe320").style.display = "flex";
+          document.getElementById("extruder-warning-icon").style.display = "none";
+          document.getElementById("tool-detection-cnc").style.display = "flex";
+          document.getElementById("cnc-warning-icon").style.display = "none";
+
+          document.getElementById("tool-detection-pe320").textContent = "\u00A0- Connected";
+          document.getElementById("tool-detection-pe320").style.color = "#a74e9e"; // Resetting color if previously set
+          document.getElementById("tool-detection-cnc").textContent = "\u00A0- Disconnected";
+          document.getElementById("tool-detection-cnc").style.color = ""; // Resetting color if previously set
+
+          document.getElementById("extruder-state-container").style.opacity = 1;
+          document.getElementById("cnc-state-container").style.opacity = 0.6;
+          document.getElementById("extruder-state-container").style.pointerEvents = "auto";
+          document.getElementById("cnc-state-container").style.pointerEvents = "none";
+
+          resetCNCUI();
+          document.querySelector(".start-text").innerHTML = `
+            <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" fill="#a74e9e" viewBox="0 0 24 24" style="vertical-align: middle;">
+                <rect x="5" y="0" width="4" height="18"></rect>
+                <rect x="15" y="0" width="4" height="18"></rect>
+            </svg> Not Ready`;
+          document.getElementById("startSpindle").style.pointerEvents = "none";
+          document.getElementById("unlockButtonContainer").style.pointerEvents = "none";
+          document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
+          document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
+          break;
+          
+        case "CNC":
+          console.log("Tool state: CNC Mill Connected");
+          document.getElementById("tool-detection-pe320").style.display = "flex";
+          document.getElementById("extruder-warning-icon").style.display = "none";
+          document.getElementById("tool-detection-cnc").style.display = "flex";
+          document.getElementById("cnc-warning-icon").style.display = "none";
+
+          document.getElementById("tool-detection-pe320").textContent = "\u00A0- Disconnected";
+          document.getElementById("tool-detection-pe320").style.color = "";
+          document.getElementById("tool-detection-cnc").textContent = "\u00A0- Connected";
+          document.getElementById("tool-detection-cnc").style.color = "#a74e9e"; // Resetting color if previously set
+          
+          document.getElementById("extruder-state-container").style.opacity = 0.6;
+          document.getElementById("cnc-state-container").style.opacity = 1;
+          document.getElementById("extruder-state-container").style.pointerEvents = "none";
+          document.getElementById("cnc-state-container").style.pointerEvents = "auto";
+
+          document.getElementById("startSpindle").style.pointerEvents = "auto";
+          document.getElementById("unlockButtonContainer").style.pointerEvents = "auto";
+
+          document.querySelector(".start-text").textContent = "▶ Start Spindle";
+          document.getElementById("indicatorText").textContent = "Spindle is Ready";
+          document.getElementById("indicatorLight").style.backgroundColor = "Green";
+          // Stop Spindle is handled in .stop-text class which is hidden by default
+
+          break;
+      
+        case "No Tool":
+          console.log("Tool state: No Tool Connected");
+          document.getElementById("tool-detection-pe320").style.display = "flex";
+          document.getElementById("extruder-warning-icon").style.display = "none";
+          document.getElementById("tool-detection-cnc").style.display = "flex";
+          document.getElementById("cnc-warning-icon").style.display = "none";
+
+          document.getElementById("tool-detection-pe320").textContent = "\u00A0- Disconnected";
+          document.getElementById("tool-detection-pe320").style.color = "";
+          document.getElementById("tool-detection-cnc").textContent = "\u00A0- Disconnected";
+          document.getElementById("tool-detection-cnc").style.color = ""; // Resetting color if previously set
+
+          document.getElementById("extruder-state-container").style.opacity = 0.6;
+          document.getElementById("cnc-state-container").style.opacity = 0.6;
+          document.getElementById("extruder-state-container").style.pointerEvents = "none";
+          document.getElementById("cnc-state-container").style.pointerEvents = "none";
+
+          resetCNCUI();
+          document.querySelector(".start-text").innerHTML = `
+            <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" fill="#a74e9e" viewBox="0 0 24 24" style="vertical-align: middle;">
+                <rect x="5" y="0" width="4" height="18"></rect>
+                <rect x="15" y="0" width="4" height="18"></rect>
+            </svg> Not Ready`;
+          document.getElementById("startSpindle").style.pointerEvents = "none";
+          document.getElementById("unlockButtonContainer").style.pointerEvents = "none";
+          document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
+          document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
+          break;
+
+        case "Open Circuit":
+          console.log("Tool state: Smart Loom Open Circuit");
+          document.getElementById("tool-detection-pe320").style.display = "none";
+          document.getElementById("extruder-warning-icon").style.display = "flex";
+          document.getElementById("tool-detection-cnc").style.display = "none";
+          document.getElementById("cnc-warning-icon").style.display = "flex";
+
+          document.getElementById("tool-detection-pe320").textContent = "\u00A0- Smart Loom Open Circuit";
+          document.getElementById("tool-detection-pe320").style.color = "red";
+          document.getElementById("tool-detection-cnc").textContent = "\u00A0- Smart Loom Open Circuit";
+          document.getElementById("tool-detection-cnc").style.color = "red"; // Resetting color if previously set
+
+          document.getElementById("extruder-state-container").style.opacity = 0.6;
+          document.getElementById("cnc-state-container").style.opacity = 0.6;
+          document.getElementById("extruder-state-container").style.pointerEvents = "none";
+          document.getElementById("cnc-state-container").style.pointerEvents = "none";
+
+          resetCNCUI();
+          document.querySelector(".start-text").innerHTML = `
+            <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" fill="#a74e9e" viewBox="0 0 24 24" style="vertical-align: middle;">
+                <rect x="5" y="0" width="4" height="18"></rect>
+                <rect x="15" y="0" width="4" height="18"></rect>
+            </svg> Not Ready`;
+          document.getElementById("startSpindle").style.pointerEvents = "none";
+          document.getElementById("unlockButtonContainer").style.pointerEvents = "none";
+          document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
+          document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
+          break;
+
+        case "Short Circuit":
+          console.log("Tool state: Smart Loom Short Circuit");
+          document.getElementById("tool-detection-pe320").style.display = "none";
+          document.getElementById("extruder-warning-icon").style.display = "flex";
+          document.getElementById("tool-detection-cnc").style.display = "none";
+          document.getElementById("cnc-warning-icon").style.display = "flex";
+
+          document.getElementById("tool-detection-pe320").textContent = "\u00A0- Smart Loom Short Circuit";
+          document.getElementById("tool-detection-pe320").style.color = "red";
+          document.getElementById("tool-detection-cnc").textContent = "\u00A0- Smart Loom Short Circuit";
+          document.getElementById("tool-detection-cnc").style.color = "red"; // Resetting color if previously set
+
+          document.getElementById("extruder-state-container").style.opacity = 0.6;
+          document.getElementById("cnc-state-container").style.opacity = 0.6;
+          document.getElementById("extruder-state-container").style.pointerEvents = "none";
+          document.getElementById("cnc-state-container").style.pointerEvents = "none";
+
+          resetCNCUI();
+          document.querySelector(".start-text").innerHTML = `
+            <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" fill="#a74e9e" viewBox="0 0 24 24" style="vertical-align: middle;">
+                <rect x="5" y="0" width="4" height="18"></rect>
+                <rect x="15" y="0" width="4" height="18"></rect>
+            </svg> Not Ready`;
+          document.getElementById("startSpindle").style.pointerEvents = "none";
+          document.getElementById("unlockButtonContainer").style.pointerEvents = "none";
+          document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
+          document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
+          break;
+      
+        default:
+          console.log("Tool state: Duet Disconnected");
+          document.getElementById("tool-detection-pe320").style.display = "none";
+          document.getElementById("extruder-warning-icon").style.display = "flex";
+          document.getElementById("tool-detection-cnc").style.display = "none";
+          document.getElementById("cnc-warning-icon").style.display = "flex";
+          
+          document.getElementById("tool-detection-pe320").textContent = "\u00A0- null";
+          document.getElementById("tool-detection-pe320").style.color = "";
+          document.getElementById("tool-detection-cnc").textContent = "\u00A0- null";
+          document.getElementById("tool-detection-cnc").style.color = ""; // Resetting color if previously set
+
+          document.getElementById("extruder-state-container").style.pointerEvents = "none";
+          document.getElementById("cnc-state-container").style.pointerEvents = "none";
+
+          if (localStorage.getItem("toolDetectionState") === "on") {
+            document.getElementById("extruder-state-container").style.opacity = 0.6;
+            document.getElementById("cnc-state-container").style.opacity = 0.6;
+          } else {
+            document.getElementById("extruder-state-container").style.opacity = 1;
+            document.getElementById("cnc-state-container").style.opacity = 1;
+          }
+
+          resetCNCUI();
+          document.querySelector(".start-text").innerHTML = `
+            <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" fill="#a74e9e" viewBox="0 0 24 24" style="vertical-align: middle;">
+                <rect x="5" y="0" width="4" height="18"></rect>
+                <rect x="15" y="0" width="4" height="18"></rect>
+            </svg> Not Ready`;
+          document.getElementById("startSpindle").style.pointerEvents = "none";
+          document.getElementById("unlockButtonContainer").style.pointerEvents = "none";
+          document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
+          document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
+          break;
+      }    
+      
+      // Data Feedback ---------------------------------------------------------------------------------------
+
+      // System Info 
+
+      // Get uptime in seconds
+      const uptimeInSeconds = data.sbc.uptime;
+      // Calculate hours, minutes, and seconds
+      const hours = Math.floor(uptimeInSeconds / 3600);
+      const minutes = Math.floor((uptimeInSeconds % 3600) / 60);
+      const seconds = Math.round(uptimeInSeconds % 60); // Round seconds to nearest integer
+      // Format the result as "hh:mm:ss"
+      const formattedUptime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      // Update the text content
+      document.getElementById("uptime-count").textContent = formattedUptime;
+
+      // document.getElementById("controller-version").textContent = see system-pe320/apollo/zeus
+      // document.getElementById("product-family").textContent = see system-pe320/apollo/zeus
+      // document.getElementById("product-family-tools").textContent = see system-pe320/apollo/zeus
+      // document.getElementById("software-version").textContent = see GitHub repo
+      document.getElementById("firmware-version").textContent = data.sbc.dsf.version;
+      document.getElementById("bed-count").textContent = configuredBedHeaters.length;
+
+      // Update & Restart Firmware
+      // check-for-updates -- see buttonId
+      // restart-firmware -- see buttonId
+
+      // Tool Status
+      if (data.global.toolState === null) {
+        document.getElementById("connected-tool").textContent = "null";
+      } else {
+        document.getElementById("connected-tool").textContent = data.global.toolState;
+      }
+    
+      // PE320 Pellet Extruder
+      // document.getElementById("extruder-state-container").textContent = "available by default";
+      // Check if any heater is in "fault" state
+      if (
+        data.heat.heaters[0].state === "fault" ||
+        data.heat.heaters[1].state === "fault" ||
+        data.heat.heaters[2].state === "fault" ||
+        data.heat.heaters[3].state === "fault"
+      ) {
+        document.getElementById("extruder-state").textContent = "FAULT";
+      }
+      // Check if any heater is in "active" state
+      else if (
+        data.heat.heaters[0].state === "active" ||
+        data.heat.heaters[1].state === "active" ||
+        data.heat.heaters[2].state === "active" ||
+        data.heat.heaters[3].state === "active"
+      ) {
+        document.getElementById("extruder-state").textContent = "ACTIVE";
+      }
+      // Check if any heater is in "standby" state
+      else if (
+        data.heat.heaters[0].state === "standby" ||
+        data.heat.heaters[1].state === "standby" ||
+        data.heat.heaters[2].state === "standby" ||
+        data.heat.heaters[3].state === "standby"
+      ) {
+        document.getElementById("extruder-state").textContent = "PREHEAT";
+      }
+      // Check if all heaters are in "off" state
+      else if (
+        data.heat.heaters[0].state === "off" &&
+        data.heat.heaters[1].state === "off" &&
+        data.heat.heaters[2].state === "off" &&
+        data.heat.heaters[3].state === "off"
+      ) {
+        document.getElementById("extruder-state").textContent = "OFF";
+      }
+      // Default to the state of the nozzle heater (heater 3)
+      else {
+        document.getElementById("extruder-state").textContent = (data.heat.heaters[3].state).toUpperCase();
+      }
+
+      // document.getElementById("extruder-runtime").textContent = "n/a";
+      document.getElementById("material-sensor-left").textContent = data.global.materialSensorLEFT;
+      document.getElementById("material-sensor-right").textContent = data.global.materialSensorRIGHT;
+      // document.getElementById("heatsink-fan").textContent = see Embedded;
+      // document.getElementById("barrel-fan").textContent = see Embedded;
+
+      // Switch case for heatsink fan selection
+      switch (document.querySelector('.heatsink-fan-button div').textContent) {
+        case "Heatsink Fan 1":
+          document.getElementById("heatsink-fan-tach").textContent = data.fans[0].rpm;
+          selectedHeatsinkFan = "0";
+          break;
+        case "Heatsink Fan 2":
+          document.getElementById("heatsink-fan-tach").textContent = data.fans[1].rpm;
+          selectedHeatsinkFan = "0";
+          break;
+        case "Heatsink Fan 3":
+          document.getElementById("heatsink-fan-tach").textContent = data.fans[2].rpm;
+          selectedHeatsinkFan = "0";
+          break;
+        case "Heatsink Fan 4":
+          document.getElementById("heatsink-fan-tach").textContent = data.fans[3].rpm;
+          selectedHeatsinkFan = "0";
+          break;
+        default:
+          document.getElementById("heatsink-fan-tach").textContent = "Config Error";
+      }
+
+      // Switch case for barrel fan selection
+      switch (document.querySelector('.barrel-fan-button div').textContent) {
+        case "Barrel Fan 1":
+          document.getElementById("barrel-fan-tach").textContent = data.fans[4].rpm;
+          selectedBarrelFan = "4";
+          break;
+        case "Barrel Fan 2":
+          document.getElementById("barrel-fan-tach").textContent = data.fans[5].rpm;
+          selectedBarrelFan = "5";
+          break;
+        case "Barrel Fan 3":
+          document.getElementById("barrel-fan-tach").textContent = data.fans[6].rpm;
+          selectedBarrelFan = "6";
+          break;
+        default:
+          document.getElementById("barrel-fan-tach").textContent = "Config Error";
+      }
+
+      // CNC Mill
+      // document.getElementById("cnc-state-container").textContent = formattedUptime;
+      document.getElementById("cnc-state").textContent = (data.spindles[0].state).toUpperCase();
+      // document.getElementById("cnc-runtime").textContent = "n/a";
+      document.getElementById("cnc-speed").textContent = data.spindles[0].current;
+      
       // Resolve the promise with the result
       resolve(globalObjectModelResult);
     } catch (error) {
@@ -417,23 +774,120 @@ function updateObjectModel() {
   });
 }
 
-// FUNCTION: send G-code to Duet via HTTP POST request
-async function sendGcode(gcode) {
-  try {
-    const responseText = await fetchData("http://localhost/machine/code", {
-      // HTTPS (Self-Signed SSL Certificate)
-      method: "POST",
-      headers: {
-        "Content-Type": "text/plain", // Set the content type to text/plain
-      },
-      body: gcode, // G-code command in body attribute
-    });
+// Polling interval (in milliseconds)
+const POLL_INTERVAL = 2000;
 
-    console.log(`Response from sending gcode ${gcode}: ${responseText}`);
-  } catch (error) {
-    console.error(`Error sending gcode ${gcode}: ${error}`);
+// Function to continuously check the server status and send commands once on state change from error to available
+async function pollServerAndSendOnceOnStateChange() {
+  let serverWasUnavailable = true; // Track whether the server was previously in an error state
+
+  while (true) {
+    try {
+      const response = await fetchData("https://192.168.1.64/machine/status");
+
+      // Check if response includes a 503 status
+      if (response.status && response.status === 503) {
+        console.log("503 Service Unavailable. Polling again after delay...");
+        serverWasUnavailable = true; // Update the server state as unavailable
+        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+        continue; // Keep polling if the server is unavailable
+      }
+
+      console.log("Server is available.");
+
+      // Only send commands once after server becomes available
+      if (serverWasUnavailable) {
+        console.log("Server state changed to available. Sending G-code commands once...");
+        await sendCommandsOnce();
+        serverWasUnavailable = false; // Update state to reflect that commands have been sent
+      }
+
+      // Wait before polling again
+      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+
+    } catch (error) {
+      console.error(`Error checking server status: ${error}`);
+      serverWasUnavailable = true; // Treat any fetch error as a temporary unavailability
+      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL)); // Delay before retrying
+    }
   }
 }
+
+// Function to send G-code commands based on states in localStorage using fetchData
+async function sendCommandsOnce() {
+  try {
+    const partCoolingState = localStorage.getItem("partCoolingState") || "off";
+    console.log(`Sending G-code for partCoolingState: ${partCoolingState}`);
+
+    if (partCoolingState === "on") {
+      if (document.getElementById("part-cooling-on").style.display === "none") {
+        document.getElementById("part-cooling-toggle").click();
+      }
+      await sendGcode('set global.partCooling = true');
+      await sendGcode('M98 P"Part cooling on.g"');
+    } else {
+      await sendGcode('set global.partCooling = false');
+      await sendGcode('M98 P"Part cooling off.g"');
+    }
+
+    const bedFixturePlateState = localStorage.getItem("bedFixturePlateState") || "off";
+    console.log(`Sending G-code for bedFixturePlateState: ${bedFixturePlateState}`);
+
+    if (bedFixturePlateState === "on") {
+      if (document.getElementById("bed-fixture-plate-on").style.display === "none") {
+        document.getElementById("bed-fixture-plate-toggle").click();
+      }
+      await sendGcode('set global.bedFixturePlate = true');
+      await sendGcode('M98 P"Bed_PID_fixture_plate_on.g"');
+    } else {
+      await sendGcode('set global.bedFixturePlate = false');
+      await sendGcode('M98 P"Bed_PID_fixture_plate_off.g"');
+    }
+
+    console.log("All commands executed successfully.");
+
+  } catch (error) {
+    console.error(`Error executing G-code commands: ${error}`);
+  }
+}
+
+// Function to send individual G-code command with retry logic for 503 and unknown variable errors using fetchData
+async function sendGcode(gcode) {
+  while (true) {
+    try {
+      const response = await fetchData("https://192.168.1.64/machine/code", {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain",
+        },
+        body: gcode,
+      });
+
+      if (response.status && response.status === 503) {
+        console.warn("503 Service Unavailable while sending G-code. Retrying...");
+        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+        continue; // Retry if server returns 503 error
+      }
+
+      // Check for unknown variable error in the response text
+      if (typeof response === "string" && response.includes("Error: unknown variable")) {
+        console.warn(`Unknown variable error detected in response. Retrying G-code '${gcode}'...`);
+        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+        continue; // Retry if unknown variable error is present
+      }
+
+      console.log(`Response from sending G-code '${gcode}': ${response}`);
+      return response; // Exit loop on successful command execution without errors
+
+    } catch (error) {
+      console.error(`Error sending G-code '${gcode}': ${error}`);
+      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL)); // Delay before retrying
+    }
+  }
+}
+
+// Start the continuous polling process
+pollServerAndSendOnceOnStateChange();
 
 // FUNCTION: call updateObjectModel & retrieve results
 async function update() {
@@ -474,25 +928,25 @@ function toggleHeaterStates(heaterState, heaterIndex) {
   ];
   let setTemp = "";
   switch (heaterState) {
-    case "Off":
+    case "OFF":
       setTemp = document.getElementById(
         `user-input-preheat-${heaterType[heaterIndex]}`
       ).textContent;
       sendGcode(`M568 P${heaterIndex} R${setTemp} A1`); // switch to preheat (standby)
       break;
-    case "Preheat":
+    case "PREHEAT":
       setTemp = document.getElementById(
         `user-input-active-${heaterType[heaterIndex]}`
       ).textContent;
       sendGcode(`M568 P${heaterIndex} S${setTemp} A2`); // switch to active
       break;
-    case "Active":
+    case "ACTIVE":
       setTemp = document.getElementById(
         `user-input-active-${heaterType[heaterIndex]}`
       ).textContent;
       sendGcode(`M568 P${heaterIndex} A0`); // switch to off
       break;
-    case "Fault":
+    case "FAULT":
       // Prompt the user to reset the fault
       const resetFault = window.confirm(
         `Heater ${
@@ -659,8 +1113,26 @@ for (let i = 0; i < defaultNumOfBedHeaters; i++) {
 // Update Object Model every 0.5 seconds
 setInterval(update, 500);
 
-// Update Object Model immediately on page load
-document.addEventListener("DOMContentLoaded", updateObjectModel);
+// Triggers on Page Load
+document.addEventListener("DOMContentLoaded", function() {
+  // Select Default Tabs on page load
+  document.getElementById("default-tab").click();
+  document.getElementById("system-info").click();
+
+  // Update Object Model immediately on page load
+  updateObjectModel();
+
+  // Call the function to set up the click listener
+  enableDeveloperSettings();
+
+  // document
+  //   .querySelectorAll(`.fan-dropdown-list .fan-dropdown-content-text`)
+  //   .forEach((element, index) =>
+  //     element.addEventListener("click", () => {
+  //       document.getElementById('heatsink-fan-main-text').textContent = element.textContent;
+  //     })
+  //   );
+});
 
 // Initialise heating profiles on startup
 heatProfiles = loadHeatingProfiles();
@@ -668,7 +1140,144 @@ updateHeatingProfiles();
 loadTempsOnEdit();
 
 sendGcode(`M5`);
-// =====================================================================================================================
+
+// ================================================ Github Repo =================================================
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Define the repository owner and name
+  const owner = "Evo3D-RapidFusion";
+  const repo = "PE320_UI";
+
+  // Async function to fetch the latest release information
+  async function fetchLatestVersion() {
+      try {
+          const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
+          
+          if (!response.ok) {
+              throw new Error("Network response was not ok");
+          }
+          
+          const data = await response.json();
+          const versionName = data.tag_name; // Extract the version tag name
+          document.getElementById("software-version").textContent = versionName; // Display the version
+      } catch (error) {
+          console.error("Error fetching GitHub version:", error);
+      }
+  }
+
+  // Call the async function
+  fetchLatestVersion();
+});
+
+// ================================================ Developer Settings =================================================
+
+// Developer Settings Click Timer
+function enableDeveloperSettings() {
+  let clickCount = 0;
+  let lastClickTime = 0;
+
+  document.getElementById("software-version").addEventListener("click", function() {
+      const currentTime = new Date().getTime();
+
+      if (currentTime - lastClickTime < 5000) { // Check if within 5 seconds
+          clickCount++;
+          if (clickCount === 7) { // If clicked 7 times
+              const devSettings = document.getElementById("developer-settings");
+              
+              // Toggle display between 'block' and 'none'
+              devSettings.style.display = devSettings.style.display === "block" ? "none" : "block";
+              
+              clickCount = 0; // Reset click count
+          }
+      } else {
+          clickCount = 1; // Reset if more than 5 seconds have passed
+      }
+
+      lastClickTime = currentTime; // Update the last click time
+  });
+}
+
+// Reset CNC UI
+function resetCNCUI() {
+  sendGcode(`M5`);
+  confirmationModal.style.display = 'none';
+  slider.disabled = true; // Ensure slider is disabled on page load
+  speedControlTitle.textContent = 'Speed Control Locked'; // Set initial state to locked
+  sliderUnlocked = false; // Initial state is locked
+  updateLockIcon(); // Ensure icon is correctly set on load
+  speedValueDisplay.classList.add('grayed-out');
+  spindleOff = true; // Set spindleOff to true
+}
+
+// Developer Options Toggle
+// Check saved state from local storage on load and initialize
+window.addEventListener("load", () => {
+  const savedAisyncState = localStorage.getItem("aisyncState");
+  switch (savedAisyncState) {
+    case "on":
+      document.getElementById("aisync-slicer").style.display = "block";
+      break;
+    default: // off state
+      document.getElementById("aisync-slicer").style.display = "none";
+  }
+
+  const savedCncState = localStorage.getItem("cncState");
+  switch (savedCncState) {
+    case "on":
+      document.getElementById("cnc-mill").style.display = "block";
+      break;
+    default: // off state
+      document.getElementById("cnc-mill").style.display = "none";
+  }
+
+  const toolDetectionState = localStorage.getItem("toolDetectionState");
+  switch (toolDetectionState) {
+    case "on":
+      document.getElementById("extruder-detection-container").style.display = "flex";
+      document.getElementById("cnc-detection-container").style.display = "flex";
+      break;
+    default: // off state
+      document.getElementById("extruder-detection-container").style.display = "none";
+      document.getElementById("cnc-detection-container").style.display = "none";
+  }
+
+  const systemFamilyState = localStorage.getItem("systemFamily");
+  switch (systemFamilyState) {
+    case "apollo":
+      document.getElementById("system-apollo").click();
+      break;
+    case "zeus":
+      document.getElementById("system-zeus").click();
+      break;
+    default: // pe320 as default
+      document.getElementById("system-pe320").click();
+  }
+
+  // const partCoolingState = localStorage.getItem("partCoolingState");
+  // switch (partCoolingState) {
+  //   case "on":
+  //     document.getElementById("part-cooling-toggle").click();
+  //     sendGcode('set global.partCooling = true');  
+  //     // sendGcode('M98 P"Part cooling on.g"');
+  //     break;
+  //   default: // off state
+  //     sendGcode('set global.partCooling = false');  
+  //     // sendGcode('M98 P"Part cooling off.g"');
+  // }
+
+  // const bedFixturePlateState = localStorage.getItem("bedFixturePlateState");
+  // switch (bedFixturePlateState) {
+  //   case "on":
+  //     document.getElementById("bed-fixture-plate-toggle").click();
+  //     sendGcode('set global.bedFixturePlate = true');  
+  //     // sendGcode('M98 P"Bed_PID_fixture_plate_on.g"');
+  //     break;
+  //   default: // off state
+  //     sendGcode('set global.partCooling = false');
+  //     // sendGcode('M98 P"Bed_PID_fixture_plate_off.g"');
+  // }
+});
+
 
 // ========================================= Tool Temperature Panel: Button Clicks =====================================
 const buttonIds = [
@@ -685,6 +1294,29 @@ const buttonIds = [
   "preheat-bed",
   "confirmYes",
   "reset-speed",
+  "aisync-on",
+  "aisync-off",
+  "open-settings",
+  "close-settings",
+  "cnc-on",
+  "cnc-off",
+  "system-pe320",
+  "system-apollo",
+  "system-zeus",
+  "tool-detection-on",
+  "tool-detection-off",
+  "bed-fixture-plate-on",
+  "bed-fixture-plate-on-icon",
+  "bed-fixture-plate-off",
+  "bed-fixture-plate-off-icon",
+  "check-for-updates",
+  "restart-firmware",
+  "heatsink-fan-off",
+  "heatsink-fan-half",
+  "heatsink-fan-full",
+  "barrel-fan-off",
+  "barrel-fan-half",
+  "barrel-fan-full",
 ];
 
 let currentSpindleAction = "";
@@ -718,11 +1350,15 @@ buttonIds.forEach((buttonId) => {
         break;
       case "part-cooling-on":
       case "part-cooling-on-icon":
+        sendGcode('set global.partCooling = false');
         sendGcode('M98 P"Part cooling off.g"');
+        localStorage.setItem("partCoolingState", "off");
         break;
       case "part-cooling-off":
       case "part-cooling-off-icon":
+        sendGcode('set global.partCooling = true');
         sendGcode('M98 P"Part cooling on.g"');
+        localStorage.setItem("partCoolingState", "on");
         break;
       case "reset-machine":
         sendGcode("M999");
@@ -740,6 +1376,227 @@ buttonIds.forEach((buttonId) => {
         speedValueDisplay.textContent = 18000; // Update the display to show 18000 RPM
         updateSliderBackground(); // Ensure the slider's background is updated accordingly
         updatedSpindleSpeed = 18000;
+        break;
+      case "aisync-on":
+        const elementOn = document.getElementById("aisync-slicer");
+        elementOn.style.display = "block";
+        document.getElementById("aisync-on").style.backgroundColor = "#a8a8a8"; // Pressed State
+        document.getElementById("aisync-off").style.backgroundColor = ""; // Default State
+        document.getElementById("aisync-slicer").click();
+        // Save state to local storage
+        localStorage.setItem("aisyncState", "on");
+        break;
+      case "aisync-off":
+        const elementOff = document.getElementById("aisync-slicer");
+        elementOff.style.display = "none";
+        document.getElementById("aisync-on").style.backgroundColor = ""; // Default State
+        document.getElementById("aisync-off").style.backgroundColor = "#a8a8a8"; // Pressed State
+        // Save state to local storage
+        localStorage.setItem("aisyncState", "off");
+        document.getElementById("default-tab").click();
+        break;
+      case "open-settings":
+        sendGcode("set global.fanOverride = true");
+        break;
+      case "close-settings":
+        document.getElementById("system-info").click();
+        sendGcode("M106 P0 S1 M106 P4 S0.5 M106 P5 S0.5 M106 P6 S0.5");
+        sendGcode("set global.fanOverride = false");
+        break;
+      case "cnc-on":
+        // MUST enable tool detection for CNC!!!
+        document.getElementById("tool-detection-on").click();
+        const cncOn = document.getElementById("cnc-mill");
+        cncOn.style.display = "block";
+        document.getElementById("cnc-on").style.backgroundColor = "#a8a8a8"; // Pressed State
+        document.getElementById("cnc-off").style.backgroundColor = ""; // Default State
+        document.getElementById("cnc-mill").click();
+        // Display CNC
+        document.getElementById("cnc-profile-heading").style.display = "flex";
+        document.getElementById("cnc-user-input-popup").style.display = "flex";
+        document.getElementById("cnc-profile-heading-popup").style.display =
+          "flex";
+        document
+          .querySelectorAll(".popup-temp.cnc-container")
+          .forEach((element) => {
+            element.style.display = "flex";
+          });
+        document
+          .querySelectorAll(".set-cnc-profile-button")
+          .forEach((element) => {
+            element.style.display = "flex";
+          });
+        // Adjust Action Column
+        document.getElementById("heating-profiles-action-header").style.width = "325px";
+        document.querySelectorAll(".popup-action-container").forEach((element) => {
+            element.style.width = "310px";
+        });
+        // Save state to local storage
+        localStorage.setItem("cncState", "on");
+        document.getElementById("cnc-state-container").style.display = "flex";
+        document.getElementById("tool-detection-off").style.display = "none";
+        break;
+      case "cnc-off":
+        const cncOff = document.getElementById("cnc-mill");
+        cncOff.style.display = "none";
+        document.getElementById("cnc-on").style.backgroundColor = ""; // Default State
+        document.getElementById("cnc-off").style.backgroundColor = "#a8a8a8"; // Pressed State
+        // Hide CNC
+        document.getElementById("cnc-profile-heading").style.display = "none";
+        document.getElementById("cnc-user-input-popup").style.display = "none";
+        document.getElementById("cnc-profile-heading-popup").style.display =
+          "none";
+        document
+          .querySelectorAll(".popup-temp.cnc-container")
+          .forEach((element) => {
+            element.style.display = "none";
+          });
+        document
+          .querySelectorAll(".set-cnc-profile-button")
+          .forEach((element) => {
+            element.style.display = "none";
+          });
+        // Adjust Action Column
+        document.getElementById("heating-profiles-action-header").style.width = "235px";
+        document.querySelectorAll(".popup-action-container").forEach((element) => {
+            element.style.width = "220px";
+        });
+        // Save state to local storage
+        localStorage.setItem("cncState", "off");
+        document.getElementById("default-tab").click();
+        document.getElementById("cnc-state-container").style.display = "none";
+        document.getElementById("tool-detection-off").style.display = "flex";
+        break;
+      case "system-pe320":
+        localStorage.setItem("systemFamily", "pe320");
+        document.getElementById("logo-text").textContent = "- PE320";
+        document.getElementById("logo-text").style.display = "flex";
+        document.getElementById("aisync-slicer-option").style.display = "none"; // no AiSync
+        document.getElementById("cnc-mill-option").style.display = "none"; // no CNC
+        document.getElementById("aisync-off").click();
+        document.getElementById("cnc-off").click();
+        document.getElementById("default-tab").click();
+        if (localStorage.getItem("toolDetectionState") === "on") {
+          document.getElementById("tool-detection-on").click();
+        } else {
+          document.getElementById("tool-detection-off").click();
+        }
+        document.getElementById("controller-version").textContent = "Epicurus Controller";
+        document.getElementById("product-family").textContent = "PE320";
+        document.getElementById("product-family-tools").textContent = "PE320 Pellet Extruder";
+        break;
+      case "system-apollo":
+        localStorage.setItem("systemFamily", "apollo");
+        document.getElementById("logo-text").textContent = "- APOLLO";
+        document.getElementById("logo-text").style.display = "flex";
+        document.getElementById("aisync-slicer-option").style.display = "flex"; // AiSync option
+        document.getElementById("cnc-mill-option").style.display = "none"; // no CNC
+        if (localStorage.getItem("toolDetectionState") === "on") {
+          document.getElementById("tool-detection-on").click();
+        } else {
+          document.getElementById("tool-detection-off").click();
+        }
+        if (localStorage.getItem("aisyncState") === "on") {
+          document.getElementById("aisync-on").click();
+        } else {
+          document.getElementById("aisync-off").click();
+        }
+        document.getElementById("cnc-off").click();
+        document.getElementById("default-tab").click();
+        document.getElementById("controller-version").textContent = "Epicurus Controller PRO";
+        document.getElementById("product-family").textContent = "Apollo";
+        document.getElementById("product-family-tools").textContent = "PE320 Pellet Extruder";
+        break;
+      case "system-zeus":
+        localStorage.setItem("systemFamily", "zeus");
+        document.getElementById("logo-text").textContent = "- ZEUS";
+        document.getElementById("logo-text").style.display = "flex";
+        document.getElementById("aisync-slicer-option").style.display = "flex"; // AiSync option
+        document.getElementById("cnc-mill-option").style.display = "flex"; // CNC option
+        if (localStorage.getItem("toolDetectionState") === "on") {
+          document.getElementById("tool-detection-on").click();
+        } else {
+          document.getElementById("tool-detection-off").click();
+        }
+        if (localStorage.getItem("aisyncState") === "on") {
+          document.getElementById("aisync-on").click();
+        } else {
+          document.getElementById("aisync-off").click();
+        }
+        if (localStorage.getItem("cncState") === "on") {
+          document.getElementById("cnc-on").click();
+        } else {
+          document.getElementById("cnc-off").click();
+        }
+        document.getElementById("default-tab").click();
+        document.getElementById("controller-version").textContent = "Epicurus Controller PRO";
+        document.getElementById("product-family").textContent = "Zeus";
+        document.getElementById("product-family-tools").textContent = "PE320 Pellet Extruder, CNC Mill";
+        break;
+      case "tool-detection-on":
+        document.getElementById("extruder-detection-container").style.display = "flex";
+        document.getElementById("cnc-detection-container").style.display = "flex";
+        document.getElementById("tool-detection-cnc").style.display = "flex";
+        document.getElementById("tool-detection-on").style.backgroundColor =
+          "#a8a8a8"; // Pressed State
+        document.getElementById("tool-detection-off").style.backgroundColor =
+          ""; // Default State
+        document.getElementById("connected-tool-container").style.display = "flex";
+        // Save state to local storage
+        localStorage.setItem("toolDetectionState", "on");
+        break;
+      case "tool-detection-off":
+        document.getElementById("extruder-detection-container").style.display = "none";
+        document.getElementById("cnc-detection-container").style.display = "none";
+        document.getElementById("tool-detection-cnc").style.display = "none";
+        document.getElementById("tool-detection-on").style.backgroundColor = ""; // Default State
+        document.getElementById("tool-detection-off").style.backgroundColor =
+          "#a8a8a8"; // Pressed State
+        document.getElementById("connected-tool-container").style.display = "none";
+        // Save state to local storage
+        localStorage.setItem("toolDetectionState", "off");
+        break;
+      case "bed-fixture-plate-on":
+      case "bed-fixture-plate-on-icon":
+        sendGcode('set global.bedFixturePlate = false');
+        sendGcode('M98 P"Bed_PID_fixture_plate_off.g"');
+        localStorage.setItem("bedFixturePlateState", "off");
+        break;
+      case "bed-fixture-plate-off":
+      case "bed-fixture-plate-off-icon":
+        sendGcode('set global.bedFixturePlate = true');
+        sendGcode('M98 P"Bed_PID_fixture_plate_on.g"');
+        localStorage.setItem("bedFixturePlateState", "on");
+        break;
+      case "check-for-updates":
+        window.alert(`System up to date.`)
+        break;
+      case "restart-firmware":
+        // Prompt the user to restart machine
+        const restartFirmware = window.confirm(`Restart Firmware?`);
+        if (restartFirmware) {
+          sendGcode('M999');
+          location.reload();
+        }
+        break;
+      case "heatsink-fan-off":
+        sendGcode(`M106 P${selectedHeatsinkFan} S0`);
+        break;
+      case "heatsink-fan-half":
+        sendGcode(`M106 P${selectedHeatsinkFan} S0.67`);
+        break;
+      case "heatsink-fan-full":
+        sendGcode(`M106 P${selectedHeatsinkFan} S1`);
+        break;
+      case "barrel-fan-off":
+        sendGcode(`M106 P${selectedBarrelFan} S0`);
+        break;
+      case "barrel-fan-half":
+        sendGcode(`M106 P${selectedBarrelFan} S0.75`);
+        break;
+      case "barrel-fan-full":
+        sendGcode(`M106 P${selectedBarrelFan} S1`);
+        break;
     }
   });
 });
@@ -1016,6 +1873,7 @@ document
         ".heating-profiles-text.bed-temp"
       )[index].textContent;
 
+      // Set Extruder Temps
       document.getElementById("user-input-active-top").textContent = topTemp;
       document.getElementById("user-input-preheat-top").textContent = topTemp;
       document.getElementById("user-input-active-middle").textContent =
@@ -1031,6 +1889,7 @@ document
       document.getElementById("user-input-preheat-nozzle").textContent =
         nozzleTemp;
 
+      // Set Bed Temps
       document.getElementById("user-input-active-bed0").textContent = bedTemp;
       document.getElementById("user-input-preheat-bed0").textContent = bedTemp;
       document.getElementById("user-input-active-bed1").textContent = bedTemp;
@@ -1048,8 +1907,27 @@ document
         gcodeString += `M568 P${index + 4} S${bedTemp} R${bedTemp} A2 `;
       });
       sendGcode(gcodeString);
+
       saveSettings();
-      document.querySelector(".main-tab-link").click();
+      document.getElementById("default-tab").click();
+    });
+  });
+
+// CNC Profiles - Switch to 'Tool Temp Tab' on 'Set Button' click
+document
+  .querySelectorAll(".heating-profile-material .set-cnc-profile-button")
+  .forEach((element, index) => {
+    element.addEventListener("click", () => {
+      let cncSpeed = document.querySelectorAll(".heating-profiles-text.cnc")[index].textContent;
+
+      // Set CNC Speed
+      slider.value = cncSpeed;
+      speedValueDisplay.textContent = cncSpeed; // Update the display to show cncSpeed RPM
+      updateSliderBackground(); // Ensure the slider's background is updated accordingly
+      updatedSpindleSpeed = cncSpeed;
+
+      saveSettings();
+      document.getElementById("cnc-mill").click();
     });
   });
 
@@ -1079,7 +1957,7 @@ $(document).ready(function () {
   };
 
   // FUNCTION: Handle touch events
-  function handleTouchEvents(keyboard, action) {
+  function handleTouchEvents(keyboard) {
     const events = ["touchstart", "touchend", "touchcancel"];
 
     keyboard.$keyboard.find("button.ui-keyboard-button").each(function () {
@@ -1091,12 +1969,11 @@ $(document).ready(function () {
   }
 
   // NumPad logic
-  var maxInteger = 3,
-    maxFractional = 2,
-    regex = new RegExp(
-      `([+-]?\\d{${maxInteger}}(?:\\.\\d{0,${maxFractional}})?)`
-    ),
-    regex1 = /^0\d$/;
+  var maxFractional = 2, regex1 = /^0\d$/;
+
+  function getRegex(maxInt) {
+    return new RegExp(`([+-]?\\d{0,${maxInt}}(?:\\.\\d{0,${maxFractional}})?)`);
+  }
 
   $.keyboard.defaultOptions.usePreview = false;
   $.keyboard.defaultOptions.autoAccept = true;
@@ -1107,22 +1984,53 @@ $(document).ready(function () {
       .keyboard({
         alwaysOpen: true,
         userClosed: false,
+        stickyShift: true,  // Keeps Shift active until pressed again (toggle behavior)
+        shiftToggle: true,  // Makes all characters uppercase when Shift is active
 
         visible: function (e, keyboard, el) {
-          keyboard.$preview[0].select(); // highlight text on visible
+          keyboard.$preview[0].select(); // Highlight text on visible
         },
 
-        // hidden: function (e, keyboard, el) {
-        //     handleTouchEvents(keyboard, 'removeEventListener'); // remove event listeners to change button opacity on click
-        // }
+        accepted: function (e, keyboard, el) {
+          // Use existing save_index and set to "Default [save_index + 1]" if input is empty
+          if (!keyboard.$preview.val().trim()) {
+            keyboard.$preview.val(`Default ${save_index + 1}`);
+          }
+        },
+
+        layout: "custom",
+        customLayout: {
+          'normal': [
+            "` 1 2 3 4 5 6 7 8 9 0 - = {b}",
+            "q w e r t y u i o p [ ] \\",
+            "a s d f g h j k l ; '",
+            "{shift} z x c v b n m , . /",
+            "{space} {clear}"
+          ],
+          'shift': [
+            "~ ! @ # $ % ^ & * ( ) _ + {b}",
+            "Q W E R T Y U I O P { } |",
+            "A S D F G H J K L : \"",
+            "{shift} Z X C V B N M < > ?",
+            "{space} {clear}"
+          ]
+        },
+
+        display: {
+          'clear': 'CLEAR' // Set display text for the clear button
+        }
       })
       .getkeyboard()
   );
+
   handleTouchEvents(keyboards[0]); // Add touch event listeners only once
   keyboards[0].$keyboard.hide();
 
   // Temp Keyboards (Numpad)
   $(".material-data-temp-input.user-input").each(function (index) {
+    let maxInteger = index === 5 ? 5 : 3; // Set maxInteger based on index
+    let regex = getRegex(maxInteger);
+
     keyboards.push(
       $(this)
         .keyboard({
@@ -1130,13 +2038,8 @@ $(document).ready(function () {
           userClosed: false,
 
           visible: function (e, keyboard, el) {
-            // highlight text on visible
             keyboard.$preview[0].select(); // highlight text on visible
           },
-
-          // hidden: function (e, keyboard, el) {
-          //     handleTouchEvents(keyboard, 'removeEventListener'); // remove event listeners to change button opacity on click
-          // },
 
           layout: "custom",
           customLayout: {
@@ -1144,28 +2047,41 @@ $(document).ready(function () {
           },
           restrictInput: true,
           change: function (e, keyboard, el) {
-            var change,
-              val = keyboard.$preview.val().replace(/[^\d-.]/g, ""),
+            var val = keyboard.$preview.val().replace(/[^\d-.]/g, ""),
               c = $.keyboard.caret(keyboard.$preview),
               start = c.start,
               end = c.end,
               restrict = val.match(regex);
+
             if (restrict) {
               restrict = restrict.slice(1).join("");
             } else {
               restrict = val;
             }
-            // Next, use regex1 to check for unwanted patterns
-            if (regex1.test(restrict)) {
-              restrict = "0"; // Clear the input if it matches patterns like 00, 01, 02, etc.
+
+            if (restrict === "") {
+              restrict = "0"; // Set input to 0 by default is nothing is entered
             }
 
-            // Check if value exceeds 400
-            if (parseFloat(restrict) > 400) {
-              restrict = "400";
+            if (regex1.test(restrict)) {
+              restrict = restrict.slice(1); // Replace leading zero with the integer just entered
             }
+
+            // Apply specific range restrictions based on index
+            var numericVal = parseFloat(restrict);
+            if (index === 5) {
+              // Restriction for index 5: range 3000 to 21000
+              // if (numericVal < 3000) restrict = "3000";
+              if (numericVal > 21000) restrict = "21000";
+            } else {
+              // Check if value exceeds 400
+              if (parseFloat(restrict) > 400) {
+                restrict = "400";
+              }
+            }
+
             keyboard.$preview.val(restrict);
-            change = restrict.length - val.length;
+            let change = restrict.length - val.length;
             start += change;
             end += change;
             $.keyboard.caret(keyboard.$preview, start, end);
@@ -1173,6 +2089,7 @@ $(document).ready(function () {
         })
         .getkeyboard()
     );
+
     handleTouchEvents(keyboards[index + 1]); // Add touch event listeners only once
     keyboards[index + 1].$keyboard.hide(); // index + 1 because 0 is for the first input
   });
@@ -1194,6 +2111,7 @@ $(document).ready(function () {
 $(document).ready(function () {
   $(".edit-profile").click(function () {
     setTimeout(() => keyboards[0].$keyboard.show(), 100);
+    document.getElementById("material-name-input").click();
   });
   $(".save-profile-edit").click(function () {
     let row = document.querySelectorAll(
@@ -1211,6 +2129,8 @@ $(document).ready(function () {
       document.getElementById("nozzle-heater-temp-input").value;
     row.querySelector(".heating-profiles-text.bed-temp").textContent =
       document.getElementById("bed-heater-temp-input").value;
+    row.querySelector(".heating-profiles-text.cnc").textContent =
+      document.getElementById("cnc-input").value;
 
     saveHeatingProfiles();
     heatProfiles = loadHeatingProfiles();
@@ -1249,6 +2169,7 @@ function saveHeatingProfileFromUI() {
         Bottom: row.querySelector(".bottom-temp").textContent,
         Nozzle: row.querySelector(".nozzle-temp").textContent,
         Bed: row.querySelector(".bed-temp").textContent,
+        Cnc: row.querySelector(".cnc").textContent,
       };
       heatingProfiles.push(profile);
     }
@@ -1282,6 +2203,7 @@ function initializeDefaultHeatingProfiles() {
       Bottom: 250,
       Nozzle: 270,
       Bed: 100,
+      Cnc: 18000,
     },
     {
       Material: "Airtech PP-GF",
@@ -1290,6 +2212,7 @@ function initializeDefaultHeatingProfiles() {
       Bottom: 200,
       Nozzle: 210,
       Bed: 90,
+      Cnc: 18000,
     },
     {
       Material: "Airtech ABS-CF",
@@ -1298,6 +2221,7 @@ function initializeDefaultHeatingProfiles() {
       Bottom: 200,
       Nozzle: 210,
       Bed: 100,
+      Cnc: 18000,
     },
     {
       Material: "Airtech PETG-GF",
@@ -1306,14 +2230,16 @@ function initializeDefaultHeatingProfiles() {
       Bottom: 160,
       Nozzle: 205,
       Bed: 50,
+      Cnc: 21000,
     },
     {
-      Material: "HDPE",
-      Top: 110,
-      Middle: 190,
-      Bottom: 220,
-      Nozzle: 240,
-      Bed: 80,
+      Material: "Recycled PP-GF",
+      Top: 105,
+      Middle: 180,
+      Bottom: 195,
+      Nozzle: 205,
+      Bed: 90,
+      Cnc: 21000,
     },
     {
       Material: "Default PLA",
@@ -1322,6 +2248,43 @@ function initializeDefaultHeatingProfiles() {
       Bottom: 150,
       Nozzle: 160,
       Bed: 40,
+      Cnc: 18000,
+    },
+    {
+      Material: "Default PETG",
+      Top: 105,
+      Middle: 140,
+      Bottom: 160,
+      Nozzle: 205,
+      Bed: 50,
+      Cnc: 18000,
+    },
+    {
+      Material: "Default PC",
+      Top: 110,
+      Middle: 200,
+      Bottom: 250,
+      Nozzle: 270,
+      Bed: 100,
+      Cnc: 18000,
+    },
+    {
+      Material: "Default PP",
+      Top: 110,
+      Middle: 200,
+      Bottom: 200,
+      Nozzle: 210,
+      Bed: 90,
+      Cnc: 18000,
+    },
+    {
+      Material: "Default ABS",
+      Top: 150,
+      Middle: 190,
+      Bottom: 200,
+      Nozzle: 210,
+      Bed: 100,
+      Cnc: 18000,
     },
   ];
   localStorage.setItem(
@@ -1337,9 +2300,9 @@ function updateHeatingProfiles() {
   const tableRows = document.querySelectorAll(
     ".heating-profiles-container .heating-profiles-content .heating-profile-material"
   );
-  const tableRowsPopup = document.querySelectorAll(
-    ".temp-popup-container .heating-profile-material"
-  );
+  // const tableRowsPopup = document.querySelectorAll(
+  //   ".temp-popup-container .heating-profile-material"
+  // );
 
   const updateRow = (row, profile, index) => {
     row.querySelector(".profile-number").textContent = `${index + 1}.`;
@@ -1349,6 +2312,7 @@ function updateHeatingProfiles() {
     row.querySelector(".bottom-temp").textContent = profile.Bottom;
     row.querySelector(".nozzle-temp").textContent = profile.Nozzle;
     row.querySelector(".bed-temp").textContent = profile.Bed;
+    row.querySelector(".cnc").textContent = profile.Cnc;
     row.style.display = "flex";
   };
 
@@ -1356,18 +2320,10 @@ function updateHeatingProfiles() {
     if (index < tableRows.length) {
       updateRow(tableRows[index], profile, index);
     }
-    if (index < tableRowsPopup.length) {
-      updateRow(tableRowsPopup[index], profile, index);
-    }
+    // if (index < tableRowsPopup.length) {
+    //   updateRow(tableRowsPopup[index], profile, index);
+    // }
   });
-
-  const headerColumnsAction = document.querySelectorAll(
-    ".heating-profiles-header-columns-action"
-  );
-  headerColumnsAction.forEach(
-    (element) =>
-      (element.style.width = heatingProfiles.length > 6 ? "232px" : "217px")
-  );
 }
 
 // Load temps on edit profile popup
