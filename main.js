@@ -432,12 +432,13 @@ function updateObjectModel() {
         popup.classList.remove('shrink'); // Clean up the shrink class
       }
 
-      // Loop to check EstopFault status and update the popup accordingly
+      // Continuously check EstopFault status in a loop
       setInterval(() => {
-        // Replace this with actual logic to get the status of EstopFault
-        const data = { global: { EstopFault: checkEstopStatus() }}; // Example placeholder function
-        
+        // Assume `data` is available within this scope and `data.global.EstopFault` gets updated in real-time.
+        // You might be fetching `data` from an API or another source within the loop.
+
         if (data.global.EstopFault === true) {
+          // Show the popup with the open animation
           popupSpace.style.display = "flex"; // Show Background blur
           popup.classList.remove('shrink'); // Remove shrink class if present
           popup.classList.add('grow'); // Add grow class to trigger open animation
@@ -446,15 +447,17 @@ function updateObjectModel() {
           // Remove any previous 'animationend' listener to prevent duplication
           popup.removeEventListener('animationend', hidePopupAfterShrink);
         } else {
+          // Close the popup with the close animation
           popup.classList.remove('grow'); // Remove grow class
           popup.classList.add('shrink'); // Add shrink class to trigger close animation
 
-          // Add 'animationend' listener only when the popup is closing
+          // Add 'animationend' listener to hide popup after shrink animation
           popup.addEventListener('animationend', hidePopupAfterShrink, { once: true });
 
           popupSpace.style.display = "none"; // Remove Background blur
         }
       }, 500); // Adjust the interval time as needed
+
 
 
       // Fault Detection - PE320 Servo Drive Fault Popup
