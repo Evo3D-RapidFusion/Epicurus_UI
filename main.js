@@ -429,28 +429,37 @@ function updateObjectModel() {
       // Function to hide the popup completely after the shrink animation
       function hidePopupAfterShrink() {
         popup.style.display = "none"; // Hide popup after shrink animation completes
+        popup.classList.remove('shrink'); // Clean up the shrink class
       }
 
       // Main function to handle the E-stop popup visibility
       function handleEstopPopup(data) {
         if (data.global.EstopFault === true) {
           popupSpace.style.display = "flex"; // Show Background blur
-          popup.classList.remove('shrink'); // Remove shrink class if present
+          popup.classList.remove('shrink'); // Ensure shrink class is removed
           popup.classList.add('grow'); // Add grow class to trigger open animation
           popup.style.display = "flex"; // Ensure popup is visible
-          
+
           // Remove any previous 'animationend' listener to prevent duplication
           popup.removeEventListener('animationend', hidePopupAfterShrink);
         } else {
           popup.classList.remove('grow'); // Remove grow class
           popup.classList.add('shrink'); // Add shrink class to trigger close animation
-          
+
           // Add 'animationend' listener to hide popup after shrink animation
           popup.addEventListener('animationend', hidePopupAfterShrink, { once: true });
           
+          // Fallback timeout to hide popup in case 'animationend' doesn't fire
+          setTimeout(() => {
+            if (!popup.classList.contains('grow')) {
+              hidePopupAfterShrink();
+            }
+          }, 500); // Adjust this timeout to match the length of your shrink animation
+
           popupSpace.style.display = "none"; // Remove Background blur
         }
       }
+
 
       // Fault Detection - PE320 Servo Drive Fault Popup
       // if (data.global.ExtruderFault === true) {
