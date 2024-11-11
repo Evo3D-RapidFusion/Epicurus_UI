@@ -386,7 +386,7 @@ function updateObjectModel() {
       }
 
       // CNC Spindle Speed Live Control
-      if (spindleRunning == true) {
+      if (spindleRunning === true && data.global.EstopFault === false) {
         document.getElementById(
           "radial-gradient-background-cnc-white"
         ).style.display = "none";
