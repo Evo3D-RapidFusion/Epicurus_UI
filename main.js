@@ -510,10 +510,10 @@ function updateObjectModel() {
               document.getElementById("indicatorLight").style.backgroundColor = "Red";
             }
           } else {
-              document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
-              document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
               document.getElementById("stopSpindle").click();
               document.getElementById("confirmYes").click();
+              document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
+              document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
               resetCNCUI();
           }
           break;
