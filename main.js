@@ -401,8 +401,7 @@ function updateObjectModel() {
         // updateSliderBackground();
         // spindleSpeed = cncSpindle.current;
 
-        updatedSpindleSpeed =
-          document.getElementById("speedValue").textContent;
+        updatedSpindleSpeed = document.getElementById("speedValue").textContent;
         sendGcode(`M3 P0 S${spindleSpeed}`); // run spindle clockwise at slider rpm
         spindleSpeed = updatedSpindleSpeed;
         spindleOff == false;
@@ -501,10 +500,17 @@ function updateObjectModel() {
           document.getElementById("unlockButtonContainer").style.pointerEvents = "auto";
 
           document.querySelector(".start-text").textContent = "▶ Start Spindle";
-          document.getElementById("indicatorText").textContent = "Spindle is Ready";
-          document.getElementById("indicatorLight").style.backgroundColor = "Green";
-          // Stop Spindle is handled in .stop-text class which is hidden by default
-
+          if (data.global.EstopFault === false && data.global.CNCFault === false) {
+            if (spindleOff === false) {
+              document.getElementById("indicatorText").textContent = "Spindle is Ready";
+              document.getElementById("indicatorLight").style.backgroundColor = "Green";
+              // Stop Spindle is handled in .stop-text class which is hidden by default
+            }
+          } else {
+              document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
+              document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
+              resetCNCUI();
+          }
           break;
       
         case "No Tool":
@@ -1389,10 +1395,10 @@ buttonIds.forEach((buttonId) => {
         }
         break;
       case "reset-speed":
-        slider.value = 18000;
-        speedValueDisplay.textContent = 18000; // Update the display to show 18000 RPM
+        slider.value = 10000;
+        speedValueDisplay.textContent = 10000; // Update the display to show 10000 RPM
         updateSliderBackground(); // Ensure the slider's background is updated accordingly
-        updatedSpindleSpeed = 18000;
+        updatedSpindleSpeed = 10000;
         break;
       case "aisync-on":
         const elementOn = document.getElementById("aisync-slicer");
@@ -2217,7 +2223,7 @@ function initializeDefaultHeatingProfiles() {
       Bottom: 250,
       Nozzle: 270,
       Bed: 100,
-      Cnc: 18000,
+      Cnc: 10000,
     },
     {
       Material: "Airtech PP-GF",
@@ -2226,7 +2232,7 @@ function initializeDefaultHeatingProfiles() {
       Bottom: 200,
       Nozzle: 210,
       Bed: 90,
-      Cnc: 18000,
+      Cnc: 10000,
     },
     {
       Material: "Airtech ABS-CF",
@@ -2235,7 +2241,7 @@ function initializeDefaultHeatingProfiles() {
       Bottom: 200,
       Nozzle: 210,
       Bed: 100,
-      Cnc: 18000,
+      Cnc: 10000,
     },
     {
       Material: "Airtech PETG-GF",
@@ -2262,7 +2268,7 @@ function initializeDefaultHeatingProfiles() {
       Bottom: 150,
       Nozzle: 160,
       Bed: 40,
-      Cnc: 18000,
+      Cnc: 10000,
     },
     {
       Material: "Default PETG",
@@ -2271,7 +2277,7 @@ function initializeDefaultHeatingProfiles() {
       Bottom: 160,
       Nozzle: 205,
       Bed: 50,
-      Cnc: 18000,
+      Cnc: 10000,
     },
     {
       Material: "Default PC",
@@ -2280,7 +2286,7 @@ function initializeDefaultHeatingProfiles() {
       Bottom: 250,
       Nozzle: 270,
       Bed: 100,
-      Cnc: 18000,
+      Cnc: 10000,
     },
     {
       Material: "Default PP",
@@ -2289,7 +2295,7 @@ function initializeDefaultHeatingProfiles() {
       Bottom: 200,
       Nozzle: 210,
       Bed: 90,
-      Cnc: 18000,
+      Cnc: 10000,
     },
     {
       Material: "Default ABS",
@@ -2298,7 +2304,7 @@ function initializeDefaultHeatingProfiles() {
       Bottom: 200,
       Nozzle: 210,
       Bed: 100,
-      Cnc: 18000,
+      Cnc: 10000,
     },
   ];
   localStorage.setItem(
