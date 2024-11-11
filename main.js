@@ -505,6 +505,9 @@ function updateObjectModel() {
               document.getElementById("indicatorText").textContent = "Spindle is Ready";
               document.getElementById("indicatorLight").style.backgroundColor = "Green";
               // Stop Spindle is handled in .stop-text class which is hidden by default
+            } else {
+              document.getElementById("indicatorText").textContent = "Caution: Spindle is Running";
+              document.getElementById("indicatorLight").style.backgroundColor = "Red";
             }
           } else {
               document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
