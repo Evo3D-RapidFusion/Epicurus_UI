@@ -501,7 +501,7 @@ function updateObjectModel() {
 
           document.querySelector(".start-text").textContent = "▶ Start Spindle";
           if (data.global.EstopFault === false && data.global.CNCFault === false) {
-            if (spindleOff === false) {
+            if (spindleRunning == false) {
               document.getElementById("indicatorText").textContent = "Spindle is Ready";
               document.getElementById("indicatorLight").style.backgroundColor = "Green";
               // Stop Spindle is handled in .stop-text class which is hidden by default
