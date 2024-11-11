@@ -1226,6 +1226,7 @@ function enableDeveloperSettings() {
 // Reset CNC UI
 function resetCNCUI() {
   sendGcode(`M5`);
+  spindleRunning = false;
   confirmationModal.style.display = 'none';
   slider.disabled = true; // Ensure slider is disabled on page load
   speedControlTitle.textContent = 'Speed Control Locked'; // Set initial state to locked
