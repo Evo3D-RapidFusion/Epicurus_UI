@@ -1222,10 +1222,10 @@ document.addEventListener("DOMContentLoaded", function () {
   loadTempsOnEdit();
 
   sendGcode(`M5`);
-
-  // Update Object Model every 0.5 seconds
-  setInterval(update, 500);
 });
+
+// Update Object Model every 0.5 seconds
+setInterval(update, 500);
 
 // ================================================ Github Repo =================================================
 
