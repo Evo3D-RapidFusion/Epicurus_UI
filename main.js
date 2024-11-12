@@ -1126,6 +1126,13 @@ settings = loadSettings();
 // Update Object Model every 0.5 seconds
 setInterval(update, 500);
 
+// Initialise heating profiles on startup
+heatProfiles = loadHeatingProfiles();
+updateHeatingProfiles();
+loadTempsOnEdit();
+
+sendGcode(`M5`);
+
 document.addEventListener("DOMContentLoaded", function () { 
   // Fetch Software Version - GitHub Release Tags from tags.txt [LOCAL]
   fetchLatestTag();
@@ -1177,13 +1184,6 @@ document.addEventListener("DOMContentLoaded", function () {
   //       document.getElementById('heatsink-fan-main-text').textContent = element.textContent;
   //     })
   //   );
-
-  // Initialise heating profiles on startup
-  heatProfiles = loadHeatingProfiles();
-  updateHeatingProfiles();
-  loadTempsOnEdit();
-
-  sendGcode(`M5`);
 });
 
 // ================================================ Github Repo =================================================
