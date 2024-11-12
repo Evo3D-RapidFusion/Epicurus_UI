@@ -1136,13 +1136,6 @@ for (let i = 0; i < defaultNumOfBedHeaters; i++) {
 // Update Object Model every 0.5 seconds
 setInterval(update, 500);
 
-// Initialise heating profiles on startup
-heatProfiles = loadHeatingProfiles();
-updateHeatingProfiles();
-loadTempsOnEdit();
-
-sendGcode(`M5`);
-
 document.addEventListener("DOMContentLoaded", function () { 
   // Select Default Tabs on page load
   document.getElementById("default-tab").click();
@@ -1168,13 +1161,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
   document.getElementById("fault-warning-container").classList.add("flash");  // Add flashing effect
 
-  // document
-  //   .querySelectorAll(`.fan-dropdown-list .fan-dropdown-content-text`)
-  //   .forEach((element, index) =>
-  //     element.addEventListener("click", () => {
-  //       document.getElementById('heatsink-fan-main-text').textContent = element.textContent;
-  //     })
-  //   );
+  // Initialise heating profiles on startup
+  heatProfiles = loadHeatingProfiles();
+  updateHeatingProfiles();
+  loadTempsOnEdit();
+
+  sendGcode(`M5`);
 });
 
 // Ensure fetchLatestTag is called on window load
