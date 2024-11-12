@@ -1144,9 +1144,6 @@ loadTempsOnEdit();
 sendGcode(`M5`);
 
 document.addEventListener("DOMContentLoaded", function () { 
-  // Fetch Software Version - GitHub Release Tags from tags.txt [LOCAL]
-  fetchLatestTag();
-
   // Select Default Tabs on page load
   document.getElementById("default-tab").click();
   document.getElementById("system-info").click();
@@ -1179,6 +1176,11 @@ document.addEventListener("DOMContentLoaded", function () {
   //     })
   //   );
 });
+
+// Ensure fetchLatestTag is called on window load
+window.onload = function() {
+  fetchLatestTag();
+};
 
 // ================================================ Github Repo =================================================
 
