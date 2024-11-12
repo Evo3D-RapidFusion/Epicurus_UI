@@ -16,6 +16,48 @@ let selectedHeatsinkFan = "0";
 let selectedBarrelFan = "0";
 // let spindleRunning = false; // already declared in embedded code
 
+// ========================================== Fetch Machine Status with Fallback URLs ========================================
+// Global variables for machine status and code URLs
+const LOCAL_STATUS_URL = "http://localhost/machine/status";
+const REMOTE_STATUS_URL = "https://192.168.1.64/machine/status";
+const LOCAL_CODE_URL = "http://localhost/machine/code";
+const REMOTE_CODE_URL = "https://192.168.1.64/machine/code";
+
+// Global variables to store the actual URLs in use
+let activeStatusURL = "";
+let activeCodeURL = "";
+
+// FUNCTION: Fetch machine status and set the appropriate active URLs
+function fetchMachineStatus() {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Attempt to fetch data from the local status URL
+      const statusData = await fetchData(LOCAL_STATUS_URL);
+
+      // If local status is available, set the active URLs to local
+      activeStatusURL = LOCAL_STATUS_URL;
+      activeCodeURL = LOCAL_CODE_URL;
+
+      resolve(statusData); // Return the fetched data
+    } catch (error) {
+      console.log(`${LOCAL_STATUS_URL} is not accessible. Falling back to ${REMOTE_STATUS_URL}.`);
+
+      try {
+        // Attempt to fetch data from the remote status URL
+        const statusData = await fetchData(REMOTE_STATUS_URL);
+        
+        // If remote status is used, set the active URLs to remote
+        activeStatusURL = REMOTE_STATUS_URL;
+        activeCodeURL = REMOTE_CODE_URL;
+
+        resolve(statusData); // Return the fetched data
+      } catch (error) {
+        reject("Failed to fetch machine status from both local and remote URLs.");
+      }
+    }
+  });
+}
+
 // ========================================== HTTP requests with Duet Mainboard ========================================
 
 // FUNCTION: HTTPS async GET/POST requests to Duet Mainboard
@@ -1115,27 +1157,33 @@ function initializeDefaultSettings() {
 
 // ================================================ Page Load Settings =================================================
 
-// Load temperature settings on page load
-settings = loadSettings();
-
-// Hide beds in temp popup on startup
-var elements = document.querySelectorAll(".temp-tab-link.heater");
-for (var i = 4; i < elements.length; i++) {
-  elements[i].style.display = "none";
-}
-
-// Hide beds in bed temperatures on startup
-for (let i = 0; i < defaultNumOfBedHeaters; i++) {
-  document
-    .querySelectorAll(`.bed${i}`)
-    .forEach((element) => (element.style.visibility = "hidden"));
-}
-
-// Update Object Model every 0.5 seconds
-setInterval(update, 500);
-
 // Triggers on Page Load
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
+  // Fetch Machine Status - LOCAL or REMOTE
+  fetchMachineStatus();
+
+  // Fetch Software Version - GitHub Release Tags from tags.txt [LOCAL]
+  fetchLatestTag();
+
+  // Load temperature settings on page load
+  settings = loadSettings();
+
+  // Hide beds in temp popup on startup
+  var elements = document.querySelectorAll(".temp-tab-link.heater");
+  for (var i = 4; i < elements.length; i++) {
+    elements[i].style.display = "none";
+  }
+
+  // Hide beds in bed temperatures on startup
+  for (let i = 0; i < defaultNumOfBedHeaters; i++) {
+    document
+      .querySelectorAll(`.bed${i}`)
+      .forEach((element) => (element.style.visibility = "hidden"));
+  }
+
+  // Update Object Model every 0.5 seconds
+  setInterval(update, 500);
+
   // Select Default Tabs on page load
   document.getElementById("default-tab").click();
   document.getElementById("system-info").click();
@@ -1170,14 +1218,14 @@ document.addEventListener("DOMContentLoaded", function() {
   //       document.getElementById('heatsink-fan-main-text').textContent = element.textContent;
   //     })
   //   );
+
+  // Initialise heating profiles on startup
+  heatProfiles = loadHeatingProfiles();
+  updateHeatingProfiles();
+  loadTempsOnEdit();
+
+  sendGcode(`M5`);
 });
-
-// Initialise heating profiles on startup
-heatProfiles = loadHeatingProfiles();
-updateHeatingProfiles();
-loadTempsOnEdit();
-
-sendGcode(`M5`);
 
 // ================================================ Github Repo =================================================
 
@@ -1225,10 +1273,6 @@ async function fetchLatestVersion() {
       document.getElementById("software-version").textContent = 'Failed to fetch version from GitHub';
   }
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  fetchLatestTag();
-});
 
 // ================================================ Developer Settings =================================================
 
