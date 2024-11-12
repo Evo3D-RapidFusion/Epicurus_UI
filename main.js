@@ -92,7 +92,7 @@ async function fetchData(url, options) {
 function updateObjectModel() {
   return new Promise(async (resolve, reject) => {
     try {
-      const data = await fetchData("http://localhost/machine/status"); // HTTPS (Self-Signed SSL Certificate)
+      const data = await fetchData(activeStatusURL); // HTTPS (Self-Signed SSL Certificate)
 
       // FUNCTION: Find configured heaters in Duet Object Model
       function findHeaters(targetObject) {
@@ -918,7 +918,7 @@ async function sendCommandsOnce() {
 async function sendGcode(gcode) {
   while (true) {
     try {
-      const response = await fetchData("http://localhost/machine/code", {
+      const response = await fetchData(activeCodeURL, {
         method: "POST",
         headers: {
           "Content-Type": "text/plain",
