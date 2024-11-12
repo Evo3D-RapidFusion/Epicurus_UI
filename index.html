@@ -50,13 +50,13 @@
   
     // Load resources from localhost
     function loadLocalResources() {
-      loadScript('http://localhost:8080/jquery/jquery-3.7.1.min.js', false, function() {
+      loadScript('http://localhost:8080/jquery/jquery-3.7.1.min.js', true, function() {
         console.log('jQuery loaded successfully');
-        loadScript('http://localhost:8080/keyboard/jquery.keyboard.js', false); // Local keyboard (no defer)
+        loadScript('http://localhost:8080/keyboard/jquery.keyboard.js', true); // Local keyboard (no defer)
       });
       loadCSS('http://localhost:8080/keyboard/keyboard-dark.css');
       loadCSS('http://localhost:8080/styles.css');
-      loadScript('http://localhost:8080/main.js', false); // No defer for main.js
+      loadScript('http://localhost:8080/main.js', true); // No defer for main.js
       activeStatusURL = LOCAL_STATUS_URL;
       activeCodeURL = LOCAL_CODE_URL;
       console.log('Using local machine status data');
@@ -64,13 +64,13 @@
   
     // Load fallback resources (external)
     function loadFallbackResources() {
-      loadScript('https://code.jquery.com/jquery-3.7.1.min.js', false, function() {
+      loadScript('https://code.jquery.com/jquery-3.7.1.min.js', true, function() {
         console.log('jQuery loaded successfully');
-        loadScript('https://fk6x9w-5000.csb.app/keyboard/jquery.keyboard.js', false); // Remote keyboard (no defer)
+        loadScript('https://fk6x9w-5000.csb.app/keyboard/jquery.keyboard.js', true); // Remote keyboard (no defer)
       });
       loadCSS('https://fk6x9w-5000.csb.app/keyboard/keyboard-dark.css');
       loadCSS('https://fk6x9w-5000.csb.app/styles.css');
-      loadScript('https://fk6x9w-5000.csb.app/main.js', false); // No defer for main.js
+      loadScript('https://fk6x9w-5000.csb.app/main.js', true); // No defer for main.js
       activeStatusURL = REMOTE_STATUS_URL;
       activeCodeURL = REMOTE_CODE_URL;
       console.log('Using remote machine status data');
