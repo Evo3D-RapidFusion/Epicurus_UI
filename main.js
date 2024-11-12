@@ -17,46 +17,103 @@ let selectedBarrelFan = "0";
 // let spindleRunning = false; // already declared in embedded code
 
 // ========================================== Fetch Machine Status with Fallback URLs ========================================
-// Global variables for machine status and code URLs
+// Global variables for URLs
 const LOCAL_STATUS_URL = "http://localhost/machine/status";
 const REMOTE_STATUS_URL = "https://192.168.1.64/machine/status";
 const LOCAL_CODE_URL = "http://localhost/machine/code";
 const REMOTE_CODE_URL = "https://192.168.1.64/machine/code";
 
-// Global variables to store the actual URLs in use
+// Global variables for active URLs
 let activeStatusURL = "";
 let activeCodeURL = "";
 
-// FUNCTION: Fetch machine status and set the appropriate active URLs
-function fetchMachineStatus() {
-  return new Promise(async (resolve, reject) => {
-    try {
-      // Attempt to fetch data from the local status URL
-      const statusData = await fetchData(LOCAL_STATUS_URL);
+// FUNCTION: Check if localhost:8080 is accessible
+async function isLocalhostAccessible() {
+  try {
+    const response = await fetch('http://localhost:8080', { method: 'HEAD' });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
 
-      // If local status is available, set the active URLs to local
-      activeStatusURL = LOCAL_STATUS_URL;
-      activeCodeURL = LOCAL_CODE_URL;
-
-      resolve(statusData); // Return the fetched data
-    } catch (error) {
-      console.log(`${LOCAL_STATUS_URL} is not accessible. Falling back to ${REMOTE_STATUS_URL}.`);
-
-      try {
-        // Attempt to fetch data from the remote status URL
-        const statusData = await fetchData(REMOTE_STATUS_URL);
-        
-        // If remote status is used, set the active URLs to remote
-        activeStatusURL = REMOTE_STATUS_URL;
-        activeCodeURL = REMOTE_CODE_URL;
-
-        resolve(statusData); // Return the fetched data
-      } catch (error) {
-        reject("Failed to fetch machine status from both local and remote URLs.");
-      }
+// FUNCTION: Load resources based on localhost availability
+function loadResources() {
+  isLocalhostAccessible().then(isAccessible => {
+    if (isAccessible) {
+      loadLocalResources();
+    } else {
+      loadFallbackResources();
     }
   });
 }
+
+// Load resources from localhost
+function loadLocalResources() {
+  loadScript('http://localhost:8080/keyboard/jquery.keyboard.js');
+  loadCSS('http://localhost:8080/keyboard/keyboard-dark.css');
+  loadCSS('http://localhost:8080/styles.css');
+  loadScript('http://localhost:8080/main.js');
+}
+
+// Load fallback resources (external)
+function loadFallbackResources() {
+  loadScript('https://fk6x9w-5000.csb.app/keyboard/jquery.keyboard.js');
+  loadCSS('https://fk6x9w-5000.csb.app/keyboard/keyboard-dark.css');
+  loadCSS('https://fk6x9w-5000.csb.app/styles.css');
+  loadScript('https://fk6x9w-5000.csb.app/main.js');
+}
+
+// Helper function to load JavaScript
+function loadScript(src) {
+  const script = document.createElement('script');
+  script.src = src;
+  script.defer = true;
+  document.head.appendChild(script);
+}
+
+// Helper function to load CSS
+function loadCSS(href) {
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = href;
+  link.defer = true;
+  document.head.appendChild(link);
+}
+
+// FUNCTION: Fetch machine status and set active URLs
+function fetchMachineStatus() {
+  return fetchData(LOCAL_STATUS_URL)
+    .then(statusData => {
+      activeStatusURL = LOCAL_STATUS_URL;
+      activeCodeURL = LOCAL_CODE_URL;
+      return statusData;
+    })
+    .catch(() => fetchData(REMOTE_STATUS_URL).then(statusData => {
+      activeStatusURL = REMOTE_STATUS_URL;
+      activeCodeURL = REMOTE_CODE_URL;
+      return statusData;
+    }));
+}
+
+// FUNCTION: Fetch data from a given URL
+function fetchData(url) {
+  return fetch(url)
+    .then(response => response.ok ? response.json() : Promise.reject())
+    .catch(() => Promise.reject('Failed to fetch data'));
+}
+
+// Execute the functions when the DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  // Load resources based on availability
+  loadResources();
+  
+  // Fetch machine status and log the result or handle error
+  fetchMachineStatus()
+    .then(statusData => console.log("Machine status fetched:", statusData))
+    .catch(error => console.error("Error fetching machine status:", error));
+});
+
 
 // ========================================== HTTP requests with Duet Mainboard ========================================
 
@@ -1157,13 +1214,19 @@ function initializeDefaultSettings() {
 
 // ================================================ Page Load Settings =================================================
 
-// Triggers on Page Load
 document.addEventListener("DOMContentLoaded", function () {
   // Fetch Machine Status - LOCAL or REMOTE
   fetchMachineStatus();
 
   // Fetch Software Version - GitHub Release Tags from tags.txt [LOCAL]
   fetchLatestTag();
+
+  // Update Object Model every 0.5 seconds
+  setInterval(update, 500);
+});
+
+// Triggers on Full Page load (including all external resources)
+window.onload = function() {
 
   // Load temperature settings on page load
   settings = loadSettings();
@@ -1222,10 +1285,7 @@ document.addEventListener("DOMContentLoaded", function () {
   loadTempsOnEdit();
 
   sendGcode(`M5`);
-});
-
-// Update Object Model every 0.5 seconds
-setInterval(update, 500);
+};
 
 // ================================================ Github Repo =================================================
 
