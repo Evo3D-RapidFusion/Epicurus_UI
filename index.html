@@ -1,4 +1,4 @@
-<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Tue Nov 12 2024 11:51:35 GMT+0000 (Coordinated Universal Time)  -->
+<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Tue Nov 12 2024 11:55:11 GMT+0000 (Coordinated Universal Time)  -->
 <html data-wf-page="6655b5b32a1c6ab9c376d69a" data-wf-site="6655b5b32a1c6ab9c376d696">
 <head>
   <meta charset="utf-8">
@@ -37,8 +37,10 @@
   function loadResources() {
     isLocalhostAccessible().then(isAccessible => {
       if (isAccessible) {
+        console.log('Using local resources');
         loadLocalResources();
       } else {
+        console.log('Using remote resources');
         loadFallbackResources();
       }
     });
@@ -80,11 +82,13 @@
       .then(statusData => {
         activeStatusURL = LOCAL_STATUS_URL;
         activeCodeURL = LOCAL_CODE_URL;
+        console.log('Using local machine status data');
         return statusData;
       })
       .catch(() => fetchJsonData(REMOTE_STATUS_URL).then(statusData => {
         activeStatusURL = REMOTE_STATUS_URL;
         activeCodeURL = REMOTE_CODE_URL;
+        console.log('Using remote machine status data');
         return statusData;
       }));
   }
