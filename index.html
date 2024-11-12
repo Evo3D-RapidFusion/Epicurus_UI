@@ -1,4 +1,4 @@
-<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Tue Nov 12 2024 11:40:23 GMT+0000 (Coordinated Universal Time)  -->
+<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Tue Nov 12 2024 11:51:35 GMT+0000 (Coordinated Universal Time)  -->
 <html data-wf-page="6655b5b32a1c6ab9c376d69a" data-wf-site="6655b5b32a1c6ab9c376d696">
 <head>
   <meta charset="utf-8">
@@ -45,6 +45,7 @@
   }
   // Load resources from localhost
   function loadLocalResources() {
+    loadScript('http://localhost:8080/jquery/jquery-3.7.1.min.js'); // Local jQuery
     loadScript('http://localhost:8080/keyboard/jquery.keyboard.js');
     loadCSS('http://localhost:8080/keyboard/keyboard-dark.css');
     loadCSS('http://localhost:8080/styles.css');
@@ -52,6 +53,7 @@
   }
   // Load fallback resources (external)
   function loadFallbackResources() {
+    loadScript('https://code.jquery.com/jquery-3.7.1.min.js'); // Remote jQuery
     loadScript('https://fk6x9w-5000.csb.app/keyboard/jquery.keyboard.js');
     loadCSS('https://fk6x9w-5000.csb.app/keyboard/keyboard-dark.css');
     loadCSS('https://fk6x9w-5000.csb.app/styles.css');
@@ -605,6 +607,7 @@
     <div class="header-container">
       <div id="fault-warning-container" data-w-id="d052e957-a8c2-24bc-71ce-363a07c9ca73" style="display:none" class="fault-warning-container">
         <div class="fault-heading">WARNING: </div>
+        <div id="fault-condition-1" data-w-id="2af04230-0696-b8e4-7ea0-4d0195eeea72" style="display:none" class="fault-heading">Fault Condition 1</div>
         <div id="fault-condition-2" data-w-id="3239df9e-5f28-8c5e-c4e6-edc73e4cccaf" style="display:none" class="fault-heading">Fault Condition 2</div>
       </div>
       <div id="open-settings" data-w-id="de5ced2d-2f10-5732-7642-8aa5befbd3cd" class="settings-icon"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewbox="0 0 1024 1024" app="ikonik" class="ikonik-1ibmf">
