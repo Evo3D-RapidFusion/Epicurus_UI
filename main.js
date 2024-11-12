@@ -1212,10 +1212,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Update Object Model every 0.5 seconds
   setInterval(update, 500);
-});
-
-// Triggers on Full Page load (including all external resources)
-window.onload = function() {
 
   // Load temperature settings on page load
   settings = loadSettings();
@@ -1274,7 +1270,7 @@ window.onload = function() {
   loadTempsOnEdit();
 
   sendGcode(`M5`);
-};
+});
 
 // ================================================ Github Repo =================================================
 
