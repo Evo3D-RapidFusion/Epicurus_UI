@@ -1,4 +1,4 @@
-<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Tue Nov 12 2024 12:02:32 GMT+0000 (Coordinated Universal Time)  -->
+<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Tue Nov 12 2024 12:16:10 GMT+0000 (Coordinated Universal Time)  -->
 <html data-wf-page="6655b5b32a1c6ab9c376d69a" data-wf-site="6655b5b32a1c6ab9c376d696">
 <head>
   <meta charset="utf-8">
@@ -52,6 +52,9 @@
     loadCSS('http://localhost:8080/keyboard/keyboard-dark.css');
     loadCSS('http://localhost:8080/styles.css');
     loadScript('http://localhost:8080/main.js');
+    activeStatusURL = LOCAL_STATUS_URL;
+    activeCodeURL = LOCAL_CODE_URL;
+    console.log('Using local machine status data');
   }
   // Load fallback resources (external)
   function loadFallbackResources() {
@@ -60,6 +63,9 @@
     loadCSS('https://fk6x9w-5000.csb.app/keyboard/keyboard-dark.css');
     loadCSS('https://fk6x9w-5000.csb.app/styles.css');
     loadScript('https://fk6x9w-5000.csb.app/main.js');
+    activeStatusURL = REMOTE_STATUS_URL;
+    activeCodeURL = REMOTE_CODE_URL;
+    console.log('Using remote machine status data');
   }
   // Helper function to load JavaScript
   function loadScript(src) {
@@ -75,28 +81,6 @@
     link.href = href;
     link.defer = true;
     document.head.appendChild(link);
-  }
-  // FUNCTION: Fetch machine status and set active URLs
-  function fetchMachineStatus() {
-    return fetchJsonData(LOCAL_STATUS_URL)
-      .then(statusData => {
-        activeStatusURL = LOCAL_STATUS_URL;
-        activeCodeURL = LOCAL_CODE_URL;
-        console.log('Using local machine status data');
-        return statusData;
-      })
-      .catch(() => fetchJsonData(REMOTE_STATUS_URL).then(statusData => {
-        activeStatusURL = REMOTE_STATUS_URL;
-        activeCodeURL = REMOTE_CODE_URL;
-        console.log('Using remote machine status data');
-        return statusData;
-      }));
-  }
-  // FUNCTION: Fetch JSON data from a given URL
-  function fetchJsonData(url) {
-    return fetch(url)
-      .then(response => response.ok ? response.json() : Promise.reject())
-      .catch(() => Promise.reject('Failed to fetch data'));
   }
   // Immediately execute the functions when the script is loaded
   loadResources();

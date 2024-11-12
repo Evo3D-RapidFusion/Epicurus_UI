@@ -1203,19 +1203,19 @@ function initializeDefaultSettings() {
 
 // ================================================ Page Load Settings =================================================
 
+// Fetch Machine Status - LOCAL or REMOTE
+fetchMachineStatus();
+
+// Fetch Software Version - GitHub Release Tags from tags.txt [LOCAL]
+fetchLatestTag();
+
+// Update Object Model every 0.5 seconds
+setInterval(update, 500);
+
+// Load temperature settings on page load
+settings = loadSettings();
+
 document.addEventListener("DOMContentLoaded", function () {
-  // Fetch Machine Status - LOCAL or REMOTE
-  fetchMachineStatus();
-
-  // Fetch Software Version - GitHub Release Tags from tags.txt [LOCAL]
-  fetchLatestTag();
-
-  // Update Object Model every 0.5 seconds
-  setInterval(update, 500);
-
-  // Load temperature settings on page load
-  settings = loadSettings();
-
   // Hide beds in temp popup on startup
   var elements = document.querySelectorAll(".temp-tab-link.heater");
   for (var i = 4; i < elements.length; i++) {
