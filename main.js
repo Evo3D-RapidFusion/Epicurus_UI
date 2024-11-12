@@ -535,6 +535,10 @@ function updateObjectModel() {
         document.getElementById("fault-condition-2").textContent = "Spindle Motor Fault";
         document.getElementById("fault-condition-2").style.display = "flex";
         document.getElementById("fault-warning-container").style.display = "flex";
+      } else if (data.global.toolState === "No Tool" || data.global.toolState === "Open Circuit" || data.global.toolState === "Short Circuit") {
+        document.getElementById("fault-condition-1").textContent = data.global.toolState;
+        document.getElementById("fault-condition-1").style.display = "flex";
+        document.getElementById("fault-warning-container").style.display = "flex";
       } else {
         document.getElementById("fault-condition-1").style.display = "none";
         document.getElementById("fault-condition-2").style.display = "none";
@@ -1209,13 +1213,6 @@ setInterval(update, 500);
 // Load temperature settings on page load
 settings = loadSettings();
 
-// Initialise heating profiles on startup
-heatProfiles = loadHeatingProfiles();
-updateHeatingProfiles();
-loadTempsOnEdit();
-
-sendGcode(`M5`);
-
 document.addEventListener("DOMContentLoaded", function () {
   // Fetch Software Version - GitHub Release Tags from tags.txt [LOCAL]
   fetchLatestTag();
@@ -1253,7 +1250,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     .flash {
-      animation: flash 1s infinite;
+      animation: flash 2s infinite;
     }
   `;
   document.head.appendChild(style);
@@ -1267,6 +1264,13 @@ document.addEventListener("DOMContentLoaded", function () {
   //       document.getElementById('heatsink-fan-main-text').textContent = element.textContent;
   //     })
   //   );
+  
+  // Initialise heating profiles on startup
+  heatProfiles = loadHeatingProfiles();
+  updateHeatingProfiles();
+  loadTempsOnEdit();
+
+  sendGcode(`M5`);
 });
 
 // ================================================ Github Repo =================================================
