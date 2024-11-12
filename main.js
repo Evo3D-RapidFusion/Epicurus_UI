@@ -1117,11 +1117,21 @@ function initializeDefaultSettings() {
 
 // ================================================ Page Load Settings =================================================
 
-// Update Object Model immediately on page load
-updateObjectModel();
-
 // Load temperature settings on page load
 settings = loadSettings();
+
+// Hide beds in temp popup on startup
+var elements = document.querySelectorAll(".temp-tab-link.heater");
+for (var i = 4; i < elements.length; i++) {
+  elements[i].style.display = "none";
+}
+
+// Hide beds in bed temperatures on startup
+for (let i = 0; i < defaultNumOfBedHeaters; i++) {
+  document
+    .querySelectorAll(`.bed${i}`)
+    .forEach((element) => (element.style.visibility = "hidden"));
+}
 
 // Update Object Model every 0.5 seconds
 setInterval(update, 500);
@@ -1137,25 +1147,9 @@ document.addEventListener("DOMContentLoaded", function () {
   // Fetch Software Version - GitHub Release Tags from tags.txt [LOCAL]
   fetchLatestTag();
 
-  // Hide beds in temp popup on startup
-  var elements = document.querySelectorAll(".temp-tab-link.heater");
-  for (var i = 4; i < elements.length; i++) {
-    elements[i].style.display = "none";
-  }
-
-  // Hide beds in bed temperatures on startup
-  for (let i = 0; i < defaultNumOfBedHeaters; i++) {
-    document
-      .querySelectorAll(`.bed${i}`)
-      .forEach((element) => (element.style.visibility = "hidden"));
-  }
-
   // Select Default Tabs on page load
   document.getElementById("default-tab").click();
   document.getElementById("system-info").click();
-
-  // Update Object Model immediately on page load
-  updateObjectModel();
 
   // Call the function to set up the click listener
   enableDeveloperSettings();
