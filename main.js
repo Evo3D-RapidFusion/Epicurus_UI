@@ -1117,16 +1117,16 @@ function initializeDefaultSettings() {
 
 // ================================================ Page Load Settings =================================================
 
-document.addEventListener("DOMContentLoaded", function () {
-    // Update Object Model immediately on page load
-  updateObjectModel();
+// Update Object Model immediately on page load
+updateObjectModel();
 
-  // Load temperature settings on page load
-  settings = loadSettings();
+// Load temperature settings on page load
+settings = loadSettings();
 
-  // Update Object Model every 0.5 seconds
-  setInterval(update, 500);
-  
+// Update Object Model every 0.5 seconds
+setInterval(update, 500);
+
+document.addEventListener("DOMContentLoaded", function () { 
   // Fetch Software Version - GitHub Release Tags from tags.txt [LOCAL]
   fetchLatestTag();
 
