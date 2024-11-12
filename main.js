@@ -433,9 +433,25 @@ function updateObjectModel() {
         popup.style.display = "none"; // Disable popup
       }      
 
-      // Fault Detection - PE320 Servo Drive Fault Popup
-      // if (data.global.ExtruderFault === true) {
-      // }
+      // Major Fault Detection - Extruder Servo & Spindle Motor
+      // JavaScript to control the visibility and flashing effect
+      if (data.global.ExtruderFault === false && data.global.CNCFault === false) {
+        document.getElementById("fault-warning-container").style.display = "none";
+      } else {
+        if (data.global.ExtruderFault === true) {
+          document.getElementById("fault-condition-1").textContent = "Extruder Servo Fault";
+          document.getElementById("fault-condition-1").style.display = "flex";
+        } else {
+          document.getElementById("fault-condition-1").style.display = "none";
+        }
+        if (data.global.CNCFault === true) {
+          document.getElementById("fault-condition-2").textContent = "Spindle Motor Fault";
+          document.getElementById("fault-condition-2").style.display = "flex";
+        } else {
+          document.getElementById("fault-condition-2").style.display = "none";
+        }
+        document.getElementById("fault-warning-container").style.display = "flex";
+      }
 
       // Fault Detection - CNC Mill Fault Popup
       if (data.global.CNCFault === true) {
@@ -1129,6 +1145,23 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // Call the function to set up the click listener
   enableDeveloperSettings();
+
+  // Add the CSS for flashing effect dynamically
+  const style = document.createElement('style');
+  style.innerHTML = `
+    @keyframes flash {
+      0% { opacity: 1; }
+      50% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    .flash {
+      animation: flash 1s infinite;
+    }
+  `;
+  document.head.appendChild(style);
+
+  document.getElementById("fault-warning-container").classList.add("flash");  // Add flashing effect
 
   // document
   //   .querySelectorAll(`.fan-dropdown-list .fan-dropdown-content-text`)

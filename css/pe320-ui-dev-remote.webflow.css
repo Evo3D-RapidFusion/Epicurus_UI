@@ -703,16 +703,16 @@ img {
   display: flex;
 }
 
-.tab-pane-extruder-temp {
+.tab-pane-extruder-control {
   flex: 1;
   height: 760px;
 }
 
-.tab-pane-material-profiles, .tab-pane-material-data, .tab-pane-bed-temp {
+.tab-pane-material-profiles, .tab-pane-material-data, .tab-pane-bed-control {
   flex: 1;
 }
 
-.tab-pane-slice {
+.tab-pane-aisync-slicer {
   flex: 1;
   height: 740px;
 }
@@ -2341,7 +2341,7 @@ img {
 }
 
 .e-stop-popup-space {
-  z-index: 2000;
+  z-index: 1900;
   -webkit-backdrop-filter: blur(5px);
   backdrop-filter: blur(5px);
   width: 100%;
@@ -2962,8 +2962,36 @@ img {
   display: flex;
 }
 
-.hot-surface-icon, .cutting-warning-icon {
+.hot-surface-icon {
   height: 36px;
+}
+
+.cutting-warning-icon {
+  height: 40px;
+}
+
+.fault-heading {
+  color: red;
+  text-align: center;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-family: Roboto, sans-serif;
+  font-size: 32px;
+  font-weight: 500;
+  position: static;
+  inset: 0% 0% 0% auto;
+}
+
+.header-container {
+  grid-column-gap: 50px;
+  grid-row-gap: 50px;
+  display: flex;
+}
+
+.fault-warning-container {
+  grid-column-gap: 20px;
+  grid-row-gap: 20px;
+  display: flex;
 }
 
 
