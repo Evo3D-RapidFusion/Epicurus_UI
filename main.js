@@ -1212,6 +1212,13 @@ setInterval(update, 500);
 // Load temperature settings on page load
 settings = loadSettings();
 
+// Initialise heating profiles on startup
+heatProfiles = loadHeatingProfiles();
+updateHeatingProfiles();
+loadTempsOnEdit();
+
+sendGcode(`M5`);
+
 document.addEventListener("DOMContentLoaded", function () {
   // Hide beds in temp popup on startup
   var elements = document.querySelectorAll(".temp-tab-link.heater");
@@ -1260,13 +1267,6 @@ document.addEventListener("DOMContentLoaded", function () {
   //       document.getElementById('heatsink-fan-main-text').textContent = element.textContent;
   //     })
   //   );
-
-  // Initialise heating profiles on startup
-  heatProfiles = loadHeatingProfiles();
-  updateHeatingProfiles();
-  loadTempsOnEdit();
-
-  sendGcode(`M5`);
 });
 
 // ================================================ Github Repo =================================================
