@@ -1203,9 +1203,6 @@ function initializeDefaultSettings() {
 
 // ================================================ Page Load Settings =================================================
 
-// Fetch Machine Status - LOCAL or REMOTE
-fetchMachineStatus();
-
 // Fetch Software Version - GitHub Release Tags from tags.txt [LOCAL]
 fetchLatestTag();
 
