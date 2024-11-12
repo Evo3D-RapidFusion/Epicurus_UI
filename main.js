@@ -16,6 +16,9 @@ let selectedHeatsinkFan = "0";
 let selectedBarrelFan = "0";
 // let spindleRunning = false; // already declared in embedded code
 
+let activeStatusURL = "http://localhost/machine/status";
+let activeCodeURL = "http://localhost/machine/code";
+
 // ============================= index.html HEADER - Fetch Machine Status with Fallback URLs ===============================
 
 // ========================================== HTTP requests with Duet Mainboard ========================================
