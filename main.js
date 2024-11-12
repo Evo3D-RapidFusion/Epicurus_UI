@@ -1181,9 +1181,6 @@ document.addEventListener("DOMContentLoaded", function () {
       .forEach((element) => (element.style.visibility = "hidden"));
   }
 
-  // Update Object Model every 0.5 seconds
-  setInterval(update, 500);
-
   // Select Default Tabs on page load
   document.getElementById("default-tab").click();
   document.getElementById("system-info").click();
@@ -1225,6 +1222,9 @@ document.addEventListener("DOMContentLoaded", function () {
   loadTempsOnEdit();
 
   sendGcode(`M5`);
+
+  // Update Object Model every 0.5 seconds
+  setInterval(update, 500);
 });
 
 // ================================================ Github Repo =================================================
