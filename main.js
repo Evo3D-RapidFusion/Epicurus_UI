@@ -1203,9 +1203,6 @@ function initializeDefaultSettings() {
 
 // ================================================ Page Load Settings =================================================
 
-// Fetch Software Version - GitHub Release Tags from tags.txt [LOCAL]
-fetchLatestTag();
-
 // Update Object Model every 0.5 seconds
 setInterval(update, 500);
 
@@ -1220,6 +1217,9 @@ loadTempsOnEdit();
 sendGcode(`M5`);
 
 document.addEventListener("DOMContentLoaded", function () {
+  // Fetch Software Version - GitHub Release Tags from tags.txt [LOCAL]
+  fetchLatestTag();
+
   // Hide beds in temp popup on startup
   var elements = document.querySelectorAll(".temp-tab-link.heater");
   for (var i = 4; i < elements.length; i++) {
