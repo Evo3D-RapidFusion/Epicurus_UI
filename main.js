@@ -17,96 +17,6 @@ let selectedBarrelFan = "0";
 // let spindleRunning = false; // already declared in embedded code
 
 // ============================= index.html HEADER - Fetch Machine Status with Fallback URLs ===============================
-// // Global variables for URLs
-// const LOCAL_STATUS_URL = "http://localhost/machine/status";
-// const REMOTE_STATUS_URL = "https://192.168.1.64/machine/status";
-// const LOCAL_CODE_URL = "http://localhost/machine/code";
-// const REMOTE_CODE_URL = "https://192.168.1.64/machine/code";
-// // Global variables for active URLs
-// let activeStatusURL = LOCAL_STATUS_URL;
-// let activeCodeURL = LOCAL_CODE_URL;
-
-// // FUNCTION: Check if localhost:8080/tags.txt exists
-// async function isLocalhostAccessible() {
-//   try {
-//     const response = await fetch('http://localhost:8080/tags.txt', { method: 'HEAD' });
-//     return response.ok;
-//   } catch {
-//     return false;
-//   }
-// }
-
-// // FUNCTION: Load resources based on localhost availability
-// function loadResources() {
-//   isLocalhostAccessible().then(isAccessible => {
-//     if (isAccessible) {
-//       loadLocalResources();
-//     } else {
-//       loadFallbackResources();
-//     }
-//   });
-// }
-
-// // Load resources from localhost
-// function loadLocalResources() {
-//   loadScript('http://localhost:8080/keyboard/jquery.keyboard.js');
-//   loadCSS('http://localhost:8080/keyboard/keyboard-dark.css');
-//   loadCSS('http://localhost:8080/styles.css');
-//   loadScript('http://localhost:8080/main.js');
-// }
-
-// // Load fallback resources (external)
-// function loadFallbackResources() {
-//   loadScript('https://fk6x9w-5000.csb.app/keyboard/jquery.keyboard.js');
-//   loadCSS('https://fk6x9w-5000.csb.app/keyboard/keyboard-dark.css');
-//   loadCSS('https://fk6x9w-5000.csb.app/styles.css');
-//   loadScript('https://fk6x9w-5000.csb.app/main.js');
-// }
-
-// // Helper function to load JavaScript
-// function loadScript(src) {
-//   const script = document.createElement('script');
-//   script.src = src;
-//   script.defer = true;
-//   document.head.appendChild(script);
-// }
-
-// // Helper function to load CSS
-// function loadCSS(href) {
-//   const link = document.createElement('link');
-//   link.rel = 'stylesheet';
-//   link.href = href;
-//   link.defer = true;
-//   document.head.appendChild(link);
-// }
-
-// // FUNCTION: Fetch machine status and set active URLs
-// function fetchMachineStatus() {
-//   return fetchJsonData(LOCAL_STATUS_URL)
-//     .then(statusData => {
-//       activeStatusURL = LOCAL_STATUS_URL;
-//       activeCodeURL = LOCAL_CODE_URL;
-//       return statusData;
-//     })
-//     .catch(() => fetchJsonData(REMOTE_STATUS_URL).then(statusData => {
-//       activeStatusURL = REMOTE_STATUS_URL;
-//       activeCodeURL = REMOTE_CODE_URL;
-//       return statusData;
-//     }));
-// }
-
-// // FUNCTION: Fetch JSON data from a given URL
-// function fetchJsonData(url) {
-//   return fetch(url)
-//     .then(response => response.ok ? response.json() : Promise.reject())
-//     .catch(() => Promise.reject('Failed to fetch data'));
-// }
-
-// // Immediately execute the functions when the script is loaded
-// loadResources();
-// fetchMachineStatus()
-//   .then(statusData => console.log("Machine status fetched:", statusData))
-//   .catch(error => console.error("Error fetching machine status:", error));
 
 // ========================================== HTTP requests with Duet Mainboard ========================================
 
@@ -1207,13 +1117,13 @@ function initializeDefaultSettings() {
 
 // ================================================ Page Load Settings =================================================
 
-// Update Object Model immediately on page load
-updateObjectModel();
-
-// Load temperature settings on page load
-settings = loadSettings();
-
 document.addEventListener("DOMContentLoaded", function () {
+    // Update Object Model immediately on page load
+  updateObjectModel();
+
+  // Load temperature settings on page load
+  settings = loadSettings();
+
   // Update Object Model every 0.5 seconds
   setInterval(update, 500);
   
