@@ -1117,26 +1117,26 @@ function initializeDefaultSettings() {
 
 // ================================================ Page Load Settings =================================================
 
-// Load temperature settings on page load
-settings = loadSettings();
+// Ensure fetchLatestTag is called on window load
+window.onload = function () {
+  // Load temperature settings on page load
+  settings = loadSettings();
 
-// Hide beds in temp popup on startup
-var elements = document.querySelectorAll(".temp-tab-link.heater");
-for (var i = 4; i < elements.length; i++) {
-  elements[i].style.display = "none";
-}
+  // Hide beds in temp popup on startup
+  var elements = document.querySelectorAll(".temp-tab-link.heater");
+  for (var i = 4; i < elements.length; i++) {
+    elements[i].style.display = "none";
+  }
 
-// Hide beds in bed temperatures on startup
-for (let i = 0; i < defaultNumOfBedHeaters; i++) {
-  document
-    .querySelectorAll(`.bed${i}`)
-    .forEach((element) => (element.style.visibility = "hidden"));
-}
+  // Hide beds in bed temperatures on startup
+  for (let i = 0; i < defaultNumOfBedHeaters; i++) {
+    document
+      .querySelectorAll(`.bed${i}`)
+      .forEach((element) => (element.style.visibility = "hidden"));
+  }
 
-// Update Object Model every 0.5 seconds
-setInterval(update, 500);
-
-document.addEventListener("DOMContentLoaded", function () { 
+  // Update Object Model every 0.5 seconds
+  setInterval(update, 500);
   // Select Default Tabs on page load
   document.getElementById("default-tab").click();
   document.getElementById("system-info").click();
@@ -1147,16 +1147,16 @@ document.addEventListener("DOMContentLoaded", function () {
   // Add the CSS for flashing effect dynamically
   const style = document.createElement('style');
   style.innerHTML = `
-    @keyframes flash {
-      0% { opacity: 1; }
-      50% { opacity: 0; }
-      100% { opacity: 1; }
-    }
-
-    .flash {
-      animation: flash 2s infinite;
-    }
-  `;
+     @keyframes flash {
+       0% { opacity: 1; }
+       50% { opacity: 0; }
+       100% { opacity: 1; }
+     }
+ 
+     .flash {
+       animation: flash 2s infinite;
+     }
+   `;
   document.head.appendChild(style);
 
   document.getElementById("fault-warning-container").classList.add("flash");  // Add flashing effect
@@ -1167,10 +1167,7 @@ document.addEventListener("DOMContentLoaded", function () {
   loadTempsOnEdit();
 
   sendGcode(`M5`);
-});
 
-// Ensure fetchLatestTag is called on window load
-window.onload = function() {
   fetchLatestTag();
 };
 
