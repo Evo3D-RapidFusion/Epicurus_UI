@@ -16,21 +16,20 @@ let selectedHeatsinkFan = "0";
 let selectedBarrelFan = "0";
 // let spindleRunning = false; // already declared in embedded code
 
-// ========================================== Fetch Machine Status with Fallback URLs ========================================
+// ============================= index.html HEADER - Fetch Machine Status with Fallback URLs ===============================
 // // Global variables for URLs
 // const LOCAL_STATUS_URL = "http://localhost/machine/status";
 // const REMOTE_STATUS_URL = "https://192.168.1.64/machine/status";
 // const LOCAL_CODE_URL = "http://localhost/machine/code";
 // const REMOTE_CODE_URL = "https://192.168.1.64/machine/code";
-
 // // Global variables for active URLs
-// let activeStatusURL = "";
-// let activeCodeURL = "";
+// let activeStatusURL = LOCAL_STATUS_URL;
+// let activeCodeURL = LOCAL_CODE_URL;
 
-// // FUNCTION: Check if localhost:8080 is accessible
+// // FUNCTION: Check if localhost:8080/tags.txt exists
 // async function isLocalhostAccessible() {
 //   try {
-//     const response = await fetch('http://localhost:8080', { method: 'HEAD' });
+//     const response = await fetch('http://localhost:8080/tags.txt', { method: 'HEAD' });
 //     return response.ok;
 //   } catch {
 //     return false;
@@ -83,37 +82,31 @@ let selectedBarrelFan = "0";
 
 // // FUNCTION: Fetch machine status and set active URLs
 // function fetchMachineStatus() {
-//   return fetchData(LOCAL_STATUS_URL)
+//   return fetchJsonData(LOCAL_STATUS_URL)
 //     .then(statusData => {
 //       activeStatusURL = LOCAL_STATUS_URL;
 //       activeCodeURL = LOCAL_CODE_URL;
 //       return statusData;
 //     })
-//     .catch(() => fetchData(REMOTE_STATUS_URL).then(statusData => {
+//     .catch(() => fetchJsonData(REMOTE_STATUS_URL).then(statusData => {
 //       activeStatusURL = REMOTE_STATUS_URL;
 //       activeCodeURL = REMOTE_CODE_URL;
 //       return statusData;
 //     }));
 // }
 
-// // FUNCTION: Fetch data from a given URL
-// function fetchData(url) {
+// // FUNCTION: Fetch JSON data from a given URL
+// function fetchJsonData(url) {
 //   return fetch(url)
 //     .then(response => response.ok ? response.json() : Promise.reject())
 //     .catch(() => Promise.reject('Failed to fetch data'));
 // }
 
-// // Execute the functions when the DOM is ready
-// document.addEventListener('DOMContentLoaded', () => {
-//   // Load resources based on availability
-//   loadResources();
-  
-//   // Fetch machine status and log the result or handle error
-//   fetchMachineStatus()
-//     .then(statusData => console.log("Machine status fetched:", statusData))
-//     .catch(error => console.error("Error fetching machine status:", error));
-// });
-
+// // Immediately execute the functions when the script is loaded
+// loadResources();
+// fetchMachineStatus()
+//   .then(statusData => console.log("Machine status fetched:", statusData))
+//   .catch(error => console.error("Error fetching machine status:", error));
 
 // ========================================== HTTP requests with Duet Mainboard ========================================
 
@@ -534,22 +527,18 @@ function updateObjectModel() {
 
       // Major Fault Detection - Extruder Servo & Spindle Motor
       // JavaScript to control the visibility and flashing effect
-      if (data.global.ExtruderFault === false && data.global.CNCFault === false) {
-        document.getElementById("fault-warning-container").style.display = "none";
-      } else {
-        if (data.global.ExtruderFault === true) {
-          document.getElementById("fault-condition-1").textContent = "Extruder Servo Fault";
-          document.getElementById("fault-condition-1").style.display = "flex";
-        } else {
-          document.getElementById("fault-condition-1").style.display = "none";
-        }
-        if (data.global.CNCFault === true) {
-          document.getElementById("fault-condition-2").textContent = "Spindle Motor Fault";
-          document.getElementById("fault-condition-2").style.display = "flex";
-        } else {
-          document.getElementById("fault-condition-2").style.display = "none";
-        }
+      if (data.global.toolState === "PE320" && data.global.ExtruderFault === true) {
+        document.getElementById("fault-condition-1").textContent = "Extruder Servo Fault";
+        document.getElementById("fault-condition-1").style.display = "flex";
         document.getElementById("fault-warning-container").style.display = "flex";
+      } else if (data.global.toolState === "CNC" && data.global.CNCFault === true) {
+        document.getElementById("fault-condition-2").textContent = "Spindle Motor Fault";
+        document.getElementById("fault-condition-2").style.display = "flex";
+        document.getElementById("fault-warning-container").style.display = "flex";
+      } else {
+        document.getElementById("fault-condition-1").style.display = "none";
+        document.getElementById("fault-condition-2").style.display = "none";
+        document.getElementById("fault-warning-container").style.display = "none";
       }
 
       // Fault Detection - CNC Mill Fault Popup

@@ -1,4 +1,4 @@
-<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Tue Nov 12 2024 11:14:48 GMT+0000 (Coordinated Universal Time)  -->
+<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Tue Nov 12 2024 11:40:23 GMT+0000 (Coordinated Universal Time)  -->
 <html data-wf-page="6655b5b32a1c6ab9c376d69a" data-wf-site="6655b5b32a1c6ab9c376d696">
 <head>
   <meta charset="utf-8">
@@ -22,12 +22,12 @@
   const LOCAL_CODE_URL = "http://localhost/machine/code";
   const REMOTE_CODE_URL = "https://192.168.1.64/machine/code";
   // Global variables for active URLs
-  let activeStatusURL = "";
-  let activeCodeURL = "";
-  // FUNCTION: Check if localhost:8080 is accessible
+  let activeStatusURL = LOCAL_STATUS_URL;
+  let activeCodeURL = LOCAL_CODE_URL;
+  // FUNCTION: Check if localhost:8080/tags.txt exists
   async function isLocalhostAccessible() {
     try {
-      const response = await fetch('http://localhost:8080', { method: 'HEAD' });
+      const response = await fetch('http://localhost:8080/tags.txt', { method: 'HEAD' });
       return response.ok;
     } catch {
       return false;
@@ -74,33 +74,29 @@
   }
   // FUNCTION: Fetch machine status and set active URLs
   function fetchMachineStatus() {
-    return fetchData(LOCAL_STATUS_URL)
+    return fetchJsonData(LOCAL_STATUS_URL)
       .then(statusData => {
         activeStatusURL = LOCAL_STATUS_URL;
         activeCodeURL = LOCAL_CODE_URL;
         return statusData;
       })
-      .catch(() => fetchData(REMOTE_STATUS_URL).then(statusData => {
+      .catch(() => fetchJsonData(REMOTE_STATUS_URL).then(statusData => {
         activeStatusURL = REMOTE_STATUS_URL;
         activeCodeURL = REMOTE_CODE_URL;
         return statusData;
       }));
   }
-  // FUNCTION: Fetch data from a given URL
-  function fetchData(url) {
+  // FUNCTION: Fetch JSON data from a given URL
+  function fetchJsonData(url) {
     return fetch(url)
       .then(response => response.ok ? response.json() : Promise.reject())
       .catch(() => Promise.reject('Failed to fetch data'));
   }
-  // Execute the functions when the DOM is ready
-  document.addEventListener('DOMContentLoaded', () => {
-    // Load resources based on availability
-    loadResources();
-    // Fetch machine status and log the result or handle error
-    fetchMachineStatus()
-      .then(statusData => console.log("Machine status fetched:", statusData))
-      .catch(error => console.error("Error fetching machine status:", error));
-  });
+  // Immediately execute the functions when the script is loaded
+  loadResources();
+  fetchMachineStatus()
+    .then(statusData => console.log("Machine status fetched:", statusData))
+    .catch(error => console.error("Error fetching machine status:", error));
 </script>
 </head>
 <body class="rapid-fusion-pe-320-ui">
@@ -609,7 +605,6 @@
     <div class="header-container">
       <div id="fault-warning-container" data-w-id="d052e957-a8c2-24bc-71ce-363a07c9ca73" style="display:none" class="fault-warning-container">
         <div class="fault-heading">WARNING: </div>
-        <div id="fault-condition-1" data-w-id="2af04230-0696-b8e4-7ea0-4d0195eeea72" style="display:none" class="fault-heading">Fault Condition 1</div>
         <div id="fault-condition-2" data-w-id="3239df9e-5f28-8c5e-c4e6-edc73e4cccaf" style="display:none" class="fault-heading">Fault Condition 2</div>
       </div>
       <div id="open-settings" data-w-id="de5ced2d-2f10-5732-7642-8aa5befbd3cd" class="settings-icon"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewbox="0 0 1024 1024" app="ikonik" class="ikonik-1ibmf">
