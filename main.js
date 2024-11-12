@@ -1207,13 +1207,16 @@ function initializeDefaultSettings() {
 
 // ================================================ Page Load Settings =================================================
 
-// Update Object Model every 0.5 seconds
-setInterval(update, 500);
+// Update Object Model immediately on page load
+updateObjectModel();
 
 // Load temperature settings on page load
 settings = loadSettings();
 
 document.addEventListener("DOMContentLoaded", function () {
+  // Update Object Model every 0.5 seconds
+  setInterval(update, 500);
+  
   // Fetch Software Version - GitHub Release Tags from tags.txt [LOCAL]
   fetchLatestTag();
 
@@ -1264,7 +1267,7 @@ document.addEventListener("DOMContentLoaded", function () {
   //       document.getElementById('heatsink-fan-main-text').textContent = element.textContent;
   //     })
   //   );
-  
+
   // Initialise heating profiles on startup
   heatProfiles = loadHeatingProfiles();
   updateHeatingProfiles();
