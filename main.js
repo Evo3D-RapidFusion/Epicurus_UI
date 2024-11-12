@@ -1117,33 +1117,33 @@ function initializeDefaultSettings() {
 
 // ================================================ Page Load Settings =================================================
 
-document.addEventListener("DOMContentLoaded", function () {
-  // Load temperature settings on page load
-  settings = loadSettings();
+// Load temperature settings on page load
+settings = loadSettings();
 
-  // Hide beds in temp popup on startup
-  var elements = document.querySelectorAll(".temp-tab-link.heater");
-  for (var i = 4; i < elements.length; i++) {
-    elements[i].style.display = "none";
-  }
+// Hide beds in temp popup on startup
+var elements = document.querySelectorAll(".temp-tab-link.heater");
+for (var i = 4; i < elements.length; i++) {
+  elements[i].style.display = "none";
+}
 
-  // Hide beds in bed temperatures on startup
-  for (let i = 0; i < defaultNumOfBedHeaters; i++) {
-    document
-      .querySelectorAll(`.bed${i}`)
-      .forEach((element) => (element.style.visibility = "hidden"));
-  }
+// Hide beds in bed temperatures on startup
+for (let i = 0; i < defaultNumOfBedHeaters; i++) {
+  document
+    .querySelectorAll(`.bed${i}`)
+    .forEach((element) => (element.style.visibility = "hidden"));
+}
 
-  // Update Object Model every 0.5 seconds
-  setInterval(update, 500);
+// Update Object Model every 0.5 seconds
+setInterval(update, 500);
 
-  // Initialise heating profiles on startup
-  heatProfiles = loadHeatingProfiles();
-  updateHeatingProfiles();
-  loadTempsOnEdit();
+// Initialise heating profiles on startup
+heatProfiles = loadHeatingProfiles();
+updateHeatingProfiles();
+loadTempsOnEdit();
 
-  sendGcode(`M5`);
+sendGcode(`M5`);
 
+document.addEventListener("DOMContentLoaded", function () { 
   // Fetch Software Version - GitHub Release Tags from tags.txt [LOCAL]
   fetchLatestTag();
 
