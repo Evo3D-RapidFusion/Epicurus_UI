@@ -71,7 +71,7 @@
   function loadScript(src) {
     const script = document.createElement('script');
     script.src = src;
-    script.defer = true;
+    script.defer = false;
     document.head.appendChild(script);
   }
   // Helper function to load CSS
