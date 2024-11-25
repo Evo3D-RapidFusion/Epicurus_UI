@@ -1612,12 +1612,12 @@ buttonIds.forEach((buttonId) => {
       case "bed-fixture-plate-on":
       case "bed-fixture-plate-on-icon":
         sendGcode('set global.bedFixturePlate = false');
-        sendGcode('M98 P"Bed_PID_fixture_plate_off.g"');
+        // sendGcode('M98 P"Bed_PID_fixture_plate_off.g"');
         localStorage.setItem("bedFixturePlateState", "off");
         break;
       case "bed-fixture-plate-off":
       case "bed-fixture-plate-off-icon":
-        sendGcode('set global.bedFixturePlate = true');
+        // sendGcode('set global.bedFixturePlate = true');
         sendGcode('M98 P"Bed_PID_fixture_plate_on.g"');
         localStorage.setItem("bedFixturePlateState", "on");
         break;
