@@ -1525,7 +1525,7 @@ buttonIds.forEach((buttonId) => {
         break;
       case "system-pe320":
         localStorage.setItem("systemFamily", "pe320");
-        document.getElementById("logo-text").textContent = "- PE320";
+        document.getElementById("logo-text").textContent = "- Pulsar";
         document.getElementById("logo-text").style.display = "flex";
         document.getElementById("aisync-slicer-option").style.display = "none"; // no AiSync
         document.getElementById("cnc-mill-option").style.display = "none"; // no CNC
