@@ -864,10 +864,10 @@ async function sendCommandsOnce() {
         document.getElementById("bed-fixture-plate-toggle").click();
       }
       await sendGcode('set global.bedFixturePlate = true');
-      await sendGcode('M98 P"Bed_PID_fixture_plate_on.g"');
+      // await sendGcode('M98 P"Bed_PID_fixture_plate_on.g"');
     } else {
       await sendGcode('set global.bedFixturePlate = false');
-      await sendGcode('M98 P"Bed_PID_fixture_plate_off.g"');
+      // await sendGcode('M98 P"Bed_PID_fixture_plate_off.g"');
     }
 
     console.log("All commands executed successfully.");
