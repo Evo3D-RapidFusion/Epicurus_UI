@@ -1373,6 +1373,7 @@ const buttonIds = [
   "barrel-fan-off",
   "barrel-fan-half",
   "barrel-fan-full",
+  "purge-extruder",
 ];
 
 let currentSpindleAction = "";
@@ -1649,6 +1650,9 @@ buttonIds.forEach((buttonId) => {
         break;
       case "barrel-fan-full":
         sendGcode(`M106 P${selectedBarrelFan} S1`);
+        break;
+      case "purge-extruder":
+        sendGcode(`M98 P"Purge_Extruder.g"`);
         break;
     }
   });
