@@ -1154,8 +1154,8 @@ for (let i = 0; i < defaultNumOfBedHeaters; i++) {
     .forEach((element) => (element.style.visibility = "hidden"));
 }
 
-// Update Object Model every 0.5 seconds
-setInterval(update, 500);
+// Update Object Model every 1 seconds
+setInterval(update, 1000);
 
 document.addEventListener("DOMContentLoaded", function () { 
   // Select Default Tabs on page load
