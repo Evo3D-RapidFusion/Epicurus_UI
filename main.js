@@ -757,8 +757,8 @@ function updateObjectModel() {
       }
 
       // document.getElementById("extruder-runtime").textContent = "n/a";
-      document.getElementById("material-sensor-left").textContent = data.global.materialSensorLEFT;
-      document.getElementById("material-sensor-right").textContent = data.global.materialSensorRIGHT;
+      // document.getElementById("material-sensor-left").textContent = data.global.materialSensorLEFT;
+      // document.getElementById("material-sensor-right").textContent = data.global.materialSensorRIGHT;
       // document.getElementById("heatsink-fan").textContent = see Embedded;
       // document.getElementById("barrel-fan").textContent = see Embedded;
 
