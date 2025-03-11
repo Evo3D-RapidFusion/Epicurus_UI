@@ -745,50 +745,50 @@ function updateObjectModel() {
       // document.getElementById("barrel-fan").textContent = see Embedded;
 
       // Switch case for heatsink fan selection
-      switch (document.querySelector('.heatsink-fan-button div').textContent) {
-        case "Heatsink Fan 1":
-          document.getElementById("heatsink-fan-tach").textContent = data.fans[0].rpm;
-          selectedHeatsinkFan = "0";
-          break;
-        case "Heatsink Fan 2":
-          document.getElementById("heatsink-fan-tach").textContent = data.fans[1].rpm;
-          selectedHeatsinkFan = "0";
-          break;
-        case "Heatsink Fan 3":
-          document.getElementById("heatsink-fan-tach").textContent = data.fans[2].rpm;
-          selectedHeatsinkFan = "0";
-          break;
-        case "Heatsink Fan 4":
-          document.getElementById("heatsink-fan-tach").textContent = data.fans[3].rpm;
-          selectedHeatsinkFan = "0";
-          break;
-        default:
-          document.getElementById("heatsink-fan-tach").textContent = "Config Error";
-      }
+      // switch (document.querySelector('.heatsink-fan-button div').textContent) {
+      //   case "Heatsink Fan 1":
+      //     document.getElementById("heatsink-fan-tach").textContent = data.fans[0].rpm;
+      //     selectedHeatsinkFan = "0";
+      //     break;
+      //   case "Heatsink Fan 2":
+      //     document.getElementById("heatsink-fan-tach").textContent = data.fans[1].rpm;
+      //     selectedHeatsinkFan = "0";
+      //     break;
+      //   case "Heatsink Fan 3":
+      //     document.getElementById("heatsink-fan-tach").textContent = data.fans[2].rpm;
+      //     selectedHeatsinkFan = "0";
+      //     break;
+      //   case "Heatsink Fan 4":
+      //     document.getElementById("heatsink-fan-tach").textContent = data.fans[3].rpm;
+      //     selectedHeatsinkFan = "0";
+      //     break;
+      //   default:
+      //     document.getElementById("heatsink-fan-tach").textContent = "Config Error";
+      // }
 
-      // Switch case for barrel fan selection
-      switch (document.querySelector('.barrel-fan-button div').textContent) {
-        case "Barrel Fan 1":
-          document.getElementById("barrel-fan-tach").textContent = data.fans[4].rpm;
-          selectedBarrelFan = "4";
-          break;
-        case "Barrel Fan 2":
-          document.getElementById("barrel-fan-tach").textContent = data.fans[5].rpm;
-          selectedBarrelFan = "5";
-          break;
-        case "Barrel Fan 3":
-          document.getElementById("barrel-fan-tach").textContent = data.fans[6].rpm;
-          selectedBarrelFan = "6";
-          break;
-        default:
-          document.getElementById("barrel-fan-tach").textContent = "Config Error";
-      }
+      // // Switch case for barrel fan selection
+      // switch (document.querySelector('.barrel-fan-button div').textContent) {
+      //   case "Barrel Fan 1":
+      //     document.getElementById("barrel-fan-tach").textContent = data.fans[4].rpm;
+      //     selectedBarrelFan = "4";
+      //     break;
+      //   case "Barrel Fan 2":
+      //     document.getElementById("barrel-fan-tach").textContent = data.fans[5].rpm;
+      //     selectedBarrelFan = "5";
+      //     break;
+      //   case "Barrel Fan 3":
+      //     document.getElementById("barrel-fan-tach").textContent = data.fans[6].rpm;
+      //     selectedBarrelFan = "6";
+      //     break;
+      //   default:
+      //     document.getElementById("barrel-fan-tach").textContent = "Config Error";
+      // }
 
-      // CNC Mill
-      // document.getElementById("cnc-state-container").textContent = formattedUptime;
-      document.getElementById("cnc-state").textContent = (data.spindles[0].state).toUpperCase();
-      // document.getElementById("cnc-runtime").textContent = "n/a";
-      document.getElementById("cnc-speed").textContent = data.spindles[0].current;
+      // // CNC Mill
+      // // document.getElementById("cnc-state-container").textContent = formattedUptime;
+      // document.getElementById("cnc-state").textContent = (data.spindles[0].state).toUpperCase();
+      // // document.getElementById("cnc-runtime").textContent = "n/a";
+      // document.getElementById("cnc-speed").textContent = data.spindles[0].current;
       
       // Resolve the promise with the result
       resolve(globalObjectModelResult);
