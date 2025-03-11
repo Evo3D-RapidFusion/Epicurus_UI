@@ -9,6 +9,8 @@ const heaterFaults = new Array(defaultNumOfHeaters).fill(false); // global array
 let globalObjectModelResult;
 let settings, heatProfiles;
 let spindleSpeed = document.getElementById("speedValue").textContent;
+let flowDisplayValue = document.getElementById("flowDisplay").textContent;
+let ExtruderSpeed = 0;
 let spindleOff = true;
 let cncCurrentRPM = "";
 let updatedSpindleSpeed = "";
@@ -388,6 +390,19 @@ function updateObjectModel() {
             heaterFaults[i] = true;
           }
         }
+      }
+
+      // Extruder Purge
+      flowDisplayValue = parseFloat(document.getElementById("flowDisplay").textContent);
+
+      // Ensure the value is a valid number within the expected range
+      if (!isNaN(flowDisplayValue) && flowDisplayValue >= 0 && flowDisplayValue <= 100) {
+          // Calculate the extruder speed
+          ExtruderSpeed = (flowDisplayValue * 7200) / 100;
+          console.log("Extruder Speed %:", flowDisplayValue);
+          sendGcode(`set global.ExtruderRPM = ${ExtruderSpeed}`);
+      } else {
+          console.error("Invalid flow display value:", flowDisplayValue);
       }
 
       // CNC Spindle Speed Live Control
