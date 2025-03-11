@@ -18,11 +18,11 @@ let selectedHeatsinkFan = "0";
 let selectedBarrelFan = "0";
 // let spindleRunning = false; // already declared in embedded code
 
-let activeStatusURL = "http://10.163.75.236/machine/status";
-let activeCodeURL = "http://10.163.75.236/machine/code";
+// let activeStatusURL = "http://10.163.75.236/machine/status";
+// let activeCodeURL = "http://10.163.75.236/machine/code";
 
-// let activeStatusURL = "http://localhost/machine/status";
-// let activeCodeURL = "http://localhost/machine/code";
+let activeStatusURL = "http://localhost/machine/status";
+let activeCodeURL = "http://localhost/machine/code";
 
 // ============================= index.html HEADER - Fetch Machine Status with Fallback URLs ===============================
 
@@ -1192,9 +1192,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   sendGcode(`M5`);
 
-  document.getElementById("bed-2-heaters").style.display = "block";
-  document.getElementById("bed-2-active").style.display = "block";
-  document.getElementById("bed-2-preheat").style.display = "block";
+  // document.getElementById("bed-2-heaters").style.display = "block";
+  // document.getElementById("bed-2-active").style.display = "block";
+  // document.getElementById("bed-2-preheat").style.display = "block";
   });
 
 // Ensure fetchLatestTag is called on window load

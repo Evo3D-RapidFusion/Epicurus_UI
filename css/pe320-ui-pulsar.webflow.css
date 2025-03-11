@@ -3027,6 +3027,7 @@ img {
   flex: 1;
 }
 
+<<<<<<< HEAD
 .body-5-copy {
   color: #fff;
   text-align: center;
@@ -3040,6 +3041,8 @@ img {
   color: #fff;
 }
 
+=======
+>>>>>>> f9bead2 (UI update)
 @media screen and (min-width: 1920px) {
   .toggle-container-button {
     display: flex;
@@ -3049,6 +3052,7 @@ img {
     display: none;
   }
 
+<<<<<<< HEAD
   .body-5.bed1, .dropdown-wrapper.active.middle.bed1, .dropdown-wrapper.active.middle-copy.bed1, .dropdown-wrapper.preheat.middle.bed1, .dropdown-wrapper.preheat.middle-copy.bed1 {
     display: block;
   }
@@ -3060,6 +3064,15 @@ img {
   .body-5-copy.bed1 {
     display: block;
   }
+=======
+  .body-5.bed1, .dropdown-wrapper.active.middle.bed1, .dropdown-wrapper.preheat.middle.bed1 {
+    display: flex;
+  }
+
+  .settings-popup, .text-container-row.material-sensor {
+    display: none;
+  }
+>>>>>>> f9bead2 (UI update)
 }
 
 
