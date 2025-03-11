@@ -1,4 +1,4 @@
-<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Tue Mar 11 2025 15:43:27 GMT+0000 (Coordinated Universal Time)  -->
+<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Tue Mar 11 2025 15:55:43 GMT+0000 (Coordinated Universal Time)  -->
 <html data-wf-page="67445cad1e0d0e98a6b5ce12" data-wf-site="67445cad1e0d0e98a6b5ce1c">
 <head>
   <meta charset="utf-8">
@@ -47,12 +47,12 @@
           </svg></div>
       </div>
       <div class="main-container">
-        <div data-current="System Info" data-easing="ease-in-out" data-duration-in="0" data-duration-out="0" class="settings-tabs w-tabs">
+        <div data-current="Tool Status" data-easing="ease-in-out" data-duration-in="0" data-duration-out="0" class="settings-tabs w-tabs">
           <div class="settings-tabs-menu w-tab-menu">
-            <a data-w-tab="System Info" id="system-info" hr="" class="settings-tab-link w-inline-block w-tab-link w--current">
+            <a data-w-tab="System Info" id="system-info" hr="" class="settings-tab-link w-inline-block w-tab-link">
               <div>System Info</div>
             </a>
-            <a data-w-tab="Tool Status" id="tool-status" class="settings-tab-link w-inline-block w-tab-link">
+            <a data-w-tab="Tool Status" id="tool-status" class="settings-tab-link w-inline-block w-tab-link w--current">
               <div>Tool Status</div>
             </a>
             <a data-w-tab="Developer Settings" id="developer-settings" data-w-id="11fb8e41-d6a7-db4b-9b6c-8d4fa7d6964b" style="display:none" class="settings-tab-link w-inline-block w-tab-link">
@@ -60,7 +60,7 @@
             </a>
           </div>
           <div class="settings-tabs-content w-tab-content">
-            <div data-w-tab="System Info" class="tab-pane-system-info w-tab-pane w--tab-active">
+            <div data-w-tab="System Info" class="tab-pane-system-info w-tab-pane">
               <div class="settings-main-content">
                 <div class="text-container-row">
                   <div class="text-title bold">
@@ -142,7 +142,7 @@
                 </aside>
               </div>
             </div>
-            <div data-w-tab="Tool Status" class="tab-pane-tool-status w-tab-pane">
+            <div data-w-tab="Tool Status" class="tab-pane-tool-status w-tab-pane w--tab-active">
               <div id="connected-tool-container" data-w-id="98b3faa9-c2b4-2bc1-f905-008f9f01a7b1" style="display:none" class="connected-tool-main-title">
                 <div class="text-container-row">
                   <div class="text-title bold">
@@ -175,14 +175,6 @@
                   <div class="text-content">
                     <div id="extruder-runtime" class="settings-content-text italic">null</div>
                     <div class="settings-content-text">HH:MM:SS</div>
-                  </div>
-                </div>
-                <div class="text-container-row material-sensor">
-                  <div class="text-title">
-                    <div class="settings-title-text">Material Sensor:</div>
-                  </div>
-                  <div class="text-content">
-                    <div id="material-sensor-left" class="settings-content-text italic">null</div>
                   </div>
                 </div>
                 <div class="text-container-row material-sensor-right">
@@ -1438,7 +1430,7 @@
                     <div class="column-text">
                       <div class="table-heading">Heaters</div>
                       <div class="body-4 bed0">Bed</div>
-                      <div class="body-5-copy bed1">Bed 2</div>
+                      <div id="bed-2-heaters" class="body-5-copy bed1">Bed 2</div>
                       <div class="body-6 bed2">Bed 3</div>
                       <div class="body-7 bed3">Bed 4</div>
                     </div>
@@ -1500,7 +1492,7 @@
                           <div id="user-input-active-bed0" class="user-input-temp bed0 active">0</div>
                         </div>
                       </div>
-                      <div data-delay="0" data-hover="false" class="dropdown-wrapper active middle-copy bed1 w-dropdown">
+                      <div data-delay="0" data-hover="false" id="bed-2-active" class="dropdown-wrapper active middle-copy bed1 w-dropdown">
                         <div class="dropdown-trigger w-dropdown-toggle">
                           <div class="dropdown-icon w-icon-dropdown-toggle"></div>
                           <div id="user-input-active-bed1" class="user-input-temp bed1 active">0</div>
@@ -1527,7 +1519,7 @@
                           <div id="user-input-preheat-bed0" class="user-input-temp bed0 preheat">0</div>
                         </div>
                       </div>
-                      <div data-delay="0" data-hover="false" class="dropdown-wrapper preheat middle-copy bed1 w-dropdown">
+                      <div data-delay="0" data-hover="false" id="bed-2-preheat" class="dropdown-wrapper preheat middle-copy bed1 w-dropdown">
                         <div class="dropdown-trigger w-dropdown-toggle">
                           <div class="dropdown-icon w-icon-dropdown-toggle"></div>
                           <div id="user-input-preheat-bed1" class="user-input-temp bed1 preheat">0</div>

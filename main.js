@@ -1188,7 +1188,11 @@ document.addEventListener("DOMContentLoaded", function () {
   loadTempsOnEdit();
 
   sendGcode(`M5`);
-});
+
+  document.getElementById("bed-2-heaters").style.display = "block";
+  document.getElementById("bed-2-active").style.display = "block";
+  document.getElementById("bed-2-preheat").style.display = "block";
+  });
 
 // Ensure fetchLatestTag is called on window load
 window.onload = function() {

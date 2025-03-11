@@ -3053,7 +3053,7 @@ img {
     display: block;
   }
 
-  .settings-popup, .text-container-row.material-sensor {
+  .settings-popup {
     display: none;
   }
 
