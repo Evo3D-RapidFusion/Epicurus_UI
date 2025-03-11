@@ -3023,6 +3023,28 @@ img {
   display: flex;
 }
 
+.tab-pane-extruder-purge {
+  flex: 1;
+}
+
+@media screen and (min-width: 1920px) {
+  .toggle-container-button {
+    display: flex;
+  }
+
+  .toggle-container-button.bed {
+    display: none;
+  }
+
+  .body-5.bed1, .dropdown-wrapper.active.middle.bed1, .dropdown-wrapper.preheat.middle.bed1 {
+    display: flex;
+  }
+
+  .settings-popup, .text-container-row.material-sensor {
+    display: none;
+  }
+}
+
 
 @font-face {
   font-family: 'Daggersquare';
