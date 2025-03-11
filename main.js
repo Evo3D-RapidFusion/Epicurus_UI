@@ -1151,7 +1151,7 @@ for (var i = 4; i < elements.length; i++) {
 for (let i = 0; i < defaultNumOfBedHeaters; i++) {
   document
     .querySelectorAll(`.bed${i}`)
-    .forEach((element) => (element.style.visibility = "hidden"));
+    .forEach((element) => (element.style.display = "none"));
 }
 
 // Update Object Model every 0.5 seconds
