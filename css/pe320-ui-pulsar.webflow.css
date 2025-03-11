@@ -3037,7 +3037,7 @@ img {
   }
 
   .body-5.bed1, .dropdown-wrapper.active.middle.bed1, .dropdown-wrapper.preheat.middle.bed1 {
-    display: flex;
+    display: block;
   }
 
   .settings-popup, .text-container-row.material-sensor {
