@@ -2324,7 +2324,7 @@ function initializeDefaultHeatingProfiles() {
       Cnc: 21000,
     },
     {
-      Material: "PEEK 450 PLA",
+      Material: "PEEK 450",
       Top: 340,
       Middle: 340,
       Bottom: 360,
