@@ -3028,15 +3028,7 @@ img {
 }
 
 @media screen and (min-width: 1920px) {
-  .toggle-container-button {
-    display: flex;
-  }
-
-  .toggle-container-button.bed {
-    display: none;
-  }
-
-  .body-5.bed1, .dropdown-wrapper.active.middle.bed1, .dropdown-wrapper.preheat.middle.bed1 {
+  .toggle-container-button, .body-5.bed1, .dropdown-wrapper.active.middle.bed1, .dropdown-wrapper.preheat.middle.bed1 {
     display: flex;
   }
 

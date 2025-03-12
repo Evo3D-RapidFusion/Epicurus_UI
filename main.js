@@ -306,7 +306,7 @@ function updateObjectModel() {
           .forEach((element) => (element.style.display = "inline-block"));
         // Warning On
         document.getElementById("extruder-hot-icon").style.display = "flex";
-        // document.getElementById("purge-hot-icon").style.display = "flex";
+        document.getElementById("purge-hot-icon").style.display = "flex";
       } else {
         if (extruderHeaterTemps.some((temp) => temp > 50 && temp < 2000)) {
           // cool temp = 50 °C
@@ -321,7 +321,7 @@ function updateObjectModel() {
             .forEach((element) => (element.style.display = "inline-block"));
           // Warning On
           document.getElementById("extruder-hot-icon").style.display = "flex";
-          // document.getElementById("purge-hot-icon").style.display = "flex";
+          document.getElementById("purge-hot-icon").style.display = "flex";
         } else {
           document
             .querySelectorAll(".radial-gradient-background-red.extruder")
@@ -334,7 +334,7 @@ function updateObjectModel() {
             .forEach((element) => (element.style.display = "inline-block"));
           // Warning Off
           document.getElementById("extruder-hot-icon").style.display = "none";
-          // document.getElementById("purge-hot-icon").style.display = "none";
+          document.getElementById("purge-hot-icon").style.display = "none";
         }
       }
 
@@ -1192,9 +1192,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   sendGcode(`M5`);
 
-  // document.getElementById("bed-2-heaters").style.display = "block";
-  // document.getElementById("bed-2-active").style.display = "block";
-  // document.getElementById("bed-2-preheat").style.display = "block";
+  document.getElementById("bed-2-heaters").style.display = "block";
+  document.getElementById("bed-2-active").style.display = "block";
+  document.getElementById("bed-2-preheat").style.display = "block";
   });
 
 // Ensure fetchLatestTag is called on window load
