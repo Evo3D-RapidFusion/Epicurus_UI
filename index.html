@@ -1,4 +1,4 @@
-<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Wed Mar 12 2025 09:53:52 GMT+0000 (Coordinated Universal Time)  -->
+<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Wed Mar 12 2025 10:06:31 GMT+0000 (Coordinated Universal Time)  -->
 <html data-wf-page="67445cad1e0d0e98a6b5ce12" data-wf-site="67445cad1e0d0e98a6b5ce1c">
 <head>
   <meta charset="utf-8">
@@ -41,7 +41,7 @@
   <div class="settings-popup-container">
     <div id="settings-popup" data-w-id="018ddf80-5939-592f-2205-93be8c100f79" style="-webkit-transform:translate3d(0, 0, 0) scale3d(0, 0, 0) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);-moz-transform:translate3d(0, 0, 0) scale3d(0, 0, 0) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);-ms-transform:translate3d(0, 0, 0) scale3d(0, 0, 0) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);transform:translate3d(0, 0, 0) scale3d(0, 0, 0) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);transform-style:preserve-3d;display:none" class="settings-popup">
       <div class="main-header">
-        <div class="heading">Settings</div>
+        <div id="cnc-heading" class="heading">Settings</div>
         <div id="close-settings" data-w-id="e69d0d94-c015-9b09-0023-32b173a687de" class="close-settings"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewbox="0 0 24 24" fill="none" app="ikonik" class="ikonik-2bx8ck">
             <path d="M17 17L7 7.00002M17 7L7.00001 17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" app="ikonik" class="path-b7eis"></path>
           </svg></div>
@@ -175,6 +175,14 @@
                   <div class="text-content">
                     <div id="extruder-runtime" class="settings-content-text italic">null</div>
                     <div class="settings-content-text">HH:MM:SS</div>
+                  </div>
+                </div>
+                <div class="text-container-row">
+                  <div class="text-title">
+                    <div class="settings-title-text">Material Sensor:</div>
+                  </div>
+                  <div class="text-content">
+                    <div id="material-sensor-left" class="settings-content-text italic">null</div>
                   </div>
                 </div>
                 <div class="text-container-row material-sensor-right">
@@ -1220,24 +1228,18 @@
           </div>
         </div>
       </div>
-      <div data-current="Extruder Control" data-easing="ease-in-out" data-duration-in="0" data-duration-out="0" class="main-tabs w-tabs">
+      <div data-current="Bed Control" data-easing="ease-in-out" data-duration-in="0" data-duration-out="0" class="main-tabs w-tabs">
         <div class="main-tabs-menu w-tab-menu">
-          <a data-w-tab="Extruder Control" id="default-tab" hr="" class="main-tab-link w-inline-block w-tab-link w--current">
+          <a data-w-tab="Extruder Control" id="default-tab" hr="" class="main-tab-link w-inline-block w-tab-link">
             <div class="flex-tab-link">
               <div id="extruder-control-tab-text" class="tab-heading">Extruder Control</div>
               <div id="extruder-hot-icon" class="hot-icon"><img width="Auto" sizes="(max-width: 479px) 88vw, (max-width: 591px) 89vw, 526px" alt="" src="images/istockphoto-1158829520-612x612-removebg-preview.png" loading="eager" srcset="images/istockphoto-1158829520-612x612-removebg-preview-p-500.png 500w, images/istockphoto-1158829520-612x612-removebg-preview.png 526w" class="hot-surface-icon"></div>
             </div>
           </a>
-          <a data-w-tab="Bed Control" class="main-tab-link w-inline-block w-tab-link">
+          <a data-w-tab="Bed Control" class="main-tab-link w-inline-block w-tab-link w--current">
             <div class="flex-tab-link">
               <div id="bed-control-tab-text" class="tab-heading">Bed Control</div>
               <div id="bed-hot-icon" class="hot-icon"><img width="Auto" sizes="(max-width: 479px) 88vw, (max-width: 591px) 89vw, 526px" alt="" src="images/istockphoto-1158829520-612x612-removebg-preview.png" loading="eager" srcset="images/istockphoto-1158829520-612x612-removebg-preview-p-500.png 500w, images/istockphoto-1158829520-612x612-removebg-preview.png 526w" class="hot-surface-icon"></div>
-            </div>
-          </a>
-          <a data-w-tab="Extruder Purge" class="main-tab-link w-inline-block w-tab-link">
-            <div class="flex-tab-link">
-              <div class="tab-heading">Extruder Purge</div>
-              <div id="purge-hot-icon" class="hot-icon"><img width="Auto" sizes="(max-width: 479px) 88vw, (max-width: 591px) 89vw, 526px" alt="" src="images/istockphoto-1158829520-612x612-removebg-preview.png" loading="eager" srcset="images/istockphoto-1158829520-612x612-removebg-preview-p-500.png 500w, images/istockphoto-1158829520-612x612-removebg-preview.png 526w" class="hot-surface-icon"></div>
             </div>
           </a>
           <a data-w-tab="Spindle Control" id="cnc-mill" data-w-id="858012f7-bd5e-9b10-21e5-2ca9d8e815d8" style="display:none" class="main-tab-link w-inline-block w-tab-link">
@@ -1252,12 +1254,18 @@
           <a data-w-tab="AiSync Slicer" id="aisync-slicer" data-w-id="858012f7-bd5e-9b10-21e5-2ca9d8e815de" style="display:none" class="main-tab-link w-inline-block w-tab-link">
             <div id="aisync-slicer-tab-text" class="tab-heading">AiSync Slicer</div>
           </a>
+          <a data-w-tab="Extruder Purge" id="cnc-mill" class="main-tab-link w-inline-block w-tab-link">
+            <div class="flex-tab-link">
+              <div id="spindle-control-tab-text" class="tab-heading">Extruder Purge</div>
+              <div id="cnc-running-icon" class="hot-icon"><img width="Auto" sizes="(max-width: 479px) 88vw, (max-width: 591px) 89vw, 526px" alt="" src="images/istockphoto-1158829520-612x612-removebg-preview.png" loading="eager" srcset="images/istockphoto-1158829520-612x612-removebg-preview-p-500.png 500w, images/istockphoto-1158829520-612x612-removebg-preview.png 526w" class="hot-surface-icon"></div>
+            </div>
+          </a>
         </div>
         <div class="main-tabs-content w-tab-content">
-          <div data-w-tab="Extruder Control" class="tab-pane-extruder-control w-tab-pane w--tab-active">
+          <div data-w-tab="Extruder Control" class="tab-pane-extruder-control w-tab-pane">
             <div class="main">
               <div class="extruder-container"><img id="radial-gradient-background-white" loading="eager" alt="" src="images/Radial-Gradient-Background.png" class="radial-gradient-background extruder"><img id="radial-gradient-background-red" loading="eager" alt="" src="images/Radial-gradient-background-red.png" class="radial-gradient-background-red extruder"><img id="radial-gradient-background-orange" loading="eager" alt="" src="images/Radial-gradient-background-orange.png" class="radial-gradient-background-orange extruder">
-                <div class="part-cooling-hue-container"><img style="opacity:0.2" loading="eager" alt="" src="images/Radial-gradient-background-blue.png" class="radial-gradient-background-blue"><img style="opacity:0.2" loading="eager" alt="" src="images/Radial-gradient-background-blue.png" class="radial-gradient-background-blue-2"><img style="opacity:0.2" loading="eager" alt="" src="images/Radial-gradient-background-blue.png" class="radial-gradient-background-blue-3"></div><img sizes="(max-width: 767px) 100vw, 564.4500122070312px" height="706" alt="" src="images/Pulsar-Production-R003-2022-12-14-STEP214.png" loading="eager" srcset="images/Pulsar-Production-R003-2022-12-14-STEP214-p-500.png 500w, images/Pulsar-Production-R003-2022-12-14-STEP214-p-800.png 800w, images/Pulsar-Production-R003-2022-12-14-STEP214-p-1080.png 1080w, images/Pulsar-Production-R003-2022-12-14-STEP214.png 1304w" class="pe-320-extruder">
+                <div class="part-cooling-hue-container"><img style="opacity:0.2" loading="eager" alt="" src="images/Radial-gradient-background-blue.png" class="radial-gradient-background-blue"><img style="opacity:0.2" loading="eager" alt="" src="images/Radial-gradient-background-blue.png" class="radial-gradient-background-blue-2"><img style="opacity:0.2" loading="eager" alt="" src="images/Radial-gradient-background-blue.png" class="radial-gradient-background-blue-3"></div><img sizes="100vw" height="706" alt="" src="images/Pulsar-Production-R003-2022-12-14-STEP214.png" loading="eager" srcset="images/Pulsar-Production-R003-2022-12-14-STEP214-p-500.png 500w, images/Pulsar-Production-R003-2022-12-14-STEP214-p-800.png 800w, images/Pulsar-Production-R003-2022-12-14-STEP214-p-1080.png 1080w, images/Pulsar-Production-R003-2022-12-14-STEP214.png 1304w" class="pe-320-extruder">
                 <div class="boost-pellets-hue-container"><img loading="eager" src="images/Radial-gradient-background-green.png" alt="" class="radial-gradient-background-green"><img loading="eager" src="images/Radial-gradient-background-green.png" alt="" class="radial-gradient-background-green-2"><img loading="eager" src="images/Radial-gradient-background-green.png" alt="" class="radial-gradient-background-green-3"></div>
                 <div class="boost-pellets-hue-container-purple"><img loading="eager" src="images/Radial-gradient-background-purple-small.png" alt="" class="radial-gradient-background-green"><img loading="eager" src="images/Radial-gradient-background-purple-small.png" alt="" class="radial-gradient-background-green-2"><img loading="eager" src="images/Radial-gradient-background-purple-small.png" alt="" class="radial-gradient-background-green-3"></div>
               </div>
@@ -1407,12 +1415,16 @@
               </div>
             </div>
           </div>
-          <div data-w-tab="Bed Control" class="tab-pane-bed-control w-tab-pane">
+          <div data-w-tab="Bed Control" class="tab-pane-bed-control w-tab-pane w--tab-active">
             <div class="main">
-              <div class="bed-container"><img loading="eager" src="images/Radial-Gradient-Background.png" alt="" class="radial-gradient-background bed"><img loading="eager" src="images/Radial-gradient-background-red.png" alt="" class="radial-gradient-background-red bed"><img loading="eager" src="images/Radial-gradient-background-orange.png" alt="" class="radial-gradient-background-orange bed"><img sizes="100vw" srcset="images/PE320-Bed-Render-p-500.png 500w, images/PE320-Bed-Render.png 591w" alt="" src="images/PE320-Bed-Render.png" loading="eager" class="bed-render"></div>
+              <div class="bed-container"><img loading="eager" src="images/Radial-Gradient-Background.png" alt="" class="radial-gradient-background bed"><img loading="eager" src="images/Radial-gradient-background-red.png" alt="" class="radial-gradient-background-red bed"><img loading="eager" src="images/Radial-gradient-background-orange.png" alt="" class="radial-gradient-background-orange bed"><img sizes="(max-width: 591px) 100vw, 591px" srcset="images/PE320-Bed-Render-p-500.png 500w, images/PE320-Bed-Render.png 591w" alt="" src="images/PE320-Bed-Render.png" loading="eager" class="bed-render"></div>
               <div class="heating-profiles-container">
                 <div class="main-header">
                   <div class="heading">Bed Control</div>
+                  <div id="bed-fixture-plate-toggle" data-w-id="69721089-3abf-7689-f818-212b6170d0df" class="toggle-container-button">
+                    <div id="bed-fixture-plate-on" data-w-id="69721089-3abf-7689-f818-212b6170d0e0" style="display:none" class="toggle-text-on">Bed Fixture Plate ON</div>
+                    <div id="bed-fixture-plate-off" data-w-id="69721089-3abf-7689-f818-212b6170d0e2" class="toggle-text-off">Bed Fixture Plate OFF</div><img style="display:none" data-w-id="69721089-3abf-7689-f818-212b6170d0e4" alt="" src="images/material-symbols-light_toggle-on_1material-symbols-light_toggle-on.png" loading="lazy" id="bed-fixture-plate-on-icon" class="toggle-on"><img data-w-id="69721089-3abf-7689-f818-212b6170d0e5" id="bed-fixture-plate-off-icon" alt="" src="images/material-symbols-light_toggle-off-outline_1material-symbols-light_toggle-off-outline.png" loading="lazy" class="toggle-off">
+                  </div>
                 </div>
                 <div class="main-container">
                   <div class="button-container">
@@ -1429,8 +1441,9 @@
                   <div class="temp-table">
                     <div class="column-text">
                       <div class="table-heading">Heaters</div>
-                      <div class="body-4 bed0">Bed</div>
-                      <div id="bed-2-heaters" class="body-5-copy bed1">Bed 2</div>
+                      <div class="body-4 bed0">Bed 1</div>
+                      <div class="body-4 bed0">Bed 2</div>
+                      <div class="body-5 bed1">Bed 2</div>
                       <div class="body-6 bed2">Bed 3</div>
                       <div class="body-7 bed3">Bed 4</div>
                     </div>
@@ -1492,7 +1505,7 @@
                           <div id="user-input-active-bed0" class="user-input-temp bed0 active">0</div>
                         </div>
                       </div>
-                      <div data-delay="0" data-hover="false" id="bed-2-active" class="dropdown-wrapper active middle-copy bed1 w-dropdown">
+                      <div data-delay="0" data-hover="false" class="dropdown-wrapper active middle bed1 w-dropdown">
                         <div class="dropdown-trigger w-dropdown-toggle">
                           <div class="dropdown-icon w-icon-dropdown-toggle"></div>
                           <div id="user-input-active-bed1" class="user-input-temp bed1 active">0</div>
@@ -1519,7 +1532,7 @@
                           <div id="user-input-preheat-bed0" class="user-input-temp bed0 preheat">0</div>
                         </div>
                       </div>
-                      <div data-delay="0" data-hover="false" id="bed-2-preheat" class="dropdown-wrapper preheat middle-copy bed1 w-dropdown">
+                      <div data-delay="0" data-hover="false" class="dropdown-wrapper preheat middle bed1 w-dropdown">
                         <div class="dropdown-trigger w-dropdown-toggle">
                           <div class="dropdown-icon w-icon-dropdown-toggle"></div>
                           <div id="user-input-preheat-bed1" class="user-input-temp bed1 preheat">0</div>
@@ -1537,192 +1550,6 @@
                           <div id="user-input-preheat-bed3" class="user-input-temp bed3 preheat">0</div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div data-w-tab="Extruder Purge" class="tab-pane-extruder-purge w-tab-pane">
-            <div class="main">
-              <div class="extruder-container"><img id="radial-gradient-background-purge-white" loading="eager" alt="" src="images/Radial-Gradient-Background.png" class="radial-gradient-background cnc"><img id="radial-gradient-background-purge-red" loading="eager" alt="" src="images/Radial-gradient-background-red.png" class="radial-gradient-background-red cnc"><img sizes="100vw" height="706" alt="" src="images/Pulsar-Production-R003-2022-12-14-STEP214.png" loading="eager" srcset="images/Pulsar-Production-R003-2022-12-14-STEP214-p-500.png 500w, images/Pulsar-Production-R003-2022-12-14-STEP214-p-800.png 800w, images/Pulsar-Production-R003-2022-12-14-STEP214-p-1080.png 1080w, images/Pulsar-Production-R003-2022-12-14-STEP214.png 1304w" class="pe-320-extruder"></div>
-              <div class="tool-temperature-container">
-                <div class="main-header">
-                  <div class="div-block-5">
-                    <div class="heading">Extruder Purge</div>
-                  </div>
-                  <aside id="purge-extruder" class="purple-button">
-                    <div class="purple-button-text">Purge Extruder</div>
-                  </aside>
-                </div>
-                <div class="main-container">
-                  <div class="button-container">
-                    <div class="code-embed w-embed w-script">
-                      <style>
-  .flow-adjustment {
-    width: 90%;
-    max-width: 600px;
-    margin: 20px auto;
-    font-family: 'Roboto', sans-serif;
-    font-size: 25px;
-  }
-  #flowRegulator {
-    width: 100%;
-    -webkit-appearance: none;
-    appearance: none;
-    height: 10px;
-    background: linear-gradient(to right, #75366f 75%, #ddd 25%);
-    outline: none;
-    opacity: 0.7;
-    transition: opacity .15s ease-in-out, background-color .3s;
-    margin: 15px 0;
-  }
-  #flowRegulator:hover {
-    opacity: 1;
-  }
-  #flowRegulator::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 25px;
-    height: 25px;
-    background: #75366f;
-    cursor: pointer;
-    border-radius: 50%;
-  }
-  #flowRegulator::-moz-range-thumb {
-    width: 25px;
-    height: 25px;
-    background: #75366f;
-    cursor: pointer;
-    border-radius: 50%;
-  }
-  label {
-    color: white;
-    font-weight: bold;
-    font-family: 'Roboto', sans-serif;
-    font-size: 25px;
-  }
-  #flowDisplay {
-    font-weight: bold;
-    margin-left: 10px;
-    display: inline-block;
-    color: white;
-    font-family: 'Roboto', sans-serif;
-    font-size: 25px;
-  }
-  .unit-indicator {
-    color: white;
-    font-family: 'Roboto', sans-serif;
-    font-size: 25px;
-    margin-left: 5px;
-  }
-  .dimmed {
-    color: #888 !important; /* Force the gray color */
-  }
-  .header-text {
-    font-family: 'Roboto', sans-serif;
-    font-size: 25px;
-    font-weight: bold;
-    color: white;
-    display: block;
-    text-align: center;
-    margin: 40px 0 20px 0;
-  }
-  .toggle-btn {
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    cursor: pointer;
-    border: none;
-    transition: background-color 0.2s ease;
-  }
-  .toggle-btn:hover {
-    background-color: #f0f0f0;
-  }
-  #securityContainer {
-    text-align: center;
-    margin: 20px 0;
-  }
-  .lock-icon svg {
-    overflow: visible;
-  }
-</style>
-                      <!--  Flow Adjustment Container  -->
-                      <div class="flow-adjustment">
-                        <label for="flowRegulator">Extruder Speed:</label>
-                        <input type="range" id="flowRegulator" min="1" max="100" value="100" step="1" disabled="">
-                        <span id="flowDisplay" class="dimmed">100</span> <span class="unit-indicator dimmed">%</span>
-                      </div>
-                      <!--  Title for Control Lock/Unlock  -->
-                      <div id="adjustmentStatus" class="header-text">Control Locked</div>
-                      <!--  Toggle button with lock icon  -->
-                      <div id="securityContainer">
-                        <button id="toggleSecurity" class="toggle-btn">
-                          <span id="lockSymbol" class="lock-icon">
-                            <svg width="30" height="30" xmlns="http://www.w3.org/2000/svg" fill="black" viewbox="0 0 24 24" style="overflow: visible;">
-                              <path id="lockTopPart" d="M7 11V7a5 5 0 1110 0v4" stroke="black" stroke-width="2" fill="none"></path>
-                              <rect id="lockBottomPart" x="5" y="11" width="14" height="10" fill="black"></rect>
-                            </svg>
-                          </span>
-                        </button>
-                      </div>
-                      <script>
-  const regulator = document.getElementById('flowRegulator');
-  const displayOutput = document.getElementById('flowDisplay');
-  const securityBtn = document.getElementById('toggleSecurity');
-  const lockTop = document.querySelector('#lockTopPart');
-  const statusHeader = document.getElementById('adjustmentStatus');
-  let controlUnlocked = false;
-  // Gradient effect for the regulator based on value
-  function updateRegulatorVisuals() {
-    const minVal = regulator.min;
-    const maxVal = regulator.max;
-    const currentVal = regulator.value;
-    const percentComplete = ((currentVal - minVal) / (maxVal - minVal)) * 100;
-    regulator.style.background = `linear-gradient(to right, #75366f ${percentComplete}%, #ddd ${percentComplete}%)`;
-    displayOutput.textContent = currentVal;
-  }
-  regulator.addEventListener('input', updateRegulatorVisuals);
-  updateRegulatorVisuals();
-  // Function to update security state
-  function toggleSecurity() {
-    regulator.disabled = !regulator.disabled;
-    if (regulator.disabled) {
-      statusHeader.textContent = 'Control Locked';
-      controlUnlocked = false;
-      displayOutput.classList.add('dimmed');
-      document.querySelector('.unit-indicator').classList.add('dimmed');
-    } else {
-      statusHeader.textContent = 'Control Unlocked';
-      controlUnlocked = true;
-      displayOutput.classList.remove('dimmed');
-      document.querySelector('.unit-indicator').classList.remove('dimmed');
-    }
-    updateLockVisual();
-  }
-  // Function to update lock icon based on controlUnlocked state
-  function updateLockVisual() {
-    if (controlUnlocked) {
-      lockTop.style.transform = 'translate(3px, -2px)';
-      lockTop.style.transition = 'transform 0.3s ease';
-    } else {
-      lockTop.style.transform = 'translate(0, 0)';
-      lockTop.style.transition = 'transform 0.3s ease';
-    }
-  }
-  // Event listener for toggling security
-  securityBtn.addEventListener('click', toggleSecurity);
-  // Ensure the initial state is set properly on page load
-  window.addEventListener('load', function() {
-    regulator.disabled = true;
-    statusHeader.textContent = 'Control Locked';
-    controlUnlocked = false;
-    updateLockVisual();
-    displayOutput.classList.add('dimmed');
-    // Update initial value display
-    displayOutput.textContent = "100";
-  });
-</script>
                     </div>
                   </div>
                 </div>
@@ -2906,6 +2733,210 @@
                           <div id="FGF-PIPG-Glassfibre-30" class="pdf-container w-embed w-iframe"><iframe src="https://mcpp-3dp.com/PDF/TDS/FGF%20Recycled%20PP%20Glassfibre%2030%25%20-%20UK.pdf" width="100%" height="100%" frameborder="0" allowfullscreen="" loading="eager"></iframe></div>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div data-w-tab="Extruder Purge" class="tab-pane-extruder-purge w-tab-pane">
+            <div class="main">
+              <div class="extruder-container"><img id="radial-gradient-background-cnc-white" loading="eager" alt="" src="images/Radial-Gradient-Background.png" class="radial-gradient-background cnc"><img id="radial-gradient-background-cnc-red" loading="eager" alt="" src="images/Radial-gradient-background-red.png" class="radial-gradient-background-red cnc"><img sizes="100vw" height="706" alt="" src="images/Pulsar-Production-R003-2022-12-14-STEP214.png" loading="eager" srcset="images/Pulsar-Production-R003-2022-12-14-STEP214-p-500.png 500w, images/Pulsar-Production-R003-2022-12-14-STEP214-p-800.png 800w, images/Pulsar-Production-R003-2022-12-14-STEP214-p-1080.png 1080w, images/Pulsar-Production-R003-2022-12-14-STEP214.png 1304w" class="pe-320-extruder"></div>
+              <div class="tool-temperature-container">
+                <div class="main-header">
+                  <div class="div-block-5">
+                    <div id="cnc-heading" class="heading">Extruder Purge</div>
+                  </div>
+                  <aside id="purge-extruder" class="purple-button">
+                    <div class="purple-button-text">Purge Extruder</div>
+                  </aside>
+                </div>
+                <div class="main-container">
+                  <div class="button-container">
+                    <div class="code-embed w-embed w-script">
+                      <!DOCTYPE html>
+                      <html>
+                      <head>
+                        <meta charset="UTF-8">
+                        <title>Extruder Speed Control</title>
+                        <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+    body {
+      background-color: #333;
+      font-family: 'Roboto', sans-serif;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .slider-container {
+      width: 90%;
+      max-width: 600px;
+      margin: 20px auto;
+      font-family: 'Roboto', sans-serif;
+      font-size: 25px;
+    }
+    #speedSlider {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 10px;
+      background: linear-gradient(to right, #75366f 75%, #ddd 25%);
+      outline: none;
+      opacity: 0.7;
+      transition: opacity .15s ease-in-out, background-color .3s;
+      margin: 15px 0;
+    }
+    #speedSlider:hover {
+      opacity: 1;
+    }
+    #speedSlider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 25px;
+      height: 25px;
+      background: #75366f;
+      cursor: pointer;
+      border-radius: 50%;
+    }
+    #speedSlider::-moz-range-thumb {
+      width: 25px;
+      height: 25px;
+      background: #75366f;
+      cursor: pointer;
+      border-radius: 50%;
+    }
+    label {
+      color: white;
+      font-weight: bold;
+      font-family: 'Roboto', sans-serif;
+      font-size: 25px;
+    }
+    #speedValue {
+      font-weight: bold;
+      margin-left: 10px;
+      display: inline-block;
+      color: white;
+      font-family: 'Roboto', sans-serif;
+      font-size: 25px;
+    }
+    .rpm-label {
+      color: white;
+      font-family: 'Roboto', sans-serif;
+      font-size: 25px;
+      margin-left: 5px;
+    }
+    .grayed-out {
+      color: #888 !important; /* Force the gray color */
+    }
+    .control-title {
+      font-family: 'Roboto', sans-serif;
+      font-size: 25px;
+      font-weight: bold;
+      color: white;
+      display: block;
+      text-align: center;
+      margin: 40px 0 20px 0;
+    }
+    .unlock {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      border: none;
+      transition: background-color 0.2s ease;
+    }
+    .unlock:hover {
+      background-color: #f0f0f0;
+    }
+    #unlockButtonContainer {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .padlock svg {
+      overflow: visible;
+    }
+  </style>
+                      </head>
+                      <body>
+                        <!--  Slider Container  -->
+                        <div class="slider-container">
+                          <label for="speedSlider">Extruder Speed:</label>
+                          <input type="range" id="speedSlider" min="1" max="100" value="100" step="1" disabled="">
+                          <span id="speedValue" class="grayed-out">100</span> <span class="rpm-label grayed-out">%</span>
+                        </div>
+                        <!--  Title for Speed Control Lock/Unlock  -->
+                        <div id="speedControlTitle" class="control-title">Slider Locked</div>
+                        <!--  Unlock button, styled like other buttons with smaller padlock  -->
+                        <div id="unlockButtonContainer">
+                          <button id="unlockSpeed" class="unlock">
+                            <span id="padlockIcon" class="padlock">
+                              <svg width="30" height="30" xmlns="http://www.w3.org/2000/svg" fill="black" viewbox="0 0 24 24" style="overflow: visible;">
+                                <path id="padlockTop" d="M7 11V7a5 5 0 1110 0v4" stroke="black" stroke-width="2" fill="none"></path>
+                                <rect id="padlockBottom" x="5" y="11" width="14" height="10" fill="black"></rect>
+                              </svg>
+                            </span>
+                          </button>
+                        </div>
+                        <script>
+    const slider = document.getElementById('speedSlider');
+    const speedValueDisplay = document.getElementById('speedValue');
+    const unlockButton = document.getElementById('unlockSpeed');
+    const padlockTop = document.querySelector('#padlockTop');
+    const speedControlTitle = document.getElementById('speedControlTitle');
+    let sliderUnlocked = false;
+    // Gradient effect for the slider based on speed
+    function updateSliderBackground() {
+      const min = slider.min;
+      const max = slider.max;
+      const val = slider.value;
+      const percentage = ((val - min) / (max - min)) * 100;
+      slider.style.background = `linear-gradient(to right, #75366f ${percentage}%, #ddd ${percentage}%)`;
+      speedValueDisplay.textContent = val;
+    }
+    slider.addEventListener('input', updateSliderBackground);
+    updateSliderBackground();
+    // Function to update lock/unlock state
+    function toggleLock() {
+      slider.disabled = !slider.disabled;
+      if (slider.disabled) {
+        speedControlTitle.textContent = 'Speed Control Locked';
+        sliderUnlocked = false;
+        speedValueDisplay.classList.add('grayed-out');
+        document.querySelector('.rpm-label').classList.add('grayed-out');
+      } else {
+        speedControlTitle.textContent = 'Speed Control Unlocked';
+        sliderUnlocked = true;
+        speedValueDisplay.classList.remove('grayed-out');
+        document.querySelector('.rpm-label').classList.remove('grayed-out');
+      }
+      updateLockIcon();
+    }
+    // Function to update lock icon based on sliderUnlocked state
+    function updateLockIcon() {
+      if (sliderUnlocked) {
+        padlockTop.style.transform = 'translate(3px, -2px)';
+        padlockTop.style.transition = 'transform 0.3s ease';
+      } else {
+        padlockTop.style.transform = 'translate(0, 0)';
+        padlockTop.style.transition = 'transform 0.3s ease';
+      }
+    }
+    // Event listener for unlocking speed control
+    unlockButton.addEventListener('click', toggleLock);
+    // Ensure the initial state is set properly on page load
+    window.addEventListener('load', function() {
+      slider.disabled = true;
+      speedControlTitle.textContent = 'Speed Control Locked';
+      sliderUnlocked = false;
+      updateLockIcon();
+      speedValueDisplay.classList.add('grayed-out');
+      // Update initial value display
+      speedValueDisplay.textContent = "100";
+    });
+  </script>
+                      </body>
+                      </html>
                     </div>
                   </div>
                 </div>
