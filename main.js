@@ -2324,12 +2324,12 @@ function initializeDefaultHeatingProfiles() {
       Cnc: 21000,
     },
     {
-      Material: "Default PLA",
-      Top: 80,
-      Middle: 140,
-      Bottom: 150,
-      Nozzle: 160,
-      Bed: 40,
+      Material: "PEEK 450 PLA",
+      Top: 340,
+      Middle: 340,
+      Bottom: 360,
+      Nozzle: 380,
+      Bed: 50,
       Cnc: 10000,
     },
     {
