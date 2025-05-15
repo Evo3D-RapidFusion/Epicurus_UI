@@ -1,3 +1,19 @@
+@font-face {
+  font-family: Daggersquare;
+  src: url('../fonts/DAGGERSQUARE-OBLIQUE.otf') format("opentype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Daggersquare;
+  src: url('../fonts/DAGGERSQUARE.otf') format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --white: white;
   --black: black;
@@ -2992,6 +3008,16 @@ img {
   grid-column-gap: 20px;
   grid-row-gap: 20px;
   display: flex;
+}
+
+@media screen and (min-width: 1920px) {
+  .main-container.tool-status {
+    height: 748px;
+  }
+
+  .settings-popup {
+    display: none;
+  }
 }
 
 

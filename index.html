@@ -1,8 +1,8 @@
-<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Tue Nov 12 2024 16:54:30 GMT+0000 (Coordinated Universal Time)  -->
+<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Thu May 15 2025 15:31:54 GMT+0000 (Coordinated Universal Time)  -->
 <html data-wf-page="6655b5b32a1c6ab9c376d69a" data-wf-site="6655b5b32a1c6ab9c376d696">
 <head>
   <meta charset="utf-8">
-  <title>PE320 UI dev remote</title>
+  <title>Epicurus UI v3.0</title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta content="Webflow" name="generator">
   <link href="css/normalize.css" rel="stylesheet" type="text/css">
@@ -46,13 +46,13 @@
             <path d="M17 17L7 7.00002M17 7L7.00001 17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" app="ikonik" class="path-b7eis"></path>
           </svg></div>
       </div>
-      <div class="main-container">
-        <div data-current="System Info" data-easing="ease-in-out" data-duration-in="0" data-duration-out="0" class="settings-tabs w-tabs">
+      <div class="main-container tool-status">
+        <div data-current="Tool Status" data-easing="ease-in-out" data-duration-in="0" data-duration-out="0" class="settings-tabs w-tabs">
           <div class="settings-tabs-menu w-tab-menu">
-            <a data-w-tab="System Info" id="system-info" hr="" class="settings-tab-link w-inline-block w-tab-link w--current">
+            <a data-w-tab="System Info" id="system-info" hr="" class="settings-tab-link w-inline-block w-tab-link">
               <div>System Info</div>
             </a>
-            <a data-w-tab="Tool Status" id="tool-status" class="settings-tab-link w-inline-block w-tab-link">
+            <a data-w-tab="Tool Status" id="tool-status" class="settings-tab-link w-inline-block w-tab-link w--current">
               <div>Tool Status</div>
             </a>
             <a data-w-tab="Developer Settings" id="developer-settings" data-w-id="11fb8e41-d6a7-db4b-9b6c-8d4fa7d6964b" style="display:none" class="settings-tab-link w-inline-block w-tab-link">
@@ -60,7 +60,7 @@
             </a>
           </div>
           <div class="settings-tabs-content w-tab-content">
-            <div data-w-tab="System Info" class="tab-pane-system-info w-tab-pane w--tab-active">
+            <div data-w-tab="System Info" class="tab-pane-system-info w-tab-pane">
               <div class="settings-main-content">
                 <div class="text-container-row">
                   <div class="text-title bold">
@@ -134,15 +134,15 @@
                 </div>
               </div>
               <div class="settings-button-container">
-                <aside id="check-for-updates" class="settings-white-button" data-ix="new-interaction">
+                <aside id="check-for-updates" class="settings-white-button">
                   <div class="user-input-temp">Check for Updates</div>
                 </aside>
-                <aside id="restart-firmware" class="settings-white-button" data-ix="new-interaction">
+                <aside id="restart-firmware" class="settings-white-button">
                   <div class="user-input-temp">Restart Firmware</div>
                 </aside>
               </div>
             </div>
-            <div data-w-tab="Tool Status" class="tab-pane-tool-status w-tab-pane">
+            <div data-w-tab="Tool Status" class="tab-pane-tool-status w-tab-pane w--tab-active">
               <div id="connected-tool-container" data-w-id="98b3faa9-c2b4-2bc1-f905-008f9f01a7b1" style="display:none" class="connected-tool-main-title">
                 <div class="text-container-row">
                   <div class="text-title bold">
@@ -551,7 +551,7 @@
               <div id="close-button" class="close-button">Close</div>
               <div id="confirm-button" class="confirm-button">Confirm</div>
               <div id="cancel-button" class="cancel-button">Cancel</div>
-              <aside id="reset-machine" data-w-id="858012f7-bd5e-9b10-21e5-2ca9d8e810a6" class="white-button" data-ix="new-interaction"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewbox="0 0 1024 1024" app="ikonik" class="ikonik-qg0eg">
+              <aside id="reset-machine" data-w-id="858012f7-bd5e-9b10-21e5-2ca9d8e810a6" class="white-button"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewbox="0 0 1024 1024" app="ikonik" class="ikonik-qg0eg">
                   <path fill="currentColor" d="M705.6 124.9a8 8 0 0 0-11.6 7.2v64.2c0 5.5 2.9 10.6 7.5 13.6a352.2 352.2 0 0 1 62.2 49.8c32.7 32.8 58.4 70.9 76.3 113.3a355 355 0 0 1 27.9 138.7c0 48.1-9.4 94.8-27.9 138.7a355.92 355.92 0 0 1-76.3 113.3 353.06 353.06 0 0 1-113.2 76.4c-43.8 18.6-90.5 28-138.5 28s-94.7-9.4-138.5-28a353.06 353.06 0 0 1-113.2-76.4A355.92 355.92 0 0 1 184 650.4a355 355 0 0 1-27.9-138.7c0-48.1 9.4-94.8 27.9-138.7 17.9-42.4 43.6-80.5 76.3-113.3 19-19 39.8-35.6 62.2-49.8 4.7-2.9 7.5-8.1 7.5-13.6V132c0-6-6.3-9.8-11.6-7.2C178.5 195.2 82 339.3 80 506.3 77.2 745.1 272.5 943.5 511.2 944c239 .5 432.8-193.3 432.8-432.4 0-169.2-97-315.7-238.4-386.7zM480 560h64c4.4 0 8-3.6 8-8V88c0-4.4-3.6-8-8-8h-64c-4.4 0-8 3.6-8 8v464c0 4.4 3.6 8 8 8z" app="ikonik" class="path-hw7e0l"></path>
                 </svg>
                 <div class="user-input-temp">Reset Machine</div>
@@ -1233,13 +1233,13 @@
           <a data-w-tab="Extruder Control" id="default-tab" hr="" class="main-tab-link w-inline-block w-tab-link w--current">
             <div class="flex-tab-link">
               <div id="extruder-control-tab-text" class="tab-heading">Extruder Control</div>
-              <div id="extruder-hot-icon" class="hot-icon"><img width="Auto" sizes="(max-width: 991px) 32.92499923706055px, 3vw" alt="" src="images/istockphoto-1158829520-612x612-removebg-preview.png" loading="eager" srcset="images/istockphoto-1158829520-612x612-removebg-preview-p-500.png 500w, images/istockphoto-1158829520-612x612-removebg-preview.png 526w" class="hot-surface-icon"></div>
+              <div id="extruder-hot-icon" class="hot-icon"><img width="Auto" sizes="(max-width: 479px) 88vw, (max-width: 591px) 89vw, 526px" alt="" src="images/istockphoto-1158829520-612x612-removebg-preview.png" loading="eager" srcset="images/istockphoto-1158829520-612x612-removebg-preview-p-500.png 500w, images/istockphoto-1158829520-612x612-removebg-preview.png 526w" class="hot-surface-icon"></div>
             </div>
           </a>
           <a data-w-tab="Bed Control" class="main-tab-link w-inline-block w-tab-link">
             <div class="flex-tab-link">
               <div id="bed-control-tab-text" class="tab-heading">Bed Control</div>
-              <div id="bed-hot-icon" class="hot-icon"><img width="Auto" sizes="39.9375px" alt="" src="images/istockphoto-1158829520-612x612-removebg-preview.png" loading="eager" srcset="images/istockphoto-1158829520-612x612-removebg-preview-p-500.png 500w, images/istockphoto-1158829520-612x612-removebg-preview.png 526w" class="hot-surface-icon"></div>
+              <div id="bed-hot-icon" class="hot-icon"><img width="Auto" sizes="(max-width: 479px) 88vw, (max-width: 591px) 89vw, 526px" alt="" src="images/istockphoto-1158829520-612x612-removebg-preview.png" loading="eager" srcset="images/istockphoto-1158829520-612x612-removebg-preview-p-500.png 500w, images/istockphoto-1158829520-612x612-removebg-preview.png 526w" class="hot-surface-icon"></div>
             </div>
           </a>
           <a data-w-tab="Spindle Control" id="cnc-mill" data-w-id="858012f7-bd5e-9b10-21e5-2ca9d8e815d8" style="display:none" class="main-tab-link w-inline-block w-tab-link">
@@ -1282,7 +1282,7 @@
                 </div>
                 <div class="main-container">
                   <div class="button-container">
-                    <aside id="boost-pellets" data-w-id="1f1e83dc-0f26-d19b-3b77-6a10a51b1f65" class="white-button" data-ix="new-interaction">
+                    <aside id="boost-pellets" data-w-id="1f1e83dc-0f26-d19b-3b77-6a10a51b1f65" class="white-button">
                       <div class="user-input-temp">Boost Pellets</div>
                     </aside>
                     <aside id="heaters-off" class="purple-button">
@@ -1411,7 +1411,7 @@
           </div>
           <div data-w-tab="Bed Control" class="tab-pane-bed-control w-tab-pane">
             <div class="main">
-              <div class="bed-container"><img loading="eager" src="images/Radial-Gradient-Background.png" alt="" class="radial-gradient-background bed"><img loading="eager" src="images/Radial-gradient-background-red.png" alt="" class="radial-gradient-background-red bed"><img loading="eager" src="images/Radial-gradient-background-orange.png" alt="" class="radial-gradient-background-orange bed"><img sizes="400px" srcset="images/PE320-Bed-Render-p-500.png 500w, images/PE320-Bed-Render.png 591w" alt="" src="images/PE320-Bed-Render.png" loading="eager" class="bed-render"></div>
+              <div class="bed-container"><img loading="eager" src="images/Radial-Gradient-Background.png" alt="" class="radial-gradient-background bed"><img loading="eager" src="images/Radial-gradient-background-red.png" alt="" class="radial-gradient-background-red bed"><img loading="eager" src="images/Radial-gradient-background-orange.png" alt="" class="radial-gradient-background-orange bed"><img sizes="100vw" srcset="images/PE320-Bed-Render-p-500.png 500w, images/PE320-Bed-Render.png 591w" alt="" src="images/PE320-Bed-Render.png" loading="eager" class="bed-render"></div>
               <div class="heating-profiles-container">
                 <div class="main-header">
                   <div class="heading">Bed Control</div>
@@ -1551,7 +1551,7 @@
           </div>
           <div data-w-tab="Spindle Control" class="tab-pane-spindle-control w-tab-pane">
             <div class="main">
-              <div class="extruder-container"><img id="radial-gradient-background-cnc-white" loading="eager" alt="" src="images/Radial-Gradient-Background.png" class="radial-gradient-background cnc"><img id="radial-gradient-background-cnc-red" loading="eager" alt="" src="images/Radial-gradient-background-red.png" class="radial-gradient-background-red cnc"><img sizes="401px" srcset="images/Zeus-Cell-Assy-v4-p-500.png 500w, images/Zeus-Cell-Assy-v4-p-800.png 800w, images/Zeus-Cell-Assy-v4.png 872w" alt="" src="images/Zeus-Cell-Assy-v4.png" loading="lazy" class="image"></div>
+              <div class="extruder-container"><img id="radial-gradient-background-cnc-white" loading="eager" alt="" src="images/Radial-Gradient-Background.png" class="radial-gradient-background cnc"><img id="radial-gradient-background-cnc-red" loading="eager" alt="" src="images/Radial-gradient-background-red.png" class="radial-gradient-background-red cnc"><img sizes="100vw" srcset="images/Zeus-Cell-Assy-v4-p-500.png 500w, images/Zeus-Cell-Assy-v4-p-800.png 800w, images/Zeus-Cell-Assy-v4.png 872w" alt="" src="images/Zeus-Cell-Assy-v4.png" loading="lazy" class="image"></div>
               <div class="tool-temperature-container">
                 <div class="main-header">
                   <div class="div-block-5">
@@ -1977,7 +1977,7 @@
                       <div class="action-heading">Action</div>
                     </div>
                   </div>
-                  <div class="heating-profiles-content" data-ix="new-interaction">
+                  <div class="heating-profiles-content">
                     <div style="display:none" class="heating-profile-material dark-purple">
                       <div class="material-name">
                         <div class="heating-profiles-text profile-number">1.</div>
