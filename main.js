@@ -1159,6 +1159,11 @@ document.addEventListener("DOMContentLoaded", function () {
     .flash {
       animation: flash 2s infinite;
     }
+
+    /* Fix dropdown clipping */
+    .settings-tabs-content .w-tab-content {
+      overflow: visible !important;
+    }
   `;
   document.head.appendChild(style);
 
