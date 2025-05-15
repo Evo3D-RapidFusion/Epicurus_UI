@@ -1161,7 +1161,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     /* Fix dropdown clipping */
-    .settings-tabs-content .w-tab-content {
+    .settings-popup .w-tab-content {
       overflow: visible !important;
     }
   `;
