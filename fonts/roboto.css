@@ -3,38 +3,53 @@
   font-family: 'Roboto';
   font-style: normal;
   font-weight: 100;
-  src: local('Roboto Thin'), local('Roboto-Thin');
+  src: local('Roboto Thin'), local('Roboto-Thin'), 
+       url('../fonts/Roboto-Thin.woff2') format('woff2'),
+       url('../fonts/Roboto-Thin.woff') format('woff');
+  font-display: swap;
 }
 
 @font-face {
   font-family: 'Roboto';
   font-style: normal;
   font-weight: 300;
-  src: local('Roboto Light'), local('Roboto-Light');
+  src: local('Roboto Light'), local('Roboto-Light'),
+       url('../fonts/Roboto-Light.woff2') format('woff2'),
+       url('../fonts/Roboto-Light.woff') format('woff');
+  font-display: swap;
 }
 
 @font-face {
   font-family: 'Roboto';
   font-style: normal;
   font-weight: 400;
-  src: local('Roboto'), local('Roboto-Regular');
+  src: local('Roboto'), local('Roboto-Regular'),
+       url('../fonts/Roboto-Regular.woff2') format('woff2'),
+       url('../fonts/Roboto-Regular.woff') format('woff');
+  font-display: swap;
 }
 
 @font-face {
   font-family: 'Roboto';
   font-style: normal;
   font-weight: 500;
-  src: local('Roboto Medium'), local('Roboto-Medium');
+  src: local('Roboto Medium'), local('Roboto-Medium'),
+       url('../fonts/Roboto-Medium.woff2') format('woff2'),
+       url('../fonts/Roboto-Medium.woff') format('woff');
+  font-display: swap;
 }
 
 @font-face {
   font-family: 'Roboto';
   font-style: normal;
   font-weight: 900;
-  src: local('Roboto Black'), local('Roboto-Black');
+  src: local('Roboto Black'), local('Roboto-Black'),
+       url('../fonts/Roboto-Black.woff2') format('woff2'),
+       url('../fonts/Roboto-Black.woff') format('woff');
+  font-display: swap;
 }
 
-/* Fallback font */
+/* Fallback font stack */
 body {
-  font-family: Roboto, Arial, sans-serif;
+  font-family: Roboto, 'Segoe UI', Tahoma, Arial, sans-serif;
 } 

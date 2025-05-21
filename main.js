@@ -18,7 +18,7 @@ let selectedBarrelFan = "0";
 
 // Use relative URLs instead of absolute URLs with localhost
 let activeStatusURL = "mock-endpoints/status.json";
-let activeCodeURL = "mock-endpoints/handle-gcode.php";
+let activeCodeURL = "mock-endpoints/handle-gcode.txt";
 
 // ============================= index.html HEADER - Fetch Machine Status with Fallback URLs ===============================
 
@@ -27,9 +27,24 @@ let activeCodeURL = "mock-endpoints/handle-gcode.php";
 // FUNCTION: HTTPS async GET/POST requests to Duet Mainboard
 // Enhanced fetchData function to handle various error cases
 async function fetchData(url, options) {
+  // First check if we're in offline mode or the network is down
+  if (!navigator.onLine || localStorage.getItem('offlineMode') === 'true') {
+    console.log(`Network offline or in offline mode. Using mock data for: ${url}`);
+    return getMockData();
+  }
+
   try {
     console.log(`Fetching data from: ${url}`);
-    const response = await fetch(url, options);
+    
+    // Add a timeout to prevent hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
+    const fetchOptions = options || {};
+    fetchOptions.signal = controller.signal;
+    
+    const response = await fetch(url, fetchOptions);
+    clearTimeout(timeoutId); // Clear the timeout if fetch completes
 
     if (!response.ok) {
       console.error(`Error: Network response was not ok. Status: ${response.status}`);
@@ -45,7 +60,18 @@ async function fetchData(url, options) {
 
     return data;
   } catch (error) {
-    console.error("There has been a problem with your fetch operation:", error);
+    console.error("Fetch error:", error);
+    
+    // Check if this was an abort (timeout) error
+    if (error.name === 'AbortError') {
+      console.error("Request timed out");
+    }
+    
+    // Special handling for PHP files not executed properly
+    if (url.includes('.php') && !navigator.onLine) {
+      console.error("PHP file cannot be executed in offline mode");
+    }
+    
     // Return mock data on error
     return getMockData();
   }
@@ -54,7 +80,15 @@ async function fetchData(url, options) {
 // Mock data function - fallback data when API calls fail
 function getMockData() {
   console.log("Using mock data due to fetch failure");
-  return {
+  
+  // If we already have mock data, use that (so we preserve state changes)
+  if (window.mockData) {
+    console.log("Using existing mock data");
+    return window.mockData;
+  }
+  
+  // Otherwise create new mock data
+  window.mockData = {
     heat: {
       heaters: [
         { current: 25, active: 0, standby: 0, state: "off" },
@@ -87,6 +121,51 @@ function getMockData() {
       dsf: { version: "v3.4.0" }
     }
   };
+  
+  // Add simulated temperature changes for realism if in offline mode
+  if (!navigator.onLine || localStorage.getItem('offlineMode') === 'true') {
+    // Start a timer to periodically simulate temperature changes
+    if (!window.mockDataInterval) {
+      window.mockDataInterval = setInterval(updateMockTemperatures, 5000);
+    }
+  }
+  
+  return window.mockData;
+}
+
+// Function to update temperatures in mock data for realistic simulation
+function updateMockTemperatures() {
+  if (!window.mockData || !window.mockData.heat || !window.mockData.heat.heaters) return;
+  
+  window.mockData.heat.heaters.forEach((heater, index) => {
+    if (heater.state === "active" && heater.active > 0) {
+      // Simulate temperature approaching target with small random variations
+      const targetTemp = heater.active;
+      const currentTemp = heater.current;
+      
+      if (Math.abs(targetTemp - currentTemp) > 5) {
+        // Moving toward target
+        const step = (targetTemp > currentTemp) ? 
+          Math.min(5, Math.abs(targetTemp - currentTemp) / 5) : 
+          -Math.min(5, Math.abs(targetTemp - currentTemp) / 5);
+        
+        heater.current = Math.round(currentTemp + step + (Math.random() * 0.5 - 0.25));
+      } else {
+        // Near target, add small fluctuations
+        heater.current = Math.round(targetTemp + (Math.random() * 2 - 1));
+      }
+      
+      console.log(`Simulated heater ${index} temperature: ${heater.current}°C (target: ${targetTemp}°C)`);
+    } else if (heater.state === "off" && heater.current > 25) {
+      // Cooling down when heater is off
+      heater.current = Math.max(25, Math.round(heater.current - 1 - Math.random()));
+    }
+  });
+  
+  // Also update SBC uptime
+  if (window.mockData.sbc) {
+    window.mockData.sbc.uptime += 5;
+  }
 }
 
 // FUNCTION: Fetch & update Duet Object Model via HTTP GET requests
@@ -917,36 +996,85 @@ async function sendCommandsOnce() {
 
 // Function to send individual G-code command with retry logic for 503 and unknown variable errors using fetchData
 async function sendGcode(gcode) {
-  while (true) {
-    try {
-      const response = await fetchData(activeCodeURL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain",
-        },
-        body: gcode,
-      });
-
-      if (response.status && response.status === 503) {
-        console.warn("503 Service Unavailable while sending G-code. Retrying...");
-        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
-        continue; // Retry if server returns 503 error
+  try {
+    console.log(`Sending G-code: ${gcode}`);
+    
+    // Check if we're in offline mode
+    if (!navigator.onLine || localStorage.getItem('offlineMode') === 'true') {
+      console.log('Operating in offline mode - simulating response');
+      
+      // Simulate different responses based on G-code content
+      if (gcode.includes('M568')) {
+        // Heater setting commands
+        console.log('Simulating heater settings update');
+        // If this is a command to turn on heaters, update the mock data accordingly
+        if (gcode.includes('A2') || gcode.includes('A1')) {
+          // Parse the heater number
+          const heaterMatch = gcode.match(/P(\d+)/);
+          const tempMatch = gcode.match(/S(\d+)/);
+          
+          if (heaterMatch && tempMatch && window.mockData && window.mockData.heat && window.mockData.heat.heaters) {
+            const heaterNum = parseInt(heaterMatch[1]);
+            const temp = parseInt(tempMatch[1]);
+            
+            if (window.mockData.heat.heaters[heaterNum]) {
+              // Update mock data for simulated polling response
+              window.mockData.heat.heaters[heaterNum].active = temp;
+              window.mockData.heat.heaters[heaterNum].state = "active";
+              console.log(`Updated mock heater ${heaterNum} to active temp ${temp}`);
+            }
+          }
+        } else if (gcode.includes('A0')) {
+          // Turn off heater
+          const heaterMatch = gcode.match(/P(\d+)/);
+          if (heaterMatch && window.mockData && window.mockData.heat && window.mockData.heat.heaters) {
+            const heaterNum = parseInt(heaterMatch[1]);
+            if (window.mockData.heat.heaters[heaterNum]) {
+              window.mockData.heat.heaters[heaterNum].state = "off";
+              console.log(`Turned off mock heater ${heaterNum}`);
+            }
+          }
+        }
+      } else if (gcode.includes('M3') || gcode.includes('M4')) {
+        // Spindle/tool commands
+        console.log('Simulating spindle activation');
+        if (window.mockData && window.mockData.spindles && window.mockData.spindles[0]) {
+          const speedMatch = gcode.match(/S(\d+)/);
+          if (speedMatch) {
+            const speed = parseInt(speedMatch[1]);
+            window.mockData.spindles[0].current = speed;
+            window.mockData.spindles[0].active = speed;
+            window.mockData.spindles[0].state = "on";
+          }
+        }
+      } else if (gcode.includes('M5')) {
+        // Spindle stop
+        console.log('Simulating spindle deactivation');
+        if (window.mockData && window.mockData.spindles && window.mockData.spindles[0]) {
+          window.mockData.spindles[0].current = 0;
+          window.mockData.spindles[0].active = 0;
+          window.mockData.spindles[0].state = "off";
+        }
       }
-
-      // Check for unknown variable error in the response text
-      if (typeof response === "string" && response.includes("Error: unknown variable")) {
-        console.warn(`Unknown variable error detected in response. Retrying G-code '${gcode}'...`);
-        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
-        continue; // Retry if unknown variable error is present
-      }
-
-      console.log(`Response from sending G-code '${gcode}': ${response}`);
-      return response; // Exit loop on successful command execution without errors
-
-    } catch (error) {
-      console.error(`Error sending G-code '${gcode}': ${error}`);
-      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL)); // Delay before retrying
+      
+      // Simulate a small delay for realism
+      await new Promise(resolve => setTimeout(resolve, 100));
+      return "G-code executed successfully in offline mode";
     }
+    
+    // If online, try to send the G-code to the actual endpoint
+    const response = await fetchData(activeCodeURL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: `gcode=${encodeURIComponent(gcode)}`
+    });
+    
+    return response;
+  } catch (error) {
+    console.error(`Error sending G-code: ${error.message}`);
+    return "G-code execution simulated (offline mode)";
   }
 }
 

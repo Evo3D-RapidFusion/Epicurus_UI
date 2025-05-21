@@ -31,6 +31,8 @@
       border-radius: 5px;
       cursor: pointer;
       font-size: 16px;
+      margin-right: 10px;
+      margin-bottom: 10px;
     }
     button:hover {
       background-color: #8f3c86;
@@ -41,22 +43,51 @@
       background-color: #f0f0f0;
       border-radius: 5px;
     }
+    .warning {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #fff3cd;
+      border-radius: 5px;
+      border-left: 4px solid #ffc107;
+    }
+    .status {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .steps {
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Epicurus UI - Offline Mode</h1>
-    <p>You are viewing this page because the system detected network connectivity issues.</p>
+    <p class="status">Current Network Status: <span id="network-status">Checking...</span></p>
     
+    <div class="steps">
+      <h2>Options:</h2>
+      <button onclick="window.location.reload()">Refresh Page</button>
+      <button onclick="forceOnlineMode()">Force Online Mode</button>
+      <button onclick="openMainUI()">Open UI in Offline Mode</button>
+    </div>
+
     <h2>Troubleshooting Steps:</h2>
     <ol>
-      <li>Check your local web server is running</li>
-      <li>Make sure all files are in the correct locations</li>
-      <li>Check for file permission issues</li>
-      <li>Ensure jQuery and other dependencies are available locally</li>
+      <li>Check that your local web server is running</li>
+      <li>Ensure all files are in the correct locations</li>
+      <li>Verify file permissions</li>
+      <li>Check that required dependencies are available locally</li>
     </ol>
     
-    <button onclick="window.location.reload()">Try Again</button>
+    <div class="warning">
+      <h3>⚠️ Important Note</h3>
+      <p>When operating in offline mode:</p>
+      <ul>
+        <li>G-code commands will be simulated and not sent to actual hardware</li>
+        <li>Temperature and other data will be mock values for display purposes</li>
+        <li>Changes to settings won't be saved permanently</li>
+      </ul>
+    </div>
     
     <div class="tips">
       <h3>Tips for Offline Use:</h3>
@@ -64,9 +95,40 @@
         <li>Use direct file paths rather than URLs with 'localhost'</li>
         <li>Include fallback mechanisms for all external resources</li>
         <li>If using Apache, ensure mod_rewrite is enabled</li>
-        <li>Check browser console for specific error messages</li>
+        <li>Check browser console for specific error messages (F12)</li>
       </ul>
     </div>
   </div>
+
+  <script>
+    // Update network status display
+    function updateNetworkStatus() {
+      const statusElement = document.getElementById('network-status');
+      if (navigator.onLine) {
+        statusElement.textContent = 'Online (but UI redirected to offline page)';
+        statusElement.style.color = 'green';
+      } else {
+        statusElement.textContent = 'Offline';
+        statusElement.style.color = 'red';
+      }
+    }
+
+    // Force online mode by setting localStorage flag
+    function forceOnlineMode() {
+      localStorage.setItem('offlineOverride', 'true');
+      window.location.href = 'index.html';
+    }
+
+    // Open UI in offline mode
+    function openMainUI() {
+      // Don't set the override, just go to index and let it use mock endpoints
+      window.location.href = 'index.html';
+    }
+
+    // Initialize
+    updateNetworkStatus();
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
+  </script>
 </body>
 </html> 
