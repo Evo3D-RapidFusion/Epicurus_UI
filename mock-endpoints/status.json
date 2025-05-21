@@ -1,1 +1,33 @@
- 
+{
+  "heat": {
+    "heaters": [
+      { "current": 25, "active": 0, "standby": 0, "state": "off" },
+      { "current": 25, "active": 0, "standby": 0, "state": "off" },
+      { "current": 25, "active": 0, "standby": 0, "state": "off" },
+      { "current": 25, "active": 0, "standby": 0, "state": "off" },
+      { "current": 25, "active": 0, "standby": 0, "state": "off" },
+      { "current": 25, "active": 0, "standby": 0, "state": "off" },
+      { "current": 25, "active": 0, "standby": 0, "state": "off" },
+      { "current": 25, "active": 0, "standby": 0, "state": "off" }
+    ],
+    "bedHeaters": [0, 1, 2, 3],
+    "chamberHeaters": []
+  },
+  "spindles": [{ "current": 0, "active": 0, "state": "off" }],
+  "fans": [
+    { "rpm": 0 }, { "rpm": 0 }, { "rpm": 0 }, { "rpm": 0 }, 
+    { "rpm": 0 }, { "rpm": 0 }, { "rpm": 0 }
+  ],
+  "global": {
+    "EstopFault": false,
+    "ExtruderFault": false,
+    "CNCFault": false,
+    "toolState": "PE320",
+    "materialSensorLEFT": "Empty",
+    "materialSensorRIGHT": "Empty"
+  },
+  "sbc": {
+    "uptime": 3600,
+    "dsf": { "version": "v3.4.0" }
+  }
+} 
