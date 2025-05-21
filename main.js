@@ -1198,34 +1198,31 @@ async function fetchLatestTag() {
   } catch (error) {
       console.error('Error fetching latest tag from local server:', error);
       
-      // Fallback to check machine status and fetch version from GitHub if necessary
-      const result = await fetchData("https://192.168.1.64/machine/status");
+      // Instead of checking GitHub, check local machine status
+      const result = await fetchData("http://localhost/machine/status");
       if (result) {
-          // If `fetchData` is successful, try fetching from GitHub
-          fetchLatestVersion();
+          // If `fetchData` is successful, try fetching from local version file
+          fetchLatestVersionLocal();
       } else {
           document.getElementById('software-version').textContent = 'Failed to fetch version';
       }
   }
 }
 
-async function fetchLatestVersion() {
-  const owner = "Evo3D-RapidFusion";
-  const repo = "Epicurus_UI";
-
+async function fetchLatestVersionLocal() {
   try {
-      const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases?per_page=1`); // Fetch releases (including pre-releases)
+      // Try to fetch version information from a local file instead of GitHub API
+      const response = await fetch('http://localhost:8080/version.txt');
       
       if (!response.ok) {
           throw new Error("Network response was not ok");
       }
       
-      const data = await response.json();
-      const versionName = data[0]?.tag_name || "No releases found"; // Extract the latest release (including pre-releases)
-      document.getElementById("software-version").textContent = versionName; // Display the version
+      const versionName = await response.text();
+      document.getElementById("software-version").textContent = versionName.trim();
   } catch (error) {
-      console.error("Error fetching GitHub version:", error);
-      document.getElementById("software-version").textContent = 'Failed to fetch version from GitHub';
+      console.error("Error fetching local version:", error);
+      document.getElementById("software-version").textContent = 'Local version unavailable';
   }
 }
 

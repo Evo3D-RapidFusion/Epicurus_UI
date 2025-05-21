@@ -1,0 +1,18 @@
+# Enable RewriteEngine
+RewriteEngine On
+
+# Handle /machine/status requests
+RewriteRule ^machine/status$ /mock-endpoints/status.json [L]
+
+# Handle /machine/code POST requests
+RewriteCond %{REQUEST_METHOD} POST
+RewriteRule ^machine/code$ /mock-endpoints/handle-gcode.php [L]
+
+# Set CORS headers for all responses
+Header set Access-Control-Allow-Origin "*"
+Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+Header set Access-Control-Allow-Headers "Content-Type"
+
+# Handle OPTIONS requests for CORS preflight
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule .* - [R=204,L] 
