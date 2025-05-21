@@ -1954,12 +1954,15 @@ document
       document.getElementById("user-input-active-bed3").textContent = bedTemp;
       document.getElementById("user-input-preheat-bed3").textContent = bedTemp;
 
+      // Preheat Extruder Heaters
       sendGcode(
-        `M568 P0 S${topTemp} R${topTemp} A2 M568 P1 S${middleTemp} R${middleTemp} A2 M568 P2 S${bottomTemp} R${bottomTemp} A2 M568 P3 S${nozzleTemp} R${nozzleTemp} A2`
+        `M568 P0 S${topTemp} R${topTemp} A1 M568 P1 S${middleTemp} R${middleTemp} A1 M568 P2 S${bottomTemp} R${bottomTemp} A1 M568 P3 S${nozzleTemp} R${nozzleTemp} A1`
       );
+
+      // Preheat Bed Heaters
       let gcodeString = "";
       configuredBedHeaters.forEach((heater, index) => {
-        gcodeString += `M568 P${index + 4} S${bedTemp} R${bedTemp} A2 `;
+        gcodeString += `M568 P${index + 4} S${bedTemp} R${bedTemp} A1 `;
       });
       sendGcode(gcodeString);
 
