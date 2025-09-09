@@ -195,15 +195,25 @@ function updateObjectModel() {
         return outputData; // Output extracted values
       }
 
-      // Call FUNCTIONS
-      const configuredHeatersAll = findHeaters(data.heat.heaters);
-      const configuredBedHeaters = findHeaters(data.heat.bedHeaters);
-      const configuredChamberHeaters = findHeaters(data.heat.chamberHeaters);
+      // Debug: Log the response to understand structure
+      console.log("RRF Response:", data);
+      
+      // Call FUNCTIONS - Handle RRF object model structure with fallbacks
+      const heatData = data.heat || {};
+      const globalData = data.global || {};
+      const stateData = data.state || {};
+      const boardsData = data.boards || [];
+      const fansData = data.fans || [];
+      const spindlesData = data.spindles || [];
+      
+      const configuredHeatersAll = findHeaters(heatData.heaters || []);
+      const configuredBedHeaters = findHeaters(heatData.bedHeaters || []);
+      const configuredChamberHeaters = findHeaters(heatData.chamberHeaters || []);
       const configuredExtruderHeaters = configuredHeatersAll.slice(
         0,
         defaultNumOfExtruderHeaters
       );
-      const cncSpindle = data.spindles[0];
+      const cncSpindle = spindlesData[0] || {};
 
       configuredBedHeaters.forEach((element, index) => {
         document
@@ -220,7 +230,7 @@ function updateObjectModel() {
       // update Extruder Current Temp
       const extruderHeaterTemps = updateUIdata(
         "extruderHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "current",
         ".temp-data.extruder",
         configuredExtruderHeaters,
@@ -232,7 +242,7 @@ function updateObjectModel() {
       // update Extruder Active Temp
       const extruderHeaterActiveTemps = updateUIdata(
         "activePreheatAllHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "active",
         ".user-input-temp.active",
         configuredExtruderHeaters,
@@ -243,7 +253,7 @@ function updateObjectModel() {
       // update Extruder Preheat (Standby) Temp
       const extruderHeaterPreheatTemps = updateUIdata(
         "activePreheatAllHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "standby",
         ".user-input-temp.preheat",
         configuredExtruderHeaters,
@@ -253,7 +263,7 @@ function updateObjectModel() {
 
       const extruderHeaterStates = updateUIdata(
         "extruderHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "state",
         ".temp-state.extruder",
         configuredExtruderHeaters,
@@ -263,7 +273,7 @@ function updateObjectModel() {
 
       const bedHeaterTemps = updateUIdata(
         "bedHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "current",
         ".temp-data.bed",
         configuredExtruderHeaters,
@@ -275,7 +285,7 @@ function updateObjectModel() {
       // update Bed Active Temp
       const bedHeaterActiveTemps = updateUIdata(
         "activePreheatAllHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "active",
         ".user-input-temp.active",
         configuredExtruderHeaters,
@@ -286,7 +296,7 @@ function updateObjectModel() {
       // update Bed Preheat (Standby) Temp
       const bedHeaterPreheatTemps = updateUIdata(
         "activePreheatAllHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "standby",
         ".user-input-temp.preheat",
         configuredExtruderHeaters,
@@ -296,7 +306,7 @@ function updateObjectModel() {
 
       const bedHeaterStates = updateUIdata(
         "bedHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "state",
         ".temp-state.bed",
         configuredExtruderHeaters,
@@ -309,7 +319,7 @@ function updateObjectModel() {
 
       const allHeaterTemps = updateUIdata(
         "allHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "current",
         ".temp-data",
         configuredExtruderHeaters,
@@ -319,7 +329,7 @@ function updateObjectModel() {
       );
       const allHeaterStates = updateUIdata(
         "allHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "state",
         ".temp-state",
         configuredExtruderHeaters,
@@ -446,7 +456,7 @@ function updateObjectModel() {
       }
 
       // CNC Spindle Speed Live Control
-      if (spindleRunning === true && data.global.EstopFault === false) {
+      if (spindleRunning === true && globalData.EstopFault === false) {
         document.getElementById(
           "radial-gradient-background-cnc-white"
         ).style.display = "none";
@@ -485,7 +495,7 @@ function updateObjectModel() {
       const popup = document.getElementById('e-stop-popup');
       const popupSpace = document.getElementById('e-stop-popup-space');
 
-      if (data.global.EstopFault === true) {
+      if (globalData.EstopFault === true) {
         popupSpace.style.display = "flex"; // Show Background blur
         popup.style.display = "flex"; // Ensure popup is visible
       } else {
@@ -495,16 +505,16 @@ function updateObjectModel() {
 
       // Major Fault Detection - Extruder Servo & Spindle Motor
       // JavaScript to control the visibility and flashing effect
-      if (data.global.toolState === "PE320" && data.global.ExtruderFault === true) {
+      if (globalData.toolState === "PE320" && globalData.ExtruderFault === true) {
         document.getElementById("fault-condition-1").textContent = "Extruder Servo Fault";
         document.getElementById("fault-condition-1").style.display = "flex";
         document.getElementById("fault-warning-container").style.display = "flex";
-      } else if (data.global.toolState === "CNC" && data.global.CNCFault === true) {
+      } else if (globalData.toolState === "CNC" && globalData.CNCFault === true) {
         document.getElementById("fault-condition-2").textContent = "Spindle Motor Fault";
         document.getElementById("fault-condition-2").style.display = "flex";
         document.getElementById("fault-warning-container").style.display = "flex";
-      } else if (data.global.toolState === "No Tool" || data.global.toolState === "Open Circuit" || data.global.toolState === "Short Circuit") {
-        document.getElementById("fault-condition-1").textContent = data.global.toolState;
+      } else if (globalData.toolState === "No Tool" || globalData.toolState === "Open Circuit" || globalData.toolState === "Short Circuit") {
+        document.getElementById("fault-condition-1").textContent = globalData.toolState;
         document.getElementById("fault-condition-1").style.display = "flex";
         document.getElementById("fault-warning-container").style.display = "flex";
       } else {
@@ -514,7 +524,7 @@ function updateObjectModel() {
       }
 
       // Fault Detection - CNC Mill Fault Popup
-      if (data.global.CNCFault === true) {
+      if (globalData.CNCFault === true) {
         sendGcode(`M5`);
         confirmationModal.style.display = 'none';
         slider.disabled = true; // Ensure slider is disabled on page load
@@ -525,7 +535,7 @@ function updateObjectModel() {
         spindleOff == true;
       }
 
-      switch (data.global.toolState) {
+      switch (globalData.toolState) {
         case "PE320":
           console.log("Tool state: PE320 Pellet Extruder Connected");
           document.getElementById("tool-detection-pe320").style.display = "flex";
@@ -576,7 +586,7 @@ function updateObjectModel() {
           document.getElementById("unlockButtonContainer").style.pointerEvents = "auto";
 
           document.querySelector(".start-text").textContent = "▶ Start Spindle";
-          if (data.global.EstopFault === false && data.global.CNCFault === false) {
+          if (globalData.EstopFault === false && globalData.CNCFault === false) {
             if (spindleRunning == false) {
               document.getElementById("indicatorText").textContent = "Spindle is Ready";
               document.getElementById("indicatorLight").style.backgroundColor = "Green";
@@ -722,7 +732,7 @@ function updateObjectModel() {
       // System Info 
 
       // Get uptime in seconds
-      const uptimeInSeconds = data.state.upTime;
+      const uptimeInSeconds = stateData.upTime;
       // Calculate hours, minutes, and seconds
       const hours = Math.floor(uptimeInSeconds / 3600);
       const minutes = Math.floor((uptimeInSeconds % 3600) / 60);
@@ -736,7 +746,7 @@ function updateObjectModel() {
       // document.getElementById("product-family").textContent = see system-pe320/apollo/zeus
       // document.getElementById("product-family-tools").textContent = see system-pe320/apollo/zeus
       // document.getElementById("software-version").textContent = see GitHub repo
-      document.getElementById("firmware-version").textContent = data.boards[0].firmwareVersion;
+      document.getElementById("firmware-version").textContent = (boardsData[0] || {}).firmwareVersion;
       document.getElementById("bed-count").textContent = configuredBedHeaters.length;
 
       // Update & Restart Firmware
@@ -744,77 +754,77 @@ function updateObjectModel() {
       // restart-firmware -- see buttonId
 
       // Tool Status
-      if (data.global.toolState === null) {
+      if (globalData.toolState === null) {
         document.getElementById("connected-tool").textContent = "null";
       } else {
-        document.getElementById("connected-tool").textContent = data.global.toolState;
+        document.getElementById("connected-tool").textContent = globalData.toolState;
       }
     
       // PE320 Pellet Extruder
       // document.getElementById("extruder-state-container").textContent = "available by default";
       // Check if any heater is in "fault" state
       if (
-        data.heat.heaters[0].state === "fault" ||
-        data.heat.heaters[1].state === "fault" ||
-        data.heat.heaters[2].state === "fault" ||
-        data.heat.heaters[3].state === "fault"
+        ((heatData.heaters || [])[0] || {}).state === "fault" ||
+        ((heatData.heaters || [])[1] || {}).state === "fault" ||
+        ((heatData.heaters || [])[2] || {}).state === "fault" ||
+        ((heatData.heaters || [])[3] || {}).state === "fault"
       ) {
         document.getElementById("extruder-state").textContent = "FAULT";
       }
       // Check if any heater is in "active" state
       else if (
-        data.heat.heaters[0].state === "active" ||
-        data.heat.heaters[1].state === "active" ||
-        data.heat.heaters[2].state === "active" ||
-        data.heat.heaters[3].state === "active"
+        ((heatData.heaters || [])[0] || {}).state === "active" ||
+        ((heatData.heaters || [])[1] || {}).state === "active" ||
+        ((heatData.heaters || [])[2] || {}).state === "active" ||
+        ((heatData.heaters || [])[3] || {}).state === "active"
       ) {
         document.getElementById("extruder-state").textContent = "ACTIVE";
       }
       // Check if any heater is in "standby" state
       else if (
-        data.heat.heaters[0].state === "standby" ||
-        data.heat.heaters[1].state === "standby" ||
-        data.heat.heaters[2].state === "standby" ||
-        data.heat.heaters[3].state === "standby"
+        ((heatData.heaters || [])[0] || {}).state === "standby" ||
+        ((heatData.heaters || [])[1] || {}).state === "standby" ||
+        ((heatData.heaters || [])[2] || {}).state === "standby" ||
+        ((heatData.heaters || [])[3] || {}).state === "standby"
       ) {
         document.getElementById("extruder-state").textContent = "PREHEAT";
       }
       // Check if all heaters are in "off" state
       else if (
-        data.heat.heaters[0].state === "off" &&
-        data.heat.heaters[1].state === "off" &&
-        data.heat.heaters[2].state === "off" &&
-        data.heat.heaters[3].state === "off"
+        ((heatData.heaters || [])[0] || {}).state === "off" &&
+        ((heatData.heaters || [])[1] || {}).state === "off" &&
+        ((heatData.heaters || [])[2] || {}).state === "off" &&
+        ((heatData.heaters || [])[3] || {}).state === "off"
       ) {
         document.getElementById("extruder-state").textContent = "OFF";
       }
       // Default to the state of the nozzle heater (heater 3)
       else {
-        document.getElementById("extruder-state").textContent = (data.heat.heaters[3].state).toUpperCase();
+        document.getElementById("extruder-state").textContent = (((heatData.heaters || [])[3] || {}).state || "unknown").toUpperCase();
       }
 
       // document.getElementById("extruder-runtime").textContent = "n/a";
-      document.getElementById("material-sensor-left").textContent = data.global.materialSensorLEFT;
-      document.getElementById("material-sensor-right").textContent = data.global.materialSensorRIGHT;
+      document.getElementById("material-sensor-left").textContent = globalData.materialSensorLEFT;
+      document.getElementById("material-sensor-right").textContent = globalData.materialSensorRIGHT;
       // document.getElementById("heatsink-fan").textContent = see Embedded;
       // document.getElementById("barrel-fan").textContent = see Embedded;
 
       // Switch case for heatsink fan selection
       switch (document.querySelector('.heatsink-fan-button div').textContent) {
         case "Heatsink Fan 1":
-          document.getElementById("heatsink-fan-tach").textContent = data.fans[0].rpm;
+          document.getElementById("heatsink-fan-tach").textContent = (fansData[0] || {}).rpm;
           selectedHeatsinkFan = "0";
           break;
         case "Heatsink Fan 2":
-          document.getElementById("heatsink-fan-tach").textContent = data.fans[1].rpm;
+          document.getElementById("heatsink-fan-tach").textContent = (fansData[1] || {}).rpm;
           selectedHeatsinkFan = "0";
           break;
         case "Heatsink Fan 3":
-          document.getElementById("heatsink-fan-tach").textContent = data.fans[2].rpm;
+          document.getElementById("heatsink-fan-tach").textContent = (fansData[2] || {}).rpm;
           selectedHeatsinkFan = "0";
           break;
         case "Heatsink Fan 4":
-          document.getElementById("heatsink-fan-tach").textContent = data.fans[3].rpm;
+          document.getElementById("heatsink-fan-tach").textContent = (fansData[3] || {}).rpm;
           selectedHeatsinkFan = "0";
           break;
         default:
@@ -824,15 +834,15 @@ function updateObjectModel() {
       // Switch case for barrel fan selection
       switch (document.querySelector('.barrel-fan-button div').textContent) {
         case "Barrel Fan 1":
-          document.getElementById("barrel-fan-tach").textContent = data.fans[4].rpm;
+          document.getElementById("barrel-fan-tach").textContent = (fansData[4] || {}).rpm;
           selectedBarrelFan = "4";
           break;
         case "Barrel Fan 2":
-          document.getElementById("barrel-fan-tach").textContent = data.fans[5].rpm;
+          document.getElementById("barrel-fan-tach").textContent = (fansData[5] || {}).rpm;
           selectedBarrelFan = "5";
           break;
         case "Barrel Fan 3":
-          document.getElementById("barrel-fan-tach").textContent = data.fans[6].rpm;
+          document.getElementById("barrel-fan-tach").textContent = (fansData[6] || {}).rpm;
           selectedBarrelFan = "6";
           break;
         default:
@@ -841,9 +851,9 @@ function updateObjectModel() {
 
       // CNC Mill
       // document.getElementById("cnc-state-container").textContent = formattedUptime;
-      document.getElementById("cnc-state").textContent = (data.spindles[0].state).toUpperCase();
+      document.getElementById("cnc-state").textContent = ((spindlesData[0] || {}).state).toUpperCase();
       // document.getElementById("cnc-runtime").textContent = "n/a";
-      document.getElementById("cnc-speed").textContent = data.spindles[0].current;
+      document.getElementById("cnc-speed").textContent = (spindlesData[0] || {}).current;
       
       // Resolve the promise with the result
       resolve(globalObjectModelResult);
