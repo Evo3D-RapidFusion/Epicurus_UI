@@ -16,8 +16,8 @@ let selectedHeatsinkFan = "0";
 let selectedBarrelFan = "0";
 // let spindleRunning = false; // already declared in embedded code
 
-let activeStatusURL = "http://localhost/machine/status";
-let activeCodeURL = "http://localhost/machine/code";
+let activeStatusURL = "http://10.10.10.100/rr_model";
+let activeCodeURL = "http://10.10.10.100/rr_gcode";
 
 // ============================= index.html HEADER - Fetch Machine Status with Fallback URLs ===============================
 
@@ -667,7 +667,7 @@ function updateObjectModel() {
       // System Info 
 
       // Get uptime in seconds
-      const uptimeInSeconds = data.sbc.uptime;
+      const uptimeInSeconds = data.state.upTime;
       // Calculate hours, minutes, and seconds
       const hours = Math.floor(uptimeInSeconds / 3600);
       const minutes = Math.floor((uptimeInSeconds % 3600) / 60);
@@ -681,7 +681,7 @@ function updateObjectModel() {
       // document.getElementById("product-family").textContent = see system-pe320/apollo/zeus
       // document.getElementById("product-family-tools").textContent = see system-pe320/apollo/zeus
       // document.getElementById("software-version").textContent = see GitHub repo
-      document.getElementById("firmware-version").textContent = data.sbc.dsf.version;
+      document.getElementById("firmware-version").textContent = data.boards[0].firmwareVersion;
       document.getElementById("bed-count").textContent = configuredBedHeaters.length;
 
       // Update & Restart Firmware
@@ -809,7 +809,7 @@ async function pollServerAndSendOnceOnStateChange() {
 
   while (true) {
     try {
-      const response = await fetchData("http://localhost/machine/status");
+      const response = await fetchData("http://10.10.10.100/rr_model");
 
       // Check if response includes a 503 status
       if (response.status && response.status === 503) {
@@ -1177,54 +1177,8 @@ document.addEventListener("DOMContentLoaded", function () {
   sendGcode(`M5`);
 });
 
-// Ensure fetchLatestTag is called on window load
-window.onload = function() {
-  fetchLatestTag();
-};
-
-// ================================================ Github Repo =================================================
-
-async function fetchLatestTag() {
-  const url = 'http://localhost:8080/tags.txt'; // Local server URL to tags.txt
-
-  try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch tags file');
-
-      const text = await response.text();
-      const latestTag = text.split('\n')[0].trim(); // Get the first line (latest tag)
-
-      document.getElementById('software-version').textContent = `${latestTag}`;
-  } catch (error) {
-      console.error('Error fetching latest tag from local server:', error);
-      
-      // Instead of checking GitHub, check local machine status
-      const result = await fetchData("http://localhost/machine/status");
-      if (result) {
-          // If `fetchData` is successful, try fetching from local version file
-          fetchLatestVersionLocal();
-      } else {
-          document.getElementById('software-version').textContent = 'Failed to fetch version';
-      }
-  }
-}
-
-async function fetchLatestVersionLocal() {
-  try {
-      // Try to fetch version information from a local file instead of GitHub API
-      const response = await fetch('http://localhost:8080/version.txt');
-      
-      if (!response.ok) {
-          throw new Error("Network response was not ok");
-      }
-      
-      const versionName = await response.text();
-      document.getElementById("software-version").textContent = versionName.trim();
-  } catch (error) {
-      console.error("Error fetching local version:", error);
-      document.getElementById("software-version").textContent = 'Local version unavailable';
-  }
-}
+// Set software version
+document.getElementById('software-version').textContent = 'v3.2';
 
 // ================================================ Developer Settings =================================================
 
