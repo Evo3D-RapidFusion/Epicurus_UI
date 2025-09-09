@@ -182,7 +182,7 @@ function updateObjectModel() {
           if (typeof outputData[index] === "string") {
             element.textContent = outputData[index] === "standby"
                 ? "PREHEAT"
-                : outputData[index].toUpperCase() + endText;
+                : outputData[index] + endText;
             element.style.color = outputData[index] === "Fault" ? "red" : "white";
           } else {
             if (Math.round(Number(element.textContent)) === -273) {
@@ -800,7 +800,7 @@ function updateObjectModel() {
       }
       // Default to the state of the nozzle heater (heater 3)
       else {
-        document.getElementById("extruder-state").textContent = (((heatData.heaters || [])[3] || {}).state || "unknown").toUpperCase();
+        document.getElementById("extruder-state").textContent = (((heatData.heaters || [])[3] || {}).state || "unknown");
       }
 
       // document.getElementById("extruder-runtime").textContent = "n/a";
@@ -851,7 +851,7 @@ function updateObjectModel() {
 
       // CNC Mill
       // document.getElementById("cnc-state-container").textContent = formattedUptime;
-      document.getElementById("cnc-state").textContent = ((spindlesData[0] || {}).state).toUpperCase();
+      document.getElementById("cnc-state").textContent = ((spindlesData[0] || {}).state);
       // document.getElementById("cnc-runtime").textContent = "n/a";
       document.getElementById("cnc-speed").textContent = (spindlesData[0] || {}).current;
       
