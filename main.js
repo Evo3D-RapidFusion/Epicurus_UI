@@ -16,31 +16,76 @@ let selectedHeatsinkFan = "0";
 let selectedBarrelFan = "0";
 // let spindleRunning = false; // already declared in embedded code
 
-let activeStatusURL = "http://10.10.10.100/rr_status?type=2";
+let activeStatusURL = "http://10.10.10.100/rr_model";
 let activeCodeURL = "http://10.10.10.100/rr_gcode";
+let activeConnectURL = "http://10.10.10.100/rr_connect";
+
+// Session management
+let isConnected = false;
 
 // ============================= index.html HEADER - Fetch Machine Status with Fallback URLs ===============================
 
 // ========================================== HTTP requests with Duet Mainboard ========================================
 
+// FUNCTION: Establish connection to RRF
+async function connectToRRF(password = "reprap") {
+  try {
+    console.log("Attempting to connect to RRF...");
+    const response = await fetch(`${activeConnectURL}?password=${encodeURIComponent(password)}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.err === 0) {
+      console.log("Successfully connected to RRF");
+      isConnected = true;
+      return data;
+    } else {
+      console.error(`RRF connection failed with error code: ${data.err}`);
+      isConnected = false;
+      throw new Error(`RRF connection failed: ${data.err}`);
+    }
+  } catch (error) {
+    console.error("Failed to connect to RRF:", error);
+    isConnected = false;
+    throw error;
+  }
+}
+
 // FUNCTION: HTTPS async GET/POST requests to Duet Mainboard
 // Enhanced fetchData function to handle various error cases
 async function fetchData(url, options) {
   try {
+    // Ensure we're connected before making requests
+    if (!isConnected && !url.includes('rr_connect')) {
+      await connectToRRF();
+    }
+    
     const response = await fetch(url, options);
+
+    // Handle 401 Unauthorized - need to reconnect
+    if (response.status === 401) {
+      console.warn("Received 401 Unauthorized, attempting to reconnect...");
+      isConnected = false;
+      await connectToRRF();
+      // Retry the original request
+      const retryResponse = await fetch(url, options);
+      if (!retryResponse.ok) {
+        console.error(`Error: Network response was not ok. Status: ${retryResponse.status}`);
+        throw new Error(`HTTP error! Status: ${retryResponse.status}`);
+      }
+      return await parseResponse(retryResponse);
+    }
 
     if (!response.ok) {
       console.error(`Error: Network response was not ok. Status: ${response.status}`);
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
-    const contentType = response.headers.get("content-type");
-    const data =
-      contentType && contentType.includes("application/json")
-        ? await response.json()
-        : await response.text();
-
-    return data;
+    return await parseResponse(response);
   } catch (error) {
     if (error.name === 'TypeError') {
       console.error("Network or SSL error, unable to fetch data. Please check your connection or SSL settings.");
@@ -49,6 +94,16 @@ async function fetchData(url, options) {
     }
     throw error;
   }
+}
+
+// Helper function to parse response
+async function parseResponse(response) {
+  const contentType = response.headers.get("content-type");
+  const data =
+    contentType && contentType.includes("application/json")
+      ? await response.json()
+      : await response.text();
+  return data;
 }
 
 // FUNCTION: Fetch & update Duet Object Model via HTTP GET requests
