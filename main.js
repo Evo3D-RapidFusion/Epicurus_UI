@@ -198,13 +198,17 @@ function updateObjectModel() {
       // Debug: Log the response to understand structure
       console.log("RRF Response:", data);
       
+      // Handle standalone mode response format only
+      // In standalone mode, data is wrapped in a 'result' property
+      const actualData = data.result;
+      
       // Call FUNCTIONS - Handle RRF object model structure with fallbacks
-      const heatData = data.heat || {};
-      const globalData = data.global || {};
-      const stateData = data.state || {};
-      const boardsData = data.boards || [];
-      const fansData = data.fans || [];
-      const spindlesData = data.spindles || [];
+      const heatData = actualData.heat || {};
+      const globalData = actualData.global || {};
+      const stateData = actualData.state || {};
+      const boardsData = actualData.boards || [];
+      const fansData = actualData.fans || [];
+      const spindlesData = actualData.spindles || [];
       
       const configuredHeatersAll = findHeaters(heatData.heaters || []);
       const configuredBedHeaters = findHeaters(heatData.bedHeaters || []);
@@ -314,8 +318,8 @@ function updateObjectModel() {
         configuredChamberHeaters
       );
 
-      // const chamberHeaterTemps = updateUIdata('chamberHeaters', data.heat.heaters, 'current', '.temp-data.chamber', configuredExtruderHeaters, configuredBedHeaters, configuredChamberHeaters, '°C');
-      // const chamberHeaterStates = updateUIdata('chamberHeaters', data.heat.heaters, 'state', '.temp-state.chamber', configuredExtruderHeaters, configuredBedHeaters, configuredChamberHeaters);
+      // const chamberHeaterTemps = updateUIdata('chamberHeaters', actualData.heat.heaters, 'current', '.temp-data.chamber', configuredExtruderHeaters, configuredBedHeaters, configuredChamberHeaters, '°C');
+      // const chamberHeaterStates = updateUIdata('chamberHeaters', actualData.heat.heaters, 'state', '.temp-state.chamber', configuredExtruderHeaters, configuredBedHeaters, configuredChamberHeaters);
 
       const allHeaterTemps = updateUIdata(
         "allHeaters",
