@@ -16,7 +16,7 @@ let selectedHeatsinkFan = "0";
 let selectedBarrelFan = "0";
 // let spindleRunning = false; // already declared in embedded code
 
-let activeStatusURL = "http://10.10.10.100/rr_model";
+let activeStatusURL = "http://10.10.10.100/rr_status?type=2";
 let activeCodeURL = "http://10.10.10.100/rr_gcode";
 
 // ============================= index.html HEADER - Fetch Machine Status with Fallback URLs ===============================
@@ -809,7 +809,7 @@ async function pollServerAndSendOnceOnStateChange() {
 
   while (true) {
     try {
-      const response = await fetchData("http://10.10.10.100/rr_model");
+      const response = await fetchData(activeStatusURL);
 
       // Check if response includes a 503 status
       if (response.status && response.status === 503) {
@@ -881,13 +881,7 @@ async function sendCommandsOnce() {
 async function sendGcode(gcode) {
   while (true) {
     try {
-      const response = await fetchData(activeCodeURL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain",
-        },
-        body: gcode,
-      });
+      const response = await fetchData(`${activeCodeURL}?gcode=${encodeURIComponent(gcode)}`);
 
       if (response.status && response.status === 503) {
         console.warn("503 Service Unavailable while sending G-code. Retrying...");
