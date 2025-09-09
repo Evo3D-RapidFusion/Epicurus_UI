@@ -23,7 +23,46 @@ let activeConnectURL = "http://10.10.10.100/rr_connect";
 // Session management
 let isConnected = false;
 
-// ============================= index.html HEADER - Fetch Machine Status with Fallback URLs ===============================
+// Mode detection and caching
+let duetMode = null; // null = not detected, 'sbc' = SBC mode, 'standalone' = standalone mode
+let modeDetectionAttempts = 0;
+const MAX_MODE_DETECTION_ATTEMPTS = 3;
+
+// FUNCTION: Reset Duet mode detection (for debugging or manual override)
+function resetDuetModeDetection() {
+  duetMode = null;
+  modeDetectionAttempts = 0;
+  console.log("Duet mode detection reset - will re-detect on next request");
+}
+
+// FUNCTION: Force Duet mode (for debugging or manual override)
+function forceDuetMode(mode) {
+  if (mode === 'sbc' || mode === 'standalone') {
+    duetMode = mode;
+    modeDetectionAttempts = 0;
+    console.log(`Duet mode manually set to: ${mode}`);
+  } else {
+    console.error("Invalid mode. Use 'sbc' or 'standalone'");
+  }
+}
+
+// Make functions available globally for debugging
+window.resetDuetModeDetection = resetDuetModeDetection;
+window.forceDuetMode = forceDuetMode;
+
+// ============================= Dual Mode Object Model Fetching ===============================
+//
+// This system automatically detects whether the Duet controller is running in:
+// - SBC Mode: Returns full object model with data in a single request
+// - Standalone Mode: Returns only object model structure, requires key-specific requests for data
+//
+// The detection happens automatically on first request and is cached for performance.
+// 
+// Debug functions available in browser console:
+// - resetDuetModeDetection(): Reset detection to re-test mode
+// - forceDuetMode('sbc' | 'standalone'): Manually override detection
+//
+// ==================================================================================
 
 // ========================================== HTTP requests with Duet Mainboard ========================================
 
@@ -106,11 +145,128 @@ async function parseResponse(response) {
   return data;
 }
 
+// FUNCTION: Detect Duet mode (SBC vs Standalone)
+async function detectDuetMode() {
+  if (duetMode !== null && modeDetectionAttempts < MAX_MODE_DETECTION_ATTEMPTS) {
+    return duetMode; // Return cached result if available and within attempt limit
+  }
+  
+  try {
+    modeDetectionAttempts++;
+    console.log(`Attempting Duet mode detection (attempt ${modeDetectionAttempts})`);
+    
+    const data = await fetchData(activeStatusURL);
+    
+    // Check if we got a standalone response format with result wrapper
+    if (data.result && typeof data.result === 'object') {
+      const actualData = data.result;
+      
+      // Check if any of the key sections have actual data beyond empty objects
+      const heatData = actualData.heat || {};
+      const globalData = actualData.global || {};
+      const stateData = actualData.state || {};
+      
+      // Test if we have meaningful data in any section
+      const hasHeatData = heatData.heaters && Array.isArray(heatData.heaters) && 
+                         heatData.heaters.some(heater => heater && typeof heater === 'object' && Object.keys(heater).length > 0);
+      const hasGlobalData = Object.keys(globalData).length > 0;
+      const hasStateData = Object.keys(stateData).length > 0;
+      
+      if (hasHeatData || hasGlobalData || hasStateData) {
+        duetMode = 'sbc';
+        console.log("Detected SBC mode - full object model contains data");
+      } else {
+        duetMode = 'standalone';
+        console.log("Detected Standalone mode - object model structure only");
+      }
+    } else if (data && typeof data === 'object') {
+      // Direct data without result wrapper - likely SBC mode
+      duetMode = 'sbc';
+      console.log("Detected SBC mode - direct object model format");
+    } else {
+      throw new Error("Unexpected response format");
+    }
+    
+    return duetMode;
+  } catch (error) {
+    console.warn(`Mode detection attempt ${modeDetectionAttempts} failed:`, error);
+    
+    if (modeDetectionAttempts >= MAX_MODE_DETECTION_ATTEMPTS) {
+      // Default to standalone mode after max attempts
+      duetMode = 'standalone';
+      console.log("Defaulting to Standalone mode after failed detection attempts");
+    }
+    
+    return duetMode;
+  }
+}
+
+// FUNCTION: Fetch object model data using key-specific requests (Standalone mode)
+async function fetchObjectModelByKeys() {
+  try {
+    console.log("Fetching object model using key-specific requests (Standalone mode)");
+    
+    // Define the keys we need and fetch them in parallel
+    const keyRequests = [
+      fetchData(`${activeStatusURL}?key=heat&flags=vn`),
+      fetchData(`${activeStatusURL}?key=global&flags=vn`), 
+      fetchData(`${activeStatusURL}?key=state&flags=vn`),
+      fetchData(`${activeStatusURL}?key=boards&flags=vn`),
+      fetchData(`${activeStatusURL}?key=fans&flags=vn`),
+      fetchData(`${activeStatusURL}?key=spindles&flags=vn`)
+    ];
+    
+    const [heatResponse, globalResponse, stateResponse, boardsResponse, fansResponse, spindlesResponse] = 
+      await Promise.all(keyRequests);
+    
+    // Construct the consolidated data structure
+    const consolidatedData = {
+      result: {
+        heat: heatResponse.result || {},
+        global: globalResponse.result || {},
+        state: stateResponse.result || {},
+        boards: boardsResponse.result || [],
+        fans: fansResponse.result || [],
+        spindles: spindlesResponse.result || []
+      }
+    };
+    
+    console.log("Successfully consolidated standalone mode data", consolidatedData);
+    return consolidatedData;
+    
+  } catch (error) {
+    console.error("Error fetching object model by keys:", error);
+    
+    // Fallback: try to get basic structure from full model call
+    console.log("Attempting fallback to full model request");
+    try {
+      const fallbackData = await fetchData(activeStatusURL);
+      console.log("Fallback successful");
+      return fallbackData;
+    } catch (fallbackError) {
+      console.error("Fallback also failed:", fallbackError);
+      throw error; // Throw original error
+    }
+  }
+}
+
 // FUNCTION: Fetch & update Duet Object Model via HTTP GET requests
 function updateObjectModel() {
   return new Promise(async (resolve, reject) => {
     try {
-      const data = await fetchData(activeStatusURL); // HTTPS (Self-Signed SSL Certificate)
+      // Detect mode and use appropriate fetching strategy
+      const mode = await detectDuetMode();
+      let data;
+      
+      if (mode === 'standalone') {
+        // Use key-specific requests for standalone mode
+        data = await fetchObjectModelByKeys();
+      } else {
+        // Use full object model request for SBC mode
+        data = await fetchData(activeStatusURL);
+      }
+      
+      console.log(`Fetched data using ${mode} mode strategy`);
 
       // FUNCTION: Find configured heaters in Duet Object Model
       function findHeaters(targetObject) {
@@ -878,7 +1034,15 @@ async function pollServerAndSendOnceOnStateChange() {
 
   while (true) {
     try {
-      const response = await fetchData(activeStatusURL);
+      // Use the same dual strategy approach for polling
+      const mode = await detectDuetMode();
+      let response;
+      
+      if (mode === 'standalone') {
+        response = await fetchObjectModelByKeys();
+      } else {
+        response = await fetchData(activeStatusURL);
+      }
 
       // Check if response includes a 503 status
       if (response.status && response.status === 503) {
