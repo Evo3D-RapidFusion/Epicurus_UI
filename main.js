@@ -518,7 +518,7 @@ function updateObjectModel() {
         heater.forEach((element, index) => {
           if (typeof outputData[index] === "string") {
             element.textContent = outputData[index] === "standby"
-                ? "PREHEAT"
+                ? "preheat"
                 : outputData[index] + endText;
             element.style.color = outputData[index] === "Fault" ? "red" : "white";
           } else {
@@ -778,21 +778,53 @@ function updateObjectModel() {
         }
       }
 
-      // Heater fault error Popup
+      // Enhanced Heater fault error Popup with debugging
       for (let i = 0; i < allHeaterStates.length; i++) {
-        if (allHeaterStates[i].includes("fault") && heaterFaults[i] === false) {
-          const resetFault = window.confirm(
-            `Heater ${
-              i + 1
-            } has a temperature fault. Reset the fault? If fault persists, contact local distributor or Rapid Fusion for support.`
-          );
-          if (resetFault) {
-            sendGcode(`M292 M562 P${i}`); // reset heater fault
-            heaterFaults[i] = true;
-            setTimeout(() => (heaterFaults[i] = false), 500); // allow time for HTTP request in sendGcode to be processed to prevent multiple fault popup instances
-          } else {
-            heaterFaults[i] = true;
-          }
+        const currentState = allHeaterStates[i];
+        const isFaulted = heaterFaults[i];
+        
+        // Check both the processed state and raw heater data for fault conditions
+        const hasStateFault = currentState && (
+          currentState.toString().toLowerCase().includes("fault") ||
+          currentState.toString().toUpperCase().includes("FAULT")
+        );
+        
+        const hasRawFault = heatData.heaters && heatData.heaters[i] && 
+          heatData.heaters[i].state && 
+          heatData.heaters[i].state.toLowerCase() === "fault";
+        
+        const isFaultCondition = hasStateFault || hasRawFault;
+        
+        // Only log when a fault is detected or for debugging
+        if (isFaultCondition || (window.epicurusDebug && window.epicurusDebug.debugHeaterFaults)) {
+          console.log(`Heater ${i}: state="${currentState}", rawState="${heatData.heaters?.[i]?.state}", faulted=${isFaulted}, hasFault=${isFaultCondition}`);
+        }
+        
+        if (isFaultCondition && !isFaulted) {
+          console.warn(`⚠️  HEATER FAULT DETECTED: Heater ${i + 1} has faulted!`);
+          
+          // Use setTimeout to ensure the popup doesn't interfere with the update loop
+          setTimeout(() => {
+            const resetFault = window.confirm(
+              `🔥 HEATER FAULT DETECTED! 🔥\n\nHeater ${i + 1} has a temperature fault.\n\nReset the fault? If fault persists, contact local distributor or Rapid Fusion for support.`
+            );
+            
+            if (resetFault) {
+              console.log(`User chose to reset fault for heater ${i + 1}`);
+              sendGcode(`M292`); // Clear all messages first
+              sendGcode(`M562 P${i}`); // Reset specific heater fault
+              heaterFaults[i] = true;
+              
+              // Reset the fault flag after a delay to allow for reset processing
+              setTimeout(() => {
+                heaterFaults[i] = false;
+                console.log(`Fault flag cleared for heater ${i + 1}, monitoring resumed`);
+              }, 3000); // 3 second delay
+            } else {
+              console.log(`User declined to reset fault for heater ${i + 1} - will not ask again`);
+              heaterFaults[i] = true; // Mark as handled permanently to prevent repeated popups
+            }
+          }, 100); // Small delay to avoid blocking the update loop
         }
       }
 
@@ -1128,7 +1160,7 @@ function updateObjectModel() {
         ((heatData.heaters || [])[2] || {}).state === "standby" ||
         ((heatData.heaters || [])[3] || {}).state === "standby"
       ) {
-        document.getElementById("extruder-state").textContent = "PREHEAT";
+        document.getElementById("extruder-state").textContent = "preheat";
       }
       // Check if all heaters are in "off" state
       else if (
@@ -1426,6 +1458,61 @@ window.epicurusDebug = {
     } else {
       console.error(`No heater container found at index ${index}`);
     }
+  },
+  simulateFault: (heaterIndex) => {
+    console.log(`🧪 Simulating fault on heater ${heaterIndex}`);
+    heaterFaults[heaterIndex] = false; // Reset flag to allow popup
+    
+    const resetFault = window.confirm(
+      `🔥 HEATER FAULT DETECTED! 🔥\n\nHeater ${heaterIndex + 1} has a temperature fault.\n\nReset the fault? If fault persists, contact local distributor or Rapid Fusion for support.`
+    );
+    
+    if (resetFault) {
+      console.log(`User chose to reset fault for heater ${heaterIndex + 1}`);
+      sendGcode(`M292`); // Clear all messages first
+      sendGcode(`M562 P${heaterIndex}`); // Reset specific heater fault
+      heaterFaults[heaterIndex] = true; // Mark as handled
+      
+      setTimeout(() => {
+        heaterFaults[heaterIndex] = false; // Reset after delay for monitoring
+      }, 3000);
+    } else {
+      console.log(`User declined to reset fault for heater ${heaterIndex + 1} - will not ask again`);
+      heaterFaults[heaterIndex] = true; // Mark as handled permanently
+    }
+  },
+  checkHeaterStates: () => {
+    console.log("Current heater states:", {
+      heaterFaults: heaterFaults,
+      elements: Array.from(document.querySelectorAll('.temp-state')).map(el => el.textContent)
+    });
+  },
+  triggerFaultCheck: () => {
+    console.log("🔍 Manually triggering fault check...");
+    // This will be called during the next update cycle
+  },
+  debugHeaterFaults: false, // Set to true to enable verbose fault logging
+  enableFaultDebug: () => {
+    window.epicurusDebug.debugHeaterFaults = true;
+    console.log("🐛 Heater fault debugging enabled - will log all heater states");
+  },
+  disableFaultDebug: () => {
+    window.epicurusDebug.debugHeaterFaults = false;
+    console.log("🐛 Heater fault debugging disabled");
+  },
+  checkSettings: () => {
+    console.log("Current settings state:", {
+      settings: settings,
+      settingsType: typeof settings,
+      keys: settings ? Object.keys(settings) : 'No keys (settings is null/undefined)'
+    });
+    return settings;
+  },
+  reloadSettings: () => {
+    console.log("🔄 Reloading settings...");
+    settings = loadSettings();
+    console.log("Settings reloaded:", settings);
+    return settings;
   }
 };
 
@@ -1448,7 +1535,7 @@ function toggleHeaterStates(heaterState, heaterIndex) {
   
   // Normalize state to uppercase and handle Duet terminology
   const normalizedState = heaterState.toUpperCase();
-  const duetState = normalizedState === "STANDBY" ? "PREHEAT" : normalizedState;
+  const duetState = normalizedState === "STANDBY" || normalizedState === "PREHEAT" ? "PREHEAT" : normalizedState;
   
   console.log(`Heater ${heaterIndex} (${heaterType[heaterIndex]}) clicked: "${heaterState}" -> "${duetState}"`);
   
@@ -2176,13 +2263,31 @@ function numPadClick(tabpane, buttonIndex) {
   let inputValue = tempInput.textContent;
   let heaters = tabpane.match(/[^-]+$/)[0];
 
+  // Ensure settings exists and has the heater configuration
+  if (!settings) {
+    console.warn("Settings not loaded, attempting to load...");
+    settings = loadSettings();
+  }
+  
+  // Ensure the specific heater exists in settings
+  if (!settings || !settings[heaters]) {
+    console.warn(`Settings for heater '${heaters}' not found, using defaults`);
+    if (!settings) settings = {};
+    if (!settings[heaters]) {
+      settings[heaters] = { popup: "0", active: "0", preheat: "0" };
+    }
+  }
+
+  // Get saved popup value safely
+  const savedPopupValue = settings[heaters]?.popup || "0";
+
   // default value = 0
   if (inputValue === 0) {
     inputValue = inputValue.slice(0, -1);
   }
 
   if (buttonIndex <= 8) {
-    if (inputValue === settings[heaters].popup) {
+    if (inputValue === savedPopupValue) {
       //saved value in local storage
       inputValue = buttonIndex + 1;
     } else {
@@ -2192,7 +2297,7 @@ function numPadClick(tabpane, buttonIndex) {
     // Clear input
     inputValue = 0; // reset default value
   } else if (buttonIndex === 10) {
-    if (inputValue === settings[heaters].popup) {
+    if (inputValue === savedPopupValue) {
       //saved value in local storage
       inputValue = 0;
     } else {
