@@ -779,6 +779,8 @@ function updateObjectModel() {
       }
 
       // Enhanced Heater fault error Popup with debugging
+      let anyHeaterHasFault = false;
+      
       for (let i = 0; i < allHeaterStates.length; i++) {
         const currentState = allHeaterStates[i];
         const isFaulted = heaterFaults[i];
@@ -794,6 +796,11 @@ function updateObjectModel() {
           heatData.heaters[i].state.toLowerCase() === "fault";
         
         const isFaultCondition = hasStateFault || hasRawFault;
+        
+        // Track if any heater has a fault (for reset button visibility)
+        if (isFaultCondition) {
+          anyHeaterHasFault = true;
+        }
         
         // Only log when a fault is detected or for debugging
         if (isFaultCondition || (window.epicurusDebug && window.epicurusDebug.debugHeaterFaults)) {
@@ -825,6 +832,16 @@ function updateObjectModel() {
               heaterFaults[i] = true; // Mark as handled permanently to prevent repeated popups
             }
           }, 100); // Small delay to avoid blocking the update loop
+        }
+      }
+
+      // Show/hide Reset All Heater Faults button
+      const resetAllFaultsButton = document.getElementById("reset-all-heater-faults");
+      if (resetAllFaultsButton) {
+        if (anyHeaterHasFault) {
+          resetAllFaultsButton.style.display = "flex";
+        } else {
+          resetAllFaultsButton.style.display = "none";
         }
       }
 
@@ -1513,6 +1530,28 @@ window.epicurusDebug = {
     settings = loadSettings();
     console.log("Settings reloaded:", settings);
     return settings;
+  },
+  testResetAllFaults: () => {
+    console.log("🧪 Testing Reset All Heater Faults button");
+    showResetAllHeaterFaultsPopup();
+  },
+  showResetButton: () => {
+    const resetButton = document.getElementById("reset-all-heater-faults");
+    if (resetButton) {
+      resetButton.style.display = "flex";
+      console.log("✅ Reset All Heater Faults button is now visible");
+    } else {
+      console.error("❌ Reset All Heater Faults button not found");
+    }
+  },
+  hideResetButton: () => {
+    const resetButton = document.getElementById("reset-all-heater-faults");
+    if (resetButton) {
+      resetButton.style.display = "none";
+      console.log("✅ Reset All Heater Faults button is now hidden");
+    } else {
+      console.error("❌ Reset All Heater Faults button not found");
+    }
   }
 };
 
@@ -1890,12 +1929,39 @@ window.addEventListener("load", () => {
   // }
 });
 
+// FUNCTION: Show Reset All Heater Faults Popup
+function showResetAllHeaterFaultsPopup() {
+  const popup = window.confirm(
+    "🔥 RESET ALL HEATER FAULTS 🔥\n\nThis will reset all heater fault conditions.\n\nAre you sure you want to continue?"
+  );
+  
+  if (popup) {
+    console.log("User confirmed reset of all heater faults");
+    sendGcode("M562"); // Reset all heater faults
+    
+    // Clear all heater fault flags
+    for (let i = 0; i < heaterFaults.length; i++) {
+      heaterFaults[i] = false;
+    }
+    
+    // Hide the reset button since faults are being cleared
+    const resetButton = document.getElementById("reset-all-heater-faults");
+    if (resetButton) {
+      resetButton.style.display = "none";
+    }
+    
+    console.log("All heater faults reset command sent (M562)");
+  } else {
+    console.log("User cancelled reset of all heater faults");
+  }
+}
 
 // ========================================= Tool Temperature Panel: Button Clicks =====================================
 const buttonIds = [
   "boost-pellets",
   "heaters-off",
   "preheat-extruder",
+  "reset-all-heater-faults",
   "emergency-stop",
   "part-cooling-on",
   "part-cooling-on-icon",
@@ -1947,6 +2013,9 @@ buttonIds.forEach((buttonId) => {
         break;
       case "preheat-extruder":
         configureHeaters(1, configuredExtruderHeaters); // mode 1 == preheat (standby)
+        break;
+      case "reset-all-heater-faults":
+        showResetAllHeaterFaultsPopup();
         break;
       case "bed-heaters-off":
         document
