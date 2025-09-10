@@ -150,22 +150,27 @@ function updateConnectionStatusUI(status, message = null) {
     case 'connected':
       indicator.style.backgroundColor = '#44ff44';
       text.textContent = message || 'Connected';
+      text.className = 'toggle-text-on';
       break;
     case 'connecting':
       indicator.style.backgroundColor = '#ffaa44';
       text.textContent = message || 'Connecting...';
+      text.className = 'toggle-text-off';
       break;
     case 'disconnected':
       indicator.style.backgroundColor = '#ff4444';
       text.textContent = message || 'Disconnected';
+      text.className = 'toggle-text-off';
       break;
     case 'error':
       indicator.style.backgroundColor = '#ff0044';
       text.textContent = message || 'Connection Error';
+      text.className = 'toggle-text-off';
       break;
     default:
       indicator.style.backgroundColor = '#888888';
       text.textContent = message || 'Status Unknown';
+      text.className = 'toggle-text-off';
   }
 }
 
