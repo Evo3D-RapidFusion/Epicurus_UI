@@ -1416,7 +1416,17 @@ window.epicurusDebug = {
   getPollingStatus,
   testConnection: testDuetConnection,
   updateIP: updateDuetIP,
-  getConnectionStatus
+  getConnectionStatus,
+  toggleHeaterState: (state, index) => toggleHeaterStates(state, index),
+  sendGcode: (command) => sendGcode(command),
+  testHeaterClick: (index) => {
+    const containers = document.querySelectorAll(".temp-state-container");
+    if (containers[index]) {
+      containers[index].click();
+    } else {
+      console.error(`No heater container found at index ${index}`);
+    }
+  }
 };
 
 // =====================================================================================================================
@@ -1435,26 +1445,37 @@ function toggleHeaterStates(heaterState, heaterIndex) {
     "bed2",
     "bed3",
   ];
+  
+  // Normalize state to uppercase and handle Duet terminology
+  const normalizedState = heaterState.toUpperCase();
+  const duetState = normalizedState === "STANDBY" ? "PREHEAT" : normalizedState;
+  
+  console.log(`Heater ${heaterIndex} (${heaterType[heaterIndex]}) clicked: "${heaterState}" -> "${duetState}"`);
+  
   let setTemp = "";
-  switch (heaterState) {
+  
+  switch (duetState) {
     case "OFF":
       setTemp = document.getElementById(
         `user-input-preheat-${heaterType[heaterIndex]}`
       ).textContent;
+      console.log(`Switching heater ${heaterIndex} to preheat (standby) at ${setTemp}°C`);
       sendGcode(`M568 P${heaterIndex} R${setTemp} A1`); // switch to preheat (standby)
       break;
+      
     case "PREHEAT":
       setTemp = document.getElementById(
         `user-input-active-${heaterType[heaterIndex]}`
       ).textContent;
+      console.log(`Switching heater ${heaterIndex} to active at ${setTemp}°C`);
       sendGcode(`M568 P${heaterIndex} S${setTemp} A2`); // switch to active
       break;
+      
     case "ACTIVE":
-      setTemp = document.getElementById(
-        `user-input-active-${heaterType[heaterIndex]}`
-      ).textContent;
+      console.log(`Switching heater ${heaterIndex} to off`);
       sendGcode(`M568 P${heaterIndex} A0`); // switch to off
       break;
+      
     case "FAULT":
       // Prompt the user to reset the fault
       const resetFault = window.confirm(
@@ -1463,10 +1484,16 @@ function toggleHeaterStates(heaterState, heaterIndex) {
         } has a temperature fault. Reset the fault? If fault persists, contact local distributor or Rapid Fusion for support.`
       );
       if (resetFault) {
+        console.log(`Resetting fault for heater ${heaterIndex}`);
         sendGcode(`M292 M562 P${heaterIndex}`); // reset heater fault
       } else {
         heaterFaults[heaterIndex] = true;
+        console.log(`User declined to reset fault for heater ${heaterIndex}`);
       }
+      break;
+      
+    default:
+      console.warn(`Unknown heater state: "${heaterState}" (normalized: "${duetState}") for heater ${heaterIndex}`);
       break;
   }
 }
@@ -2098,10 +2125,23 @@ buttonIds.forEach((buttonId) => {
 
 // === Toggle Heater States on Click ===
 document.querySelectorAll(".temp-state-container").forEach((element, index) => {
-  element.addEventListener("click", () =>
-    toggleHeaterStates(element.querySelector(".temp-state").textContent, index)
-  );
+  element.addEventListener("click", () => {
+    const tempStateElement = element.querySelector(".temp-state");
+    if (tempStateElement) {
+      const currentState = tempStateElement.textContent.trim();
+      console.log(`Click detected on heater ${index}, current state: "${currentState}"`);
+      toggleHeaterStates(currentState, index);
+    } else {
+      console.error(`No .temp-state element found in container ${index}:`, element);
+    }
+  });
+  
+  // Add visual feedback for clickable elements
+  element.style.cursor = 'pointer';
+  element.title = `Click to cycle heater state`;
 });
+
+console.log(`Initialized ${document.querySelectorAll(".temp-state-container").length} heater state click handlers`);
 // =====================================================================================================================
 
 // ================================================ Temperautre Popup ==================================================
