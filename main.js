@@ -16,23 +16,177 @@ let selectedHeatsinkFan = "0";
 let selectedBarrelFan = "0";
 // let spindleRunning = false; // already declared in embedded code
 
-let activeStatusURL = "http://10.10.10.100/rr_model";
-let activeCodeURL = "http://10.10.10.100/rr_gcode";
-let activeConnectURL = "http://10.10.10.100/rr_connect";
+// Configuration for Duet connection - can be modified via UI or localStorage
+let duetIP = localStorage.getItem('duetIP') || "10.10.10.100";
+let activeStatusURL = `http://${duetIP}/rr_model`;
+let activeCodeURL = `http://${duetIP}/rr_gcode`;
+let activeConnectURL = `http://${duetIP}/rr_connect`;
 
 // Session management
 let isConnected = false;
+
+// Network configuration
+const NETWORK_TIMEOUT = 5000; // 5 seconds timeout for requests
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second base delay
 
 // Mode detection and caching
 let duetMode = null; // null = not detected, 'sbc' = SBC mode, 'standalone' = standalone mode
 let modeDetectionAttempts = 0;
 const MAX_MODE_DETECTION_ATTEMPTS = 3;
 
+// Helper function to create timeout-enabled fetch requests
+function fetchWithTimeout(url, options = {}, timeout = NETWORK_TIMEOUT) {
+  return new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error(`Request timeout after ${timeout}ms`));
+    }, timeout);
+
+    fetch(url, options)
+      .then(response => {
+        clearTimeout(timeoutId);
+        resolve(response);
+      })
+      .catch(error => {
+        clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
+}
+
+// Helper function to validate if an IP is potentially reachable
+async function validateConnection(ip) {
+  try {
+    const testUrl = `http://${ip}/rr_connect?password=test`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000); // Quick 2s test
+    
+    const response = await fetch(testUrl, { 
+      signal: controller.signal,
+      mode: 'no-cors' // Allow checking even if CORS fails
+    });
+    clearTimeout(timeoutId);
+    return true; // If we get any response, IP is reachable
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      console.warn(`Connection validation timeout for IP: ${ip}`);
+    }
+    return false;
+  }
+}
+
 // FUNCTION: Reset Duet mode detection (for debugging or manual override)
 function resetDuetModeDetection() {
   duetMode = null;
   modeDetectionAttempts = 0;
   console.log("Duet mode detection reset - will re-detect on next request");
+}
+
+// FUNCTION: Update Duet IP address and reset connection
+function updateDuetIP(newIP) {
+  if (!newIP || newIP === duetIP) return;
+  
+  console.log(`Updating Duet IP from ${duetIP} to ${newIP}`);
+  duetIP = newIP;
+  localStorage.setItem('duetIP', newIP);
+  
+  // Update all URLs
+  activeStatusURL = `http://${duetIP}/rr_model`;
+  activeCodeURL = `http://${duetIP}/rr_gcode`;
+  activeConnectURL = `http://${duetIP}/rr_connect`;
+  
+  // Reset connection state
+  isConnected = false;
+  resetDuetModeDetection();
+  
+  console.log(`Duet endpoints updated. New status URL: ${activeStatusURL}`);
+}
+
+// FUNCTION: Test connectivity to current Duet IP
+async function testDuetConnection() {
+  console.log(`Testing connection to Duet at ${duetIP}...`);
+  
+  try {
+    // First validate basic connectivity
+    const isReachable = await validateConnection(duetIP);
+    if (!isReachable) {
+      console.error(`Cannot reach device at ${duetIP}. Please check the IP address and network connection.`);
+      return { success: false, error: 'Device unreachable' };
+    }
+
+    // Try to establish RRF connection
+    const result = await connectToRRF();
+    console.log('Connection test successful:', result);
+    return { success: true, data: result };
+    
+  } catch (error) {
+    console.error('Connection test failed:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// FUNCTION: Get connection status for UI display
+function getConnectionStatus() {
+  return {
+    isConnected,
+    duetIP,
+    duetMode,
+    urls: {
+      status: activeStatusURL,
+      code: activeCodeURL,
+      connect: activeConnectURL
+    }
+  };
+}
+
+// FUNCTION: Update connection status indicator in UI
+function updateConnectionStatusUI(status, message = null) {
+  const indicator = document.getElementById('connection-indicator');
+  const text = document.getElementById('connection-text');
+  
+  if (!indicator || !text) return; // Elements not found
+  
+  switch (status) {
+    case 'connected':
+      indicator.style.backgroundColor = '#44ff44';
+      text.textContent = message || `Connected to ${duetIP}`;
+      break;
+    case 'connecting':
+      indicator.style.backgroundColor = '#ffaa44';
+      text.textContent = message || `Connecting to ${duetIP}...`;
+      break;
+    case 'disconnected':
+      indicator.style.backgroundColor = '#ff4444';
+      text.textContent = message || `Disconnected from ${duetIP}`;
+      break;
+    case 'error':
+      indicator.style.backgroundColor = '#ff0044';
+      text.textContent = message || `Connection Error`;
+      break;
+    default:
+      indicator.style.backgroundColor = '#888888';
+      text.textContent = message || 'Status Unknown';
+  }
+}
+
+// FUNCTION: Initialize connection status on page load
+function initializeConnectionStatus() {
+  // Set initial status
+  updateConnectionStatusUI('connecting');
+  
+  // Try to establish connection
+  setTimeout(async () => {
+    try {
+      const result = await testDuetConnection();
+      if (result.success) {
+        updateConnectionStatusUI('connected');
+      } else {
+        updateConnectionStatusUI('disconnected', result.error);
+      }
+    } catch (error) {
+      updateConnectionStatusUI('error', error.message);
+    }
+  }, 1000);
 }
 
 // FUNCTION: Force Duet mode (for debugging or manual override)
@@ -66,11 +220,11 @@ window.forceDuetMode = forceDuetMode;
 
 // ========================================== HTTP requests with Duet Mainboard ========================================
 
-// FUNCTION: Establish connection to RRF
+// FUNCTION: Establish connection to RRF with timeout
 async function connectToRRF(password = "reprap") {
   try {
-    console.log("Attempting to connect to RRF...");
-    const response = await fetch(`${activeConnectURL}?password=${encodeURIComponent(password)}`);
+    console.log(`Attempting to connect to RRF at ${duetIP}...`);
+    const response = await fetchWithTimeout(`${activeConnectURL}?password=${encodeURIComponent(password)}`, {}, NETWORK_TIMEOUT);
     
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
@@ -81,29 +235,32 @@ async function connectToRRF(password = "reprap") {
     if (data.err === 0) {
       console.log("Successfully connected to RRF");
       isConnected = true;
+      updateConnectionStatusUI('connected');
       return data;
     } else {
       console.error(`RRF connection failed with error code: ${data.err}`);
       isConnected = false;
+      updateConnectionStatusUI('error', `Connection failed: ${data.err}`);
       throw new Error(`RRF connection failed: ${data.err}`);
     }
   } catch (error) {
     console.error("Failed to connect to RRF:", error);
     isConnected = false;
+    updateConnectionStatusUI('error', error.message);
     throw error;
   }
 }
 
-// FUNCTION: HTTPS async GET/POST requests to Duet Mainboard
-// Enhanced fetchData function to handle various error cases
-async function fetchData(url, options) {
+// FUNCTION: Enhanced async GET/POST requests to Duet Mainboard with timeouts and retry logic
+async function fetchData(url, options = {}, retryCount = 0) {
   try {
     // Ensure we're connected before making requests
     if (!isConnected && !url.includes('rr_connect')) {
       await connectToRRF();
     }
     
-    const response = await fetch(url, options);
+    // Use timeout-enabled fetch
+    const response = await fetchWithTimeout(url, options, NETWORK_TIMEOUT);
 
     // Handle 401 Unauthorized - need to reconnect
     if (response.status === 401) {
@@ -111,7 +268,7 @@ async function fetchData(url, options) {
       isConnected = false;
       await connectToRRF();
       // Retry the original request
-      const retryResponse = await fetch(url, options);
+      const retryResponse = await fetchWithTimeout(url, options, NETWORK_TIMEOUT);
       if (!retryResponse.ok) {
         console.error(`Error: Network response was not ok. Status: ${retryResponse.status}`);
         throw new Error(`HTTP error! Status: ${retryResponse.status}`);
@@ -126,11 +283,35 @@ async function fetchData(url, options) {
 
     return await parseResponse(response);
   } catch (error) {
+    // Implement retry logic for network errors
+    if (retryCount < MAX_RETRIES && (
+      error.name === 'TypeError' || 
+      error.message.includes('timeout') ||
+      error.message.includes('ERR_CONNECTION_RESET') ||
+      error.message.includes('Failed to fetch')
+    )) {
+      const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
+      console.warn(`Network error (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
+      
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return await fetchData(url, options, retryCount + 1);
+    }
+
+    // Log specific error types
     if (error.name === 'TypeError') {
       console.error("Network or SSL error, unable to fetch data. Please check your connection or SSL settings.");
+    } else if (error.message.includes('timeout')) {
+      console.error(`Request timeout after ${NETWORK_TIMEOUT}ms. The device may be slow to respond or unreachable.`);
     } else {
       console.error("There has been a problem with your fetch operation:", error);
     }
+    
+    // Mark as disconnected for network-related errors
+    if (error.name === 'TypeError' || error.message.includes('timeout')) {
+      isConnected = false;
+      updateConnectionStatusUI('disconnected', 'Connection lost');
+    }
+    
     throw error;
   }
 }
@@ -1025,8 +1206,14 @@ function updateObjectModel() {
   });
 }
 
-// Polling interval (in milliseconds)
-const POLL_INTERVAL = 2000;
+// Polling configuration
+const POLL_INTERVAL = 2000; // 2 seconds - safe for embedded systems
+const POLL_INTERVAL_SLOW = 5000; // 5 seconds - when errors occur
+const POLL_INTERVAL_FAST = 1000; // 1 second - when actively monitoring (optional)
+
+let currentPollInterval = POLL_INTERVAL;
+let consecutiveErrors = 0;
+let updateIntervalId = null;
 
 // Function to continuously check the server status and send commands once on state change from error to available
 async function pollServerAndSendOnceOnStateChange() {
@@ -1142,7 +1329,7 @@ async function sendGcode(gcode) {
 // Start the continuous polling process
 pollServerAndSendOnceOnStateChange();
 
-// FUNCTION: call updateObjectModel & retrieve results
+// FUNCTION: call updateObjectModel & retrieve results with adaptive polling
 async function update() {
   try {
     ({
@@ -1159,10 +1346,79 @@ async function update() {
       allHeaterStates,
       cncSpindle,
     } = await updateObjectModel());
+    
+    // Success - reset error count and use normal polling
+    consecutiveErrors = 0;
+    if (currentPollInterval !== POLL_INTERVAL) {
+      console.log("Connection stable, returning to normal polling interval");
+      currentPollInterval = POLL_INTERVAL;
+      restartPolling();
+    }
+    
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error in update():", error);
+    consecutiveErrors++;
+    
+    // Adaptive polling - slow down when errors occur
+    if (consecutiveErrors >= 3 && currentPollInterval !== POLL_INTERVAL_SLOW) {
+      console.log(`${consecutiveErrors} consecutive errors, slowing polling to ${POLL_INTERVAL_SLOW}ms`);
+      currentPollInterval = POLL_INTERVAL_SLOW;
+      restartPolling();
+    }
   }
 }
+
+// FUNCTION: Restart polling with new interval
+function restartPolling() {
+  if (updateIntervalId) {
+    clearInterval(updateIntervalId);
+  }
+  updateIntervalId = setInterval(update, currentPollInterval);
+  console.log(`Polling restarted with ${currentPollInterval}ms interval`);
+}
+
+// FUNCTION: Stop polling (useful for debugging or manual control)
+function stopPolling() {
+  if (updateIntervalId) {
+    clearInterval(updateIntervalId);
+    updateIntervalId = null;
+    console.log("Polling stopped");
+  }
+}
+
+// FUNCTION: Start polling (useful for debugging or manual control)  
+function startPolling(interval = POLL_INTERVAL) {
+  stopPolling();
+  currentPollInterval = interval;
+  updateIntervalId = setInterval(update, currentPollInterval);
+  console.log(`Polling started with ${currentPollInterval}ms interval`);
+}
+
+// FUNCTION: Get current polling status (useful for debugging)
+function getPollingStatus() {
+  return {
+    isPolling: updateIntervalId !== null,
+    currentInterval: currentPollInterval,
+    consecutiveErrors,
+    isConnected,
+    availableIntervals: {
+      normal: POLL_INTERVAL,
+      slow: POLL_INTERVAL_SLOW, 
+      fast: POLL_INTERVAL_FAST
+    }
+  };
+}
+
+// Expose polling controls globally for debugging
+window.epicurusDebug = {
+  stopPolling,
+  startPolling,
+  getPollingStatus,
+  testConnection: testDuetConnection,
+  updateIP: updateDuetIP,
+  getConnectionStatus
+};
+
 // =====================================================================================================================
 
 // ================================= Heaters: Top, Middle, Bottom, Nozzle, Bed, Chamber =================================
@@ -1363,13 +1619,16 @@ for (let i = 0; i < defaultNumOfBedHeaters; i++) {
     .forEach((element) => (element.style.visibility = "hidden"));
 }
 
-// Update Object Model every 0.5 seconds
-setInterval(update, 500);
+// Start adaptive polling system
+startPolling();
 
 document.addEventListener("DOMContentLoaded", function () { 
   // Select Default Tabs on page load
   document.getElementById("default-tab").click();
   document.getElementById("system-info").click();
+
+  // Initialize connection status indicator
+  initializeConnectionStatus();
 
   // Call the function to set up the click listener
   enableDeveloperSettings();
