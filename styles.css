@@ -119,7 +119,7 @@ body {
 /* Heaters */
 #bed-temp-table .column-text:nth-child(1) { --column-item-margin: 30px; }
 /* State */
-#bed-temp-table .column-text:nth-child(2) { --column-item-margin: 28.2px; }
+#bed-temp-table .column-text:nth-child(2) { --column-item-margin: 28px; }
 /* Live */
 #bed-temp-table .column-text:nth-child(3) { --column-item-margin: 30px; }
 /* Active */
