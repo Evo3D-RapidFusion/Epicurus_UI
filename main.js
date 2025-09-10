@@ -149,19 +149,19 @@ function updateConnectionStatusUI(status, message = null) {
   switch (status) {
     case 'connected':
       indicator.style.backgroundColor = '#44ff44';
-      text.textContent = message || `Connected to ${duetIP}`;
+      text.textContent = message || 'Connected';
       break;
     case 'connecting':
       indicator.style.backgroundColor = '#ffaa44';
-      text.textContent = message || `Connecting to ${duetIP}...`;
+      text.textContent = message || 'Connecting...';
       break;
     case 'disconnected':
       indicator.style.backgroundColor = '#ff4444';
-      text.textContent = message || `Disconnected from ${duetIP}`;
+      text.textContent = message || 'Disconnected';
       break;
     case 'error':
       indicator.style.backgroundColor = '#ff0044';
-      text.textContent = message || `Connection Error`;
+      text.textContent = message || 'Connection Error';
       break;
     default:
       indicator.style.backgroundColor = '#888888';
@@ -778,8 +778,17 @@ function updateObjectModel() {
         }
       }
 
-      // Enhanced Heater fault error Popup with debugging
+      // Enhanced Heater fault error Popup with debugging and timing controls
       let anyHeaterHasFault = false;
+      
+      // Check if fault detection should be suspended
+      const currentTime = Date.now();
+      const timeSinceLastReset = currentTime - lastFaultResetTime;
+      const shouldSuspendFaultDetection = faultDetectionSuspended || (timeSinceLastReset < FAULT_RESET_DELAY);
+      
+      if (shouldSuspendFaultDetection && (window.epicurusDebug && window.epicurusDebug.debugHeaterFaults)) {
+        console.log(`Fault detection suspended. Time since last reset: ${timeSinceLastReset}ms, Suspended: ${faultDetectionSuspended}`);
+      }
       
       for (let i = 0; i < allHeaterStates.length; i++) {
         const currentState = allHeaterStates[i];
@@ -797,17 +806,18 @@ function updateObjectModel() {
         
         const isFaultCondition = hasStateFault || hasRawFault;
         
-        // Track if any heater has a fault (for reset button visibility)
+        // Track if any heater has a fault (for reset button visibility) - this should always work
         if (isFaultCondition) {
           anyHeaterHasFault = true;
         }
         
         // Only log when a fault is detected or for debugging
         if (isFaultCondition || (window.epicurusDebug && window.epicurusDebug.debugHeaterFaults)) {
-          console.log(`Heater ${i}: state="${currentState}", rawState="${heatData.heaters?.[i]?.state}", faulted=${isFaulted}, hasFault=${isFaultCondition}`);
+          console.log(`Heater ${i}: state="${currentState}", rawState="${heatData.heaters?.[i]?.state}", faulted=${isFaulted}, hasFault=${isFaultCondition}, suspended=${shouldSuspendFaultDetection}`);
         }
         
-        if (isFaultCondition && !isFaulted) {
+        // Skip popup if fault detection is suspended
+        if (isFaultCondition && !isFaulted && !shouldSuspendFaultDetection) {
           console.warn(`⚠️  HEATER FAULT DETECTED: Heater ${i + 1} has faulted!`);
           
           // Use setTimeout to ensure the popup doesn't interfere with the update loop
@@ -822,11 +832,14 @@ function updateObjectModel() {
               sendGcode(`M562 P${i}`); // Reset specific heater fault
               heaterFaults[i] = true;
               
-              // Reset the fault flag after a delay to allow for reset processing
+              // Suspend fault detection to prevent duplicate popups
+              suspendFaultDetection(`Individual heater ${i + 1} fault reset`);
+              
+              // Reset the fault flag after extended delay
               setTimeout(() => {
                 heaterFaults[i] = false;
-                console.log(`Fault flag cleared for heater ${i + 1}, monitoring resumed`);
-              }, 3000); // 3 second delay
+                console.log(`Fault flag cleared for heater ${i + 1}`);
+              }, FAULT_RESET_DELAY); // Use same delay as fault detection suspension
             } else {
               console.log(`User declined to reset fault for heater ${i + 1} - will not ask again`);
               heaterFaults[i] = true; // Mark as handled permanently to prevent repeated popups
@@ -838,10 +851,11 @@ function updateObjectModel() {
       // Show/hide Reset All Heater Faults button in header
       const resetAllFaultsButton = document.getElementById("reset-all-heater-faults");
       if (resetAllFaultsButton) {
-        if (anyHeaterHasFault) {
-          resetAllFaultsButton.style.display = "flex";
-        } else {
+        // Hide button if no faults OR if we just sent a reset command (give time for Duet to clear)
+        if (!anyHeaterHasFault || shouldSuspendFaultDetection) {
           resetAllFaultsButton.style.display = "none";
+        } else {
+          resetAllFaultsButton.style.display = "flex";
         }
       }
 
@@ -1264,6 +1278,24 @@ let currentPollInterval = POLL_INTERVAL;
 let consecutiveErrors = 0;
 let updateIntervalId = null;
 
+// Fault detection timing controls
+let lastFaultResetTime = 0;
+const FAULT_RESET_DELAY = 5000; // 5 seconds after M562 before resuming fault detection
+let faultDetectionSuspended = false;
+
+// FUNCTION: Suspend fault detection after M562 commands
+function suspendFaultDetection(reason = "M562 command sent") {
+  console.log(`🔇 Suspending fault detection: ${reason}`);
+  faultDetectionSuspended = true;
+  lastFaultResetTime = Date.now();
+  
+  // Auto-resume after delay
+  setTimeout(() => {
+    faultDetectionSuspended = false;
+    console.log(`🔔 Fault detection resumed after ${FAULT_RESET_DELAY}ms delay`);
+  }, FAULT_RESET_DELAY);
+}
+
 // Function to continuously check the server status and send commands once on state change from error to available
 async function pollServerAndSendOnceOnStateChange() {
   let serverWasUnavailable = true; // Track whether the server was previously in an error state
@@ -1490,9 +1522,12 @@ window.epicurusDebug = {
       sendGcode(`M562 P${heaterIndex}`); // Reset specific heater fault
       heaterFaults[heaterIndex] = true; // Mark as handled
       
+      // Use same suspension mechanism as real faults
+      suspendFaultDetection(`Simulated heater ${heaterIndex + 1} fault reset`);
+      
       setTimeout(() => {
         heaterFaults[heaterIndex] = false; // Reset after delay for monitoring
-      }, 3000);
+      }, FAULT_RESET_DELAY);
     } else {
       console.log(`User declined to reset fault for heater ${heaterIndex + 1} - will not ask again`);
       heaterFaults[heaterIndex] = true; // Mark as handled permanently
@@ -1516,6 +1551,27 @@ window.epicurusDebug = {
   disableFaultDebug: () => {
     window.epicurusDebug.debugHeaterFaults = false;
     console.log("🐛 Heater fault debugging disabled");
+  },
+  getFaultDetectionStatus: () => {
+    const currentTime = Date.now();
+    const timeSinceReset = currentTime - lastFaultResetTime;
+    const status = {
+      suspended: faultDetectionSuspended,
+      lastResetTime: new Date(lastFaultResetTime).toLocaleTimeString(),
+      timeSinceReset: `${timeSinceReset}ms`,
+      resumesIn: faultDetectionSuspended ? `${FAULT_RESET_DELAY - timeSinceReset}ms` : 'N/A',
+      suspensionActive: faultDetectionSuspended || (timeSinceReset < FAULT_RESET_DELAY)
+    };
+    console.log("Fault Detection Status:", status);
+    return status;
+  },
+  suspendFaultDetection: (reason) => {
+    suspendFaultDetection(reason || "Manual debug suspension");
+  },
+  resumeFaultDetection: () => {
+    faultDetectionSuspended = false;
+    lastFaultResetTime = 0;
+    console.log("🔔 Fault detection manually resumed");
   },
   checkSettings: () => {
     console.log("Current settings state:", {
@@ -1939,18 +1995,24 @@ function showResetAllHeaterFaultsPopup() {
     console.log("User confirmed reset of all heater faults");
     sendGcode("M562"); // Reset all heater faults
     
-    // Clear all heater fault flags
-    for (let i = 0; i < heaterFaults.length; i++) {
-      heaterFaults[i] = false;
-    }
+    // Suspend fault detection to prevent duplicate popups after reset
+    suspendFaultDetection("Reset all heater faults command");
     
-    // Hide the reset button since faults are being cleared
+    // Clear all heater fault flags after delay
+    setTimeout(() => {
+      for (let i = 0; i < heaterFaults.length; i++) {
+        heaterFaults[i] = false;
+      }
+      console.log("All heater fault flags cleared after delay");
+    }, FAULT_RESET_DELAY);
+    
+    // Hide the reset button immediately since faults are being cleared
     const resetButton = document.getElementById("reset-all-heater-faults");
     if (resetButton) {
       resetButton.style.display = "none";
     }
     
-    console.log("All heater faults reset command sent (M562)");
+    console.log("All heater faults reset command sent (M562) - fault detection suspended");
   } else {
     console.log("User cancelled reset of all heater faults");
   }
