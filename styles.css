@@ -87,3 +87,59 @@ body {
     opacity: 0.7;
   }
 }
+
+/* Bed Control Scrollable Table Styles */
+.temp-table {
+  display: flex;
+  flex-direction: column;
+  max-height: 400px;
+  overflow: hidden;
+}
+
+.temp-table-header {
+  display: flex;
+  flex-direction: row;
+  background-color: rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.temp-table-body {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: 320px;
+}
+
+.bed-row {
+  display: flex;
+  flex-direction: row;
+  min-height: 60px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.bed-row:hover {
+  background-color: rgba(167, 78, 158, 0.1);
+}
+
+.bed-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 8px;
+}
+
+.bed-cell.heater-name {
+  font-family: Roboto;
+  font-size: 16px;
+  color: #ffffff;
+}
+
+/* Apply custom scrollbar styling to bed table */
+.temp-table-body::-webkit-scrollbar-thumb {
+  -webkit-border-radius: 20px;
+  border-radius: 20px;
+  background: #a74e9e;
+}

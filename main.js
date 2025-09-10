@@ -1,8 +1,8 @@
 // ============================================= Global Variables ==================================================
 
-var defaultNumOfHeaters = 8; // 4 extruder heaters + 4 bed heaters
+var defaultNumOfHeaters = 14; // 4 extruder heaters + 10 bed heaters
 var defaultNumOfExtruderHeaters = 4;
-var defaultNumOfBedHeaters = 4;
+var defaultNumOfBedHeaters = 10;
 var defaultNumOfChamberHeaters = 0;
 
 const heaterFaults = new Array(defaultNumOfHeaters).fill(false); // global array to store heater fault data
@@ -561,10 +561,18 @@ function updateObjectModel() {
       );
       const cncSpindle = spindlesData[0] || {};
 
+      // Update bed table if more beds are detected than currently generated
+      if (configuredBedHeaters.length > document.querySelectorAll('.bed-row').length) {
+        generateBedTable(Math.min(configuredBedHeaters.length, 10));
+      }
+      
+      // Show only the configured bed heaters
       configuredBedHeaters.forEach((element, index) => {
-        document
-          .querySelectorAll(`.bed${index}`)
-          .forEach((element) => (element.style.visibility = "visible"));
+        if (index < 10) { // Limit to maximum 10 beds
+          document
+            .querySelectorAll(`.bed${index}`)
+            .forEach((element) => (element.style.visibility = "visible"));
+        }
       });
 
       configuredBedHeaters.forEach((element, index) => {
@@ -1725,17 +1733,19 @@ function configureHeaters(mode, configuredExtruderHeaters) {
 // FUNCTION: configureBedHeaters
 function configureBedHeaters(mode, configuredBedHeaters) {
   let gcodeString = "";
-  let heaterType = ["bed0", "bed1", "bed2", "bed3"];
+  let heaterType = ["bed0", "bed1", "bed2", "bed3", "bed4", "bed5", "bed6", "bed7", "bed8", "bed9"];
   configuredBedHeaters.forEach((heater, index) => {
-    preheatTemp = document.getElementById(
-      `user-input-preheat-${heaterType[index]}`
-    ).textContent;
-    activeTemp = document.getElementById(
-      `user-input-active-${heaterType[index]}`
-    ).textContent;
-    gcodeString += `M568 P${
-      index + configuredExtruderHeaters.length
-    } S${activeTemp} R${preheatTemp} A${mode} `;
+    const heaterElement = document.getElementById(`user-input-preheat-${heaterType[index]}`);
+    const activeElement = document.getElementById(`user-input-active-${heaterType[index]}`);
+    
+    // Only proceed if elements exist (for beds that are actually configured)
+    if (heaterElement && activeElement) {
+      preheatTemp = heaterElement.textContent;
+      activeTemp = activeElement.textContent;
+      gcodeString += `M568 P${
+        index + configuredExtruderHeaters.length
+      } S${activeTemp} R${preheatTemp} A${mode} `;
+    }
   });
   sendGcode(gcodeString);
 }
@@ -1754,6 +1764,12 @@ function saveSettings() {
     "bed1",
     "bed2",
     "bed3",
+    "bed4",
+    "bed5",
+    "bed6",
+    "bed7",
+    "bed8",
+    "bed9",
   ];
 
   const settings = categories.reduce((acc, category) => {
@@ -1847,11 +1863,85 @@ for (var i = 4; i < elements.length; i++) {
   elements[i].style.display = "none";
 }
 
-// Hide beds in bed temperatures on startup
-for (let i = 0; i < defaultNumOfBedHeaters; i++) {
-  document
-    .querySelectorAll(`.bed${i}`)
-    .forEach((element) => (element.style.visibility = "hidden"));
+// Initialize dynamic bed table structure
+generateBedTable(defaultNumOfBedHeaters);
+
+// Function to dynamically generate bed table rows
+function generateBedTable(numBeds) {
+  const tableBody = document.getElementById('bed-temp-table-body');
+  if (!tableBody) return;
+  
+  // Clear existing content
+  tableBody.innerHTML = '';
+  
+  for (let i = 0; i < numBeds; i++) {
+    const bedRow = createBedRow(i);
+    tableBody.appendChild(bedRow);
+  }
+}
+
+// Function to create a single bed row
+function createBedRow(bedIndex) {
+  const row = document.createElement('div');
+  row.className = `bed-row bed${bedIndex}`;
+  row.style.visibility = 'hidden'; // Initially hidden until detected
+  
+  // Heater Name Column
+  const heaterCell = document.createElement('div');
+  heaterCell.className = 'bed-cell heater-name';
+  heaterCell.textContent = `Bed ${bedIndex + 1}`;
+  
+  // State Column
+  const stateCell = document.createElement('div');
+  stateCell.className = `bed-cell temp-state-container bed${bedIndex}`;
+  stateCell.innerHTML = `
+    <div id="temp-state-bed${bedIndex}" class="temp-state bed">null</div>
+    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewbox="0 0 24 24" app="ikonik" class="temp-state-icon">
+      <g data-name="Circle Chev Left" app="ikonik">
+        <g app="ikonik">
+          <path d="M12,21.933A9.933,9.933,0,1,1,21.933,12,9.944,9.944,0,0,1,12,21.933ZM12,3.067A8.933,8.933,0,1,0,20.933,12,8.943,8.943,0,0,0,12,3.067Z" fill="currentColor" app="ikonik" class="path-uj3x4"></path>
+          <path d="M10.15,12.35a.492.492,0,0,1,0-.7l3-3a.495.495,0,0,1,.7.7L11.21,12l2.64,2.65a.495.495,0,0,1-.7.7Z" fill="currentColor" app="ikonik" class="path-ji5zwg"></path>
+        </g>
+      </g>
+    </svg>
+  `;
+  
+  // Live Temperature Column
+  const liveCell = document.createElement('div');
+  liveCell.className = 'bed-cell';
+  liveCell.innerHTML = `<div id="bed${bedIndex}-heater-temp" class="temp-data bed bed${bedIndex}">null</div>`;
+  
+  // Active Temperature Column
+  const activeCell = document.createElement('div');
+  activeCell.className = 'bed-cell';
+  activeCell.innerHTML = `
+    <div data-delay="0" data-hover="false" class="dropdown-wrapper active bed${bedIndex} w-dropdown">
+      <div class="dropdown-trigger w-dropdown-toggle">
+        <div class="dropdown-icon w-icon-dropdown-toggle"></div>
+        <div id="user-input-active-bed${bedIndex}" class="user-input-temp bed${bedIndex} active">0</div>
+      </div>
+    </div>
+  `;
+  
+  // Preheat Temperature Column
+  const preheatCell = document.createElement('div');
+  preheatCell.className = 'bed-cell';
+  preheatCell.innerHTML = `
+    <div data-delay="0" data-hover="false" class="dropdown-wrapper preheat bed${bedIndex} w-dropdown">
+      <div class="dropdown-trigger w-dropdown-toggle">
+        <div class="dropdown-icon w-icon-dropdown-toggle"></div>
+        <div id="user-input-preheat-bed${bedIndex}" class="user-input-temp bed${bedIndex} preheat">0</div>
+      </div>
+    </div>
+  `;
+  
+  row.appendChild(heaterCell);
+  row.appendChild(stateCell);
+  row.appendChild(liveCell);
+  row.appendChild(activeCell);
+  row.appendChild(preheatCell);
+  
+  return row;
 }
 
 // Start adaptive polling system
@@ -2553,6 +2643,42 @@ function setTemp(tabpane, buttonIndex) {
           document.getElementById("user-input-preheat-bed3"),
           "P7",
         ];
+      case ".tab-pane-bed4":
+        return [
+          document.getElementById("user-input-active-bed4"),
+          document.getElementById("user-input-preheat-bed4"),
+          "P8",
+        ];
+      case ".tab-pane-bed5":
+        return [
+          document.getElementById("user-input-active-bed5"),
+          document.getElementById("user-input-preheat-bed5"),
+          "P9",
+        ];
+      case ".tab-pane-bed6":
+        return [
+          document.getElementById("user-input-active-bed6"),
+          document.getElementById("user-input-preheat-bed6"),
+          "P10",
+        ];
+      case ".tab-pane-bed7":
+        return [
+          document.getElementById("user-input-active-bed7"),
+          document.getElementById("user-input-preheat-bed7"),
+          "P11",
+        ];
+      case ".tab-pane-bed8":
+        return [
+          document.getElementById("user-input-active-bed8"),
+          document.getElementById("user-input-preheat-bed8"),
+          "P12",
+        ];
+      case ".tab-pane-bed9":
+        return [
+          document.getElementById("user-input-active-bed9"),
+          document.getElementById("user-input-preheat-bed9"),
+          "P13",
+        ];
     }
   })();
 
@@ -2586,6 +2712,12 @@ function setTemp(tabpane, buttonIndex) {
   ".tab-pane-bed1",
   ".tab-pane-bed2",
   ".tab-pane-bed3",
+  ".tab-pane-bed4",
+  ".tab-pane-bed5",
+  ".tab-pane-bed6",
+  ".tab-pane-bed7",
+  ".tab-pane-bed8",
+  ".tab-pane-bed9",
 ].forEach((tabpane) => {
   document
     .querySelectorAll(`${tabpane} .number-container`)
@@ -2708,15 +2840,13 @@ document
       document.getElementById("user-input-preheat-nozzle").textContent =
         nozzleTemp;
 
-      // Set Bed Temps
-      document.getElementById("user-input-active-bed0").textContent = bedTemp;
-      document.getElementById("user-input-preheat-bed0").textContent = bedTemp;
-      document.getElementById("user-input-active-bed1").textContent = bedTemp;
-      document.getElementById("user-input-preheat-bed1").textContent = bedTemp;
-      document.getElementById("user-input-active-bed2").textContent = bedTemp;
-      document.getElementById("user-input-preheat-bed2").textContent = bedTemp;
-      document.getElementById("user-input-active-bed3").textContent = bedTemp;
-      document.getElementById("user-input-preheat-bed3").textContent = bedTemp;
+      // Set Bed Temps for all configured beds
+      for (let i = 0; i < configuredBedHeaters.length && i < 10; i++) {
+        const activeElement = document.getElementById(`user-input-active-bed${i}`);
+        const preheatElement = document.getElementById(`user-input-preheat-bed${i}`);
+        if (activeElement) activeElement.textContent = bedTemp;
+        if (preheatElement) preheatElement.textContent = bedTemp;
+      }
 
       // Preheat Extruder Heaters
       sendGcode(
