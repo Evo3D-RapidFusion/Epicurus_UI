@@ -88,6 +88,12 @@ body {
   }
 }
 
+/* Ensure beds 5-10 tab panes expand to fill container */
+.tab-pane-bed4, .tab-pane-bed5, .tab-pane-bed6, .tab-pane-bed7, 
+.tab-pane-bed8, .tab-pane-bed9 {
+  flex: 1 !important;
+}
+
 /* Bed Control Scrollable Table Styles */
 #bed-temp-table::-webkit-scrollbar-thumb {
   -webkit-border-radius: 20px;
