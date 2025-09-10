@@ -101,7 +101,23 @@ body {
   background: #a74e9e;
 }
 
-/* Bed Control row spacing: apply consistent vertical margins to all items */
-#bed-temp-table .column-text > div {
-  margin-block: 20px;
+/* Bed Control row spacing: per-column control via custom property */
+#bed-temp-table .column-text {
+  --column-item-margin: 30px;
 }
+
+#bed-temp-table .column-text > div {
+  margin: var(--column-item-margin);
+}
+
+/* Per-column spacing overrides */
+/* Heaters */
+#bed-temp-table .column-text:nth-child(1) { --column-item-margin: 20px; }
+/* State */
+#bed-temp-table .column-text:nth-child(2) { --column-item-margin: 16px; }
+/* Live */
+#bed-temp-table .column-text:nth-child(3) { --column-item-margin: 22px; }
+/* Active */
+#bed-temp-table .column-text:nth-child(4) { --column-item-margin: 28px; }
+/* Preheat */
+#bed-temp-table .column-text:nth-child(5) { --column-item-margin: 12px; }
