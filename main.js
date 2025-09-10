@@ -2082,6 +2082,7 @@ const buttonIds = [
   "bed-fixture-plate-off-icon",
   "check-for-updates",
   "restart-firmware",
+  "reload-ui",
   "heatsink-fan-off",
   "heatsink-fan-half",
   "heatsink-fan-full",
@@ -2340,12 +2341,16 @@ buttonIds.forEach((buttonId) => {
         window.alert(`System up to date.`)
         break;
       case "restart-firmware":
-        // Prompt the user to restart machine
-        const restartFirmware = window.confirm(`Restart Firmware?`);
+        // Warn the user about the consequences of restarting firmware
+        const restartFirmware = window.confirm(`⚠️ WARNING: RESTART FIRMWARE ⚠️\n\nConfirming will RESET ALL Extruder Heater & Bed temperatures to OFF.\n\nAll heating processes will be stopped immediately.\n\nAre you sure you want to proceed?`);
         if (restartFirmware) {
           sendGcode('M999');
           location.reload();
         }
+        break;
+      case "reload-ui":
+        // Reload the UI immediately
+        location.reload();
         break;
       case "heatsink-fan-off":
         sendGcode(`M106 P${selectedHeatsinkFan} S0`);
