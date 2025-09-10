@@ -100,3 +100,8 @@ body {
   border-radius: 20px;
   background: #a74e9e;
 }
+
+/* Bed Control row spacing: apply consistent vertical margins to all items */
+#bed-temp-table .column-text > div {
+  margin-block: 20px;
+}
