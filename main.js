@@ -835,7 +835,7 @@ function updateObjectModel() {
         }
       }
 
-      // Show/hide Reset All Heater Faults button
+      // Show/hide Reset All Heater Faults button in header
       const resetAllFaultsButton = document.getElementById("reset-all-heater-faults");
       if (resetAllFaultsButton) {
         if (anyHeaterHasFault) {
@@ -1539,18 +1539,18 @@ window.epicurusDebug = {
     const resetButton = document.getElementById("reset-all-heater-faults");
     if (resetButton) {
       resetButton.style.display = "flex";
-      console.log("✅ Reset All Heater Faults button is now visible");
+      console.log("✅ Reset All Heater Faults header button is now visible");
     } else {
-      console.error("❌ Reset All Heater Faults button not found");
+      console.error("❌ Reset All Heater Faults header button not found");
     }
   },
   hideResetButton: () => {
     const resetButton = document.getElementById("reset-all-heater-faults");
     if (resetButton) {
       resetButton.style.display = "none";
-      console.log("✅ Reset All Heater Faults button is now hidden");
+      console.log("✅ Reset All Heater Faults header button is now hidden");
     } else {
-      console.error("❌ Reset All Heater Faults button not found");
+      console.error("❌ Reset All Heater Faults header button not found");
     }
   }
 };
@@ -1961,7 +1961,6 @@ const buttonIds = [
   "boost-pellets",
   "heaters-off",
   "preheat-extruder",
-  "reset-all-heater-faults",
   "emergency-stop",
   "part-cooling-on",
   "part-cooling-on-icon",
@@ -2013,9 +2012,6 @@ buttonIds.forEach((buttonId) => {
         break;
       case "preheat-extruder":
         configureHeaters(1, configuredExtruderHeaters); // mode 1 == preheat (standby)
-        break;
-      case "reset-all-heater-faults":
-        showResetAllHeaterFaultsPopup();
         break;
       case "bed-heaters-off":
         document
@@ -2298,6 +2294,21 @@ document.querySelectorAll(".temp-state-container").forEach((element, index) => {
 });
 
 console.log(`Initialized ${document.querySelectorAll(".temp-state-container").length} heater state click handlers`);
+
+// === Reset All Heater Faults Button in Header ===
+document.addEventListener("DOMContentLoaded", function() {
+  const resetAllButton = document.getElementById("reset-all-heater-faults");
+  if (resetAllButton) {
+    resetAllButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      console.log("Reset All Heater Faults button clicked from header");
+      showResetAllHeaterFaultsPopup();
+    });
+    console.log("Reset All Heater Faults header button event listener initialized");
+  }
+});
+
 // =====================================================================================================================
 
 // ================================================ Temperautre Popup ==================================================
