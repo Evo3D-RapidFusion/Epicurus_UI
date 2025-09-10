@@ -110,14 +110,19 @@ body {
   margin: var(--column-item-margin);
 }
 
+/* Ensure headings in each column use the same per-column spacing */
+#bed-temp-table .column-text > .table-heading {
+  margin: var(--column-item-margin);
+}
+
 /* Per-column spacing overrides */
 /* Heaters */
-#bed-temp-table .column-text:nth-child(1) { --column-item-margin: 20px; }
+#bed-temp-table .column-text:nth-child(1) { --column-item-margin: 30px; }
 /* State */
-#bed-temp-table .column-text:nth-child(2) { --column-item-margin: 16px; }
+#bed-temp-table .column-text:nth-child(2) { --column-item-margin: 28.2px; }
 /* Live */
-#bed-temp-table .column-text:nth-child(3) { --column-item-margin: 22px; }
+#bed-temp-table .column-text:nth-child(3) { --column-item-margin: 30px; }
 /* Active */
-#bed-temp-table .column-text:nth-child(4) { --column-item-margin: 28px; }
+#bed-temp-table .column-text:nth-child(4) { --column-item-margin: 28.5px; }
 /* Preheat */
-#bed-temp-table .column-text:nth-child(5) { --column-item-margin: 12px; }
+#bed-temp-table .column-text:nth-child(5) { --column-item-margin: 28.5px; }
