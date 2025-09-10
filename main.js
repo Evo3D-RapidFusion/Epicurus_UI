@@ -1239,9 +1239,9 @@ function updateObjectModel() {
 }
 
 // Polling configuration
-const POLL_INTERVAL = 2000; // 2 seconds - safe for embedded systems
+const POLL_INTERVAL = 1000; // 1 second - faster updates for better responsiveness
 const POLL_INTERVAL_SLOW = 5000; // 5 seconds - when errors occur
-const POLL_INTERVAL_FAST = 1000; // 1 second - when actively monitoring (optional)
+const POLL_INTERVAL_FAST = 500; // 0.5 seconds - when actively monitoring (optional)
 
 let currentPollInterval = POLL_INTERVAL;
 let consecutiveErrors = 0;
