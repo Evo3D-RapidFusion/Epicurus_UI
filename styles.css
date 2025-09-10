@@ -106,13 +106,13 @@ body {
   --column-item-margin: 30px;
 }
 
-#bed-temp-table .column-text > div {
+#bed-temp-table .column-text > :not(.table-heading) {
   margin: var(--column-item-margin);
 }
 
-/* Ensure headings in each column use the same per-column spacing */
+/* Keep headings at a fixed default spacing */
 #bed-temp-table .column-text > .table-heading {
-  margin: var(--column-item-margin);
+  margin: 30px;
 }
 
 /* Per-column spacing overrides */
