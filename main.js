@@ -561,11 +561,6 @@ function updateObjectModel() {
       );
       const cncSpindle = spindlesData[0] || {};
 
-      // Update bed table if more beds are detected than currently generated
-      if (configuredBedHeaters.length > document.querySelectorAll('.bed-row').length) {
-        generateBedTable(Math.min(configuredBedHeaters.length, 10));
-      }
-      
       // Show only the configured bed heaters
       configuredBedHeaters.forEach((element, index) => {
         if (index < 10) { // Limit to maximum 10 beds
@@ -1863,85 +1858,11 @@ for (var i = 4; i < elements.length; i++) {
   elements[i].style.display = "none";
 }
 
-// Initialize dynamic bed table structure
-generateBedTable(defaultNumOfBedHeaters);
-
-// Function to dynamically generate bed table rows
-function generateBedTable(numBeds) {
-  const tableBody = document.getElementById('bed-temp-table-body');
-  if (!tableBody) return;
-  
-  // Clear existing content
-  tableBody.innerHTML = '';
-  
-  for (let i = 0; i < numBeds; i++) {
-    const bedRow = createBedRow(i);
-    tableBody.appendChild(bedRow);
-  }
-}
-
-// Function to create a single bed row
-function createBedRow(bedIndex) {
-  const row = document.createElement('div');
-  row.className = `bed-row bed${bedIndex}`;
-  row.style.visibility = 'hidden'; // Initially hidden until detected
-  
-  // Heater Name Column
-  const heaterCell = document.createElement('div');
-  heaterCell.className = 'bed-cell heater-name';
-  heaterCell.textContent = `Bed ${bedIndex + 1}`;
-  
-  // State Column
-  const stateCell = document.createElement('div');
-  stateCell.className = `bed-cell temp-state-container bed${bedIndex}`;
-  stateCell.innerHTML = `
-    <div id="temp-state-bed${bedIndex}" class="temp-state bed">null</div>
-    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewbox="0 0 24 24" app="ikonik" class="temp-state-icon">
-      <g data-name="Circle Chev Left" app="ikonik">
-        <g app="ikonik">
-          <path d="M12,21.933A9.933,9.933,0,1,1,21.933,12,9.944,9.944,0,0,1,12,21.933ZM12,3.067A8.933,8.933,0,1,0,20.933,12,8.943,8.943,0,0,0,12,3.067Z" fill="currentColor" app="ikonik" class="path-uj3x4"></path>
-          <path d="M10.15,12.35a.492.492,0,0,1,0-.7l3-3a.495.495,0,0,1,.7.7L11.21,12l2.64,2.65a.495.495,0,0,1-.7.7Z" fill="currentColor" app="ikonik" class="path-ji5zwg"></path>
-        </g>
-      </g>
-    </svg>
-  `;
-  
-  // Live Temperature Column
-  const liveCell = document.createElement('div');
-  liveCell.className = 'bed-cell';
-  liveCell.innerHTML = `<div id="bed${bedIndex}-heater-temp" class="temp-data bed bed${bedIndex}">null</div>`;
-  
-  // Active Temperature Column
-  const activeCell = document.createElement('div');
-  activeCell.className = 'bed-cell';
-  activeCell.innerHTML = `
-    <div data-delay="0" data-hover="false" class="dropdown-wrapper active bed${bedIndex} w-dropdown">
-      <div class="dropdown-trigger w-dropdown-toggle">
-        <div class="dropdown-icon w-icon-dropdown-toggle"></div>
-        <div id="user-input-active-bed${bedIndex}" class="user-input-temp bed${bedIndex} active">0</div>
-      </div>
-    </div>
-  `;
-  
-  // Preheat Temperature Column
-  const preheatCell = document.createElement('div');
-  preheatCell.className = 'bed-cell';
-  preheatCell.innerHTML = `
-    <div data-delay="0" data-hover="false" class="dropdown-wrapper preheat bed${bedIndex} w-dropdown">
-      <div class="dropdown-trigger w-dropdown-toggle">
-        <div class="dropdown-icon w-icon-dropdown-toggle"></div>
-        <div id="user-input-preheat-bed${bedIndex}" class="user-input-temp bed${bedIndex} preheat">0</div>
-      </div>
-    </div>
-  `;
-  
-  row.appendChild(heaterCell);
-  row.appendChild(stateCell);
-  row.appendChild(liveCell);
-  row.appendChild(activeCell);
-  row.appendChild(preheatCell);
-  
-  return row;
+// Hide beds in bed temperatures on startup - now supports up to 10 beds
+for (let i = 0; i < defaultNumOfBedHeaters; i++) {
+  document
+    .querySelectorAll(`.bed${i}`)
+    .forEach((element) => (element.style.visibility = "hidden"));
 }
 
 // Start adaptive polling system
