@@ -1229,115 +1229,6 @@ function updateObjectModel() {
   });
 }
 
-// Function to continuously check the server status and send commands once on state change from error to available
-async function pollServerAndSendOnceOnStateChange() {
-  let serverWasUnavailable = true; // Track whether the server was previously in an error state
-
-  while (true) {
-    try {
-      const response = await fetchData("http://localhost/machine/status");
-
-      // Check if response includes a 503 status
-      if (response.status && response.status === 503) {
-        console.log("503 Service Unavailable. Polling again after delay...");
-        serverWasUnavailable = true; // Update the server state as unavailable
-        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
-        continue; // Keep polling if the server is unavailable
-      }
-
-      console.log("Server is available.");
-
-      // Only send commands once after server becomes available
-      if (serverWasUnavailable) {
-        console.log("Server state changed to available. Sending G-code commands once...");
-        await sendCommandsOnce();
-        serverWasUnavailable = false; // Update state to reflect that commands have been sent
-      }
-
-      // Wait before polling again
-      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
-
-    } catch (error) {
-      console.error(`Error checking server status: ${error}`);
-      serverWasUnavailable = true; // Treat any fetch error as a temporary unavailability
-      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL)); // Delay before retrying
-    }
-  }
-}
-
-// Function to send G-code commands based on states in localStorage using fetchData
-async function sendCommandsOnce() {
-  try {
-    const partCoolingState = localStorage.getItem("partCoolingState") || "off";
-    console.log(`Sending G-code for partCoolingState: ${partCoolingState}`);
-
-    if (partCoolingState === "on") {
-      if (document.getElementById("part-cooling-on").style.display === "none") {
-        document.getElementById("part-cooling-toggle").click();
-      }
-      await sendGcode('set global.partCooling = true');
-      await sendGcode('M98 P"Part cooling on.g"');
-    } else {
-      await sendGcode('set global.partCooling = false');
-      await sendGcode('M98 P"Part cooling off.g"');
-    }
-
-    const bedFixturePlateState = localStorage.getItem("bedFixturePlateState") || "off";
-    console.log(`Sending G-code for bedFixturePlateState: ${bedFixturePlateState}`);
-
-    if (bedFixturePlateState === "on") {
-      if (document.getElementById("bed-fixture-plate-on").style.display === "none") {
-        document.getElementById("bed-fixture-plate-toggle").click();
-      }
-      await sendGcode('set global.bedFixturePlate = true');
-      // await sendGcode('M98 P"Bed_PID_fixture_plate_on.g"');
-    } else {
-      await sendGcode('set global.bedFixturePlate = false');
-      // await sendGcode('M98 P"Bed_PID_fixture_plate_off.g"');
-    }
-
-    console.log("All commands executed successfully.");
-
-  } catch (error) {
-    console.error(`Error executing G-code commands: ${error}`);
-  }
-}
-
-// Function to send individual G-code command with retry logic for 503 and unknown variable errors using fetchData
-async function sendGcode(gcode) {
-  while (true) {
-    try {
-      const response = await fetchData(activeCodeURL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain",
-        },
-        body: gcode,
-      });
-
-      if (response.status && response.status === 503) {
-        console.warn("503 Service Unavailable while sending G-code. Retrying...");
-        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
-        continue; // Retry if server returns 503 error
-      }
-
-      // Check for unknown variable error in the response text
-      if (typeof response === "string" && response.includes("Error: unknown variable")) {
-        console.warn(`Unknown variable error detected in response. Retrying G-code '${gcode}'...`);
-        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
-        continue; // Retry if unknown variable error is present
-      }
-
-      console.log(`Response from sending G-code '${gcode}': ${response}`);
-      return response; // Exit loop on successful command execution without errors
-
-    } catch (error) {
-      console.error(`Error sending G-code '${gcode}': ${error}`);
-      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL)); // Delay before retrying
-    }
-  }
-}
-
 // Polling configuration
 const POLL_INTERVAL = 1000; // 1 second - faster updates for better responsiveness
 const POLL_INTERVAL_SLOW = 5000; // 5 seconds - when errors occur
@@ -1699,13 +1590,16 @@ for (let i = 0; i < defaultNumOfBedHeaters; i++) {
     .forEach((element) => (element.style.visibility = "hidden"));
 }
 
-// Update Object Model every 1 seconds
-setInterval(update, 1000);
+// Start adaptive polling system
+startPolling();
 
 document.addEventListener("DOMContentLoaded", function () { 
   // Select Default Tabs on page load
   document.getElementById("default-tab").click();
   document.getElementById("system-info").click();
+
+  // Initialize connection status indicator
+  initializeConnectionStatus();
 
   // Call the function to set up the click listener
   enableDeveloperSettings();
@@ -2044,7 +1938,7 @@ buttonIds.forEach((buttonId) => {
         break;
       case "system-pe320":
         localStorage.setItem("systemFamily", "pe320");
-        document.getElementById("logo-text").textContent = "- Pulsar";
+        document.getElementById("logo-text").textContent = "- PE320";
         document.getElementById("logo-text").style.display = "flex";
         document.getElementById("aisync-slicer-option").style.display = "none"; // no AiSync
         document.getElementById("cnc-mill-option").style.display = "none"; // no CNC
@@ -2984,8 +2878,5 @@ window.epicurusDebug = {
   getConnectionStatus,
   sendGcode: (command) => sendGcode(command)
 };
-
-// Start adaptive polling system
-startPolling();
 
 // =====================================================================================================================
