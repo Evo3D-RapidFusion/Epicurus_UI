@@ -24,6 +24,11 @@ let activeStatusURL = `http://${duetIP}/rr_model`;
 let activeCodeURL = `http://${duetIP}/rr_gcode`;
 let activeConnectURL = `http://${duetIP}/rr_connect`;
 
+// Ensure PE320 is set as default system family if none exists
+if (!localStorage.getItem("systemFamily")) {
+  localStorage.setItem("systemFamily", "pe320");
+}
+
 // Session management
 let isConnected = false;
 
@@ -1598,6 +1603,12 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("default-tab").click();
   document.getElementById("system-info").click();
 
+  // Force PE320 selection as default (localStorage already set at script start)
+  setTimeout(() => {
+    document.getElementById("system-pe320").click();
+    console.log("PE320 system selected as default");
+  }, 100);
+
   // Initialize connection status indicator
   initializeConnectionStatus();
 
@@ -1718,11 +1729,11 @@ window.addEventListener("load", () => {
       document.getElementById("system-zeus").click();
       break;
     case "pe320":
-      document.getElementById("system-pe320").click();
+      // PE320 is the default, already handled
       break;
-    default: // pe320 as default
-      localStorage.setItem("systemFamily", "pe320"); // Ensure pe320 is saved as default
-      document.getElementById("system-pe320").click();
+    default:
+      // This should never happen since we set pe320 as default at script start
+      break;
   }
 
   // const partCoolingState = localStorage.getItem("partCoolingState");
