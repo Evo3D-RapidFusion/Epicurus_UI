@@ -18,41 +18,423 @@ let selectedHeatsinkFan = "0";
 let selectedBarrelFan = "0";
 // let spindleRunning = false; // already declared in embedded code
 
-// let activeStatusURL = "http://10.163.75.236/machine/status";
-// let activeCodeURL = "http://10.163.75.236/machine/code";
+// Configuration for Duet connection - can be modified via UI or localStorage
+let duetIP = localStorage.getItem('duetIP') || "10.10.10.100";
+let activeStatusURL = `http://${duetIP}/rr_model`;
+let activeCodeURL = `http://${duetIP}/rr_gcode`;
+let activeConnectURL = `http://${duetIP}/rr_connect`;
 
-let activeStatusURL = "http://localhost/machine/status";
-let activeCodeURL = "http://localhost/machine/code";
+// Session management
+let isConnected = false;
 
-// ============================= index.html HEADER - Fetch Machine Status with Fallback URLs ===============================
+// Network configuration
+const NETWORK_TIMEOUT = 5000; // 5 seconds timeout for requests
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second base delay
+
+// Mode detection and caching
+let duetMode = null; // null = not detected, 'sbc' = SBC mode, 'standalone' = standalone mode
+let modeDetectionAttempts = 0;
+const MAX_MODE_DETECTION_ATTEMPTS = 3;
+
+// Helper function to create timeout-enabled fetch requests
+function fetchWithTimeout(url, options = {}, timeout = NETWORK_TIMEOUT) {
+  return new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error(`Request timeout after ${timeout}ms`));
+    }, timeout);
+
+    fetch(url, options)
+      .then(response => {
+        clearTimeout(timeoutId);
+        resolve(response);
+      })
+      .catch(error => {
+        clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
+}
+
+// Helper function to validate if an IP is potentially reachable
+async function validateConnection(ip) {
+  try {
+    const testUrl = `http://${ip}/rr_connect?password=test`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000); // Quick 2s test
+    
+    const response = await fetch(testUrl, { 
+      signal: controller.signal,
+      mode: 'no-cors' // Allow checking even if CORS fails
+    });
+    clearTimeout(timeoutId);
+    return true; // If we get any response, IP is reachable
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      console.warn(`Connection validation timeout for IP: ${ip}`);
+    }
+    return false;
+  }
+}
+
+// FUNCTION: Reset Duet mode detection (for debugging or manual override)
+function resetDuetModeDetection() {
+  duetMode = null;
+  modeDetectionAttempts = 0;
+  console.log("Duet mode detection reset - will re-detect on next request");
+}
+
+// FUNCTION: Update Duet IP address and reset connection
+function updateDuetIP(newIP) {
+  if (!newIP || newIP === duetIP) return;
+  
+  console.log(`Updating Duet IP from ${duetIP} to ${newIP}`);
+  duetIP = newIP;
+  localStorage.setItem('duetIP', newIP);
+  
+  // Update all URLs
+  activeStatusURL = `http://${duetIP}/rr_model`;
+  activeCodeURL = `http://${duetIP}/rr_gcode`;
+  activeConnectURL = `http://${duetIP}/rr_connect`;
+  
+  // Reset connection state
+  isConnected = false;
+  resetDuetModeDetection();
+  
+  console.log(`Duet endpoints updated. New status URL: ${activeStatusURL}`);
+}
+
+// FUNCTION: Test connectivity to current Duet IP
+async function testDuetConnection() {
+  console.log(`Testing connection to Duet at ${duetIP}...`);
+  
+  try {
+    // First validate basic connectivity
+    const isReachable = await validateConnection(duetIP);
+    if (!isReachable) {
+      console.error(`Cannot reach device at ${duetIP}. Please check the IP address and network connection.`);
+      return { success: false, error: 'Device unreachable' };
+    }
+
+    // Try to establish RRF connection
+    const result = await connectToRRF();
+    console.log('Connection test successful:', result);
+    return { success: true, data: result };
+    
+  } catch (error) {
+    console.error('Connection test failed:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// FUNCTION: Get connection status for UI display
+function getConnectionStatus() {
+  return {
+    isConnected,
+    duetIP,
+    duetMode,
+    urls: {
+      status: activeStatusURL,
+      code: activeCodeURL,
+      connect: activeConnectURL
+    }
+  };
+}
+
+// FUNCTION: Update connection status indicator in UI
+function updateConnectionStatusUI(status, message = null) {
+  const indicator = document.getElementById('connection-indicator');
+  const text = document.getElementById('connection-text');
+  
+  if (!indicator || !text) return; // Elements not found
+  
+  switch (status) {
+    case 'connected':
+      indicator.style.backgroundColor = '#44ff44';
+      text.textContent = message || 'Connected';
+      text.className = 'toggle-text-on';
+      break;
+    case 'connecting':
+      indicator.style.backgroundColor = '#ffaa44';
+      text.textContent = message || 'Connecting...';
+      text.className = 'toggle-text-off';
+      break;
+    case 'disconnected':
+      indicator.style.backgroundColor = '#ff4444';
+      text.textContent = message || 'Disconnected';
+      text.className = 'toggle-text-off';
+      break;
+    case 'error':
+      indicator.style.backgroundColor = '#ff0044';
+      text.textContent = message || 'Connection Error';
+      text.className = 'toggle-text-off';
+      break;
+    default:
+      indicator.style.backgroundColor = '#888888';
+      text.textContent = message || 'Status Unknown';
+      text.className = 'toggle-text-off';
+  }
+}
+
+// FUNCTION: Initialize connection status on page load
+function initializeConnectionStatus() {
+  // Set initial status
+  updateConnectionStatusUI('connecting');
+  
+  // Try to establish connection
+  setTimeout(async () => {
+    try {
+      const result = await testDuetConnection();
+      if (result.success) {
+        updateConnectionStatusUI('connected');
+      } else {
+        updateConnectionStatusUI('disconnected', result.error);
+      }
+    } catch (error) {
+      updateConnectionStatusUI('error', error.message);
+    }
+  }, 1000);
+}
+
+// FUNCTION: Force Duet mode (for debugging or manual override)
+function forceDuetMode(mode) {
+  if (mode === 'sbc' || mode === 'standalone') {
+    duetMode = mode;
+    modeDetectionAttempts = 0;
+    console.log(`Duet mode manually set to: ${mode}`);
+  } else {
+    console.error("Invalid mode. Use 'sbc' or 'standalone'");
+  }
+}
+
+// Make functions available globally for debugging
+window.resetDuetModeDetection = resetDuetModeDetection;
+window.forceDuetMode = forceDuetMode;
+
+// ============================= Dual Mode Object Model Fetching ===============================
+//
+// This system automatically detects whether the Duet controller is running in:
+// - SBC Mode: Returns full object model with data in a single request
+// - Standalone Mode: Returns only object model structure, requires key-specific requests for data
+//
+// The detection happens automatically on first request and is cached for performance.
+// 
+// Debug functions available in browser console:
+// - resetDuetModeDetection(): Reset detection to re-test mode
+// - forceDuetMode('sbc' | 'standalone'): Manually override detection
+//
+// ==================================================================================
 
 // ========================================== HTTP requests with Duet Mainboard ========================================
 
-// FUNCTION: HTTPS async GET/POST requests to Duet Mainboard
-// Enhanced fetchData function to handle various error cases
-async function fetchData(url, options) {
+// FUNCTION: Establish connection to RRF with timeout
+async function connectToRRF(password = "reprap") {
   try {
-    const response = await fetch(url, options);
+    console.log(`Attempting to connect to RRF at ${duetIP}...`);
+    const response = await fetchWithTimeout(`${activeConnectURL}?password=${encodeURIComponent(password)}`, {}, NETWORK_TIMEOUT);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.err === 0) {
+      console.log("Successfully connected to RRF");
+      isConnected = true;
+      updateConnectionStatusUI('connected');
+      return data;
+    } else {
+      console.error(`RRF connection failed with error code: ${data.err}`);
+      isConnected = false;
+      updateConnectionStatusUI('error', `Connection failed: ${data.err}`);
+      throw new Error(`RRF connection failed: ${data.err}`);
+    }
+  } catch (error) {
+    console.error("Failed to connect to RRF:", error);
+    isConnected = false;
+    updateConnectionStatusUI('error', error.message);
+    throw error;
+  }
+}
+
+// FUNCTION: Enhanced async GET/POST requests to Duet Mainboard with timeouts and retry logic
+async function fetchData(url, options = {}, retryCount = 0) {
+  try {
+    // Ensure we're connected before making requests
+    if (!isConnected && !url.includes('rr_connect')) {
+      await connectToRRF();
+    }
+    
+    // Use timeout-enabled fetch
+    const response = await fetchWithTimeout(url, options, NETWORK_TIMEOUT);
+
+    // Handle 401 Unauthorized - need to reconnect
+    if (response.status === 401) {
+      console.warn("Received 401 Unauthorized, attempting to reconnect...");
+      isConnected = false;
+      await connectToRRF();
+      // Retry the original request
+      const retryResponse = await fetchWithTimeout(url, options, NETWORK_TIMEOUT);
+      if (!retryResponse.ok) {
+        console.error(`Error: Network response was not ok. Status: ${retryResponse.status}`);
+        throw new Error(`HTTP error! Status: ${retryResponse.status}`);
+      }
+      return await parseResponse(retryResponse);
+    }
 
     if (!response.ok) {
       console.error(`Error: Network response was not ok. Status: ${response.status}`);
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
-    const contentType = response.headers.get("content-type");
-    const data =
-      contentType && contentType.includes("application/json")
-        ? await response.json()
-        : await response.text();
-
-    return data;
+    return await parseResponse(response);
   } catch (error) {
+    // Implement retry logic for network errors
+    if (retryCount < MAX_RETRIES && (
+      error.name === 'TypeError' || 
+      error.message.includes('timeout') ||
+      error.message.includes('ERR_CONNECTION_RESET') ||
+      error.message.includes('Failed to fetch')
+    )) {
+      const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
+      console.warn(`Network error (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
+      
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return await fetchData(url, options, retryCount + 1);
+    }
+
+    // Log specific error types
     if (error.name === 'TypeError') {
       console.error("Network or SSL error, unable to fetch data. Please check your connection or SSL settings.");
+    } else if (error.message.includes('timeout')) {
+      console.error(`Request timeout after ${NETWORK_TIMEOUT}ms. The device may be slow to respond or unreachable.`);
     } else {
       console.error("There has been a problem with your fetch operation:", error);
     }
+    
+    // Mark as disconnected for network-related errors
+    if (error.name === 'TypeError' || error.message.includes('timeout')) {
+      isConnected = false;
+      updateConnectionStatusUI('disconnected', 'Connection lost');
+    }
+    
     throw error;
+  }
+}
+
+// Helper function to parse response
+async function parseResponse(response) {
+  const contentType = response.headers.get("content-type");
+  const data =
+    contentType && contentType.includes("application/json")
+      ? await response.json()
+      : await response.text();
+  return data;
+}
+
+// FUNCTION: Detect Duet mode (SBC vs Standalone)
+async function detectDuetMode() {
+  if (duetMode !== null && modeDetectionAttempts < MAX_MODE_DETECTION_ATTEMPTS) {
+    return duetMode; // Return cached result if available and within attempt limit
+  }
+  
+  try {
+    modeDetectionAttempts++;
+    console.log(`Attempting Duet mode detection (attempt ${modeDetectionAttempts})`);
+    
+    const data = await fetchData(activeStatusURL);
+    
+    // Check if we got a standalone response format with result wrapper
+    if (data.result && typeof data.result === 'object') {
+      const actualData = data.result;
+      
+      // Check if any of the key sections have actual data beyond empty objects
+      const heatData = actualData.heat || {};
+      const globalData = actualData.global || {};
+      const stateData = actualData.state || {};
+      
+      // Test if we have meaningful data in any section
+      const hasHeatData = heatData.heaters && Array.isArray(heatData.heaters) && 
+                         heatData.heaters.some(heater => heater && typeof heater === 'object' && Object.keys(heater).length > 0);
+      const hasGlobalData = Object.keys(globalData).length > 0;
+      const hasStateData = Object.keys(stateData).length > 0;
+      
+      if (hasHeatData || hasGlobalData || hasStateData) {
+        duetMode = 'sbc';
+        console.log("Detected SBC mode - full object model contains data");
+      } else {
+        duetMode = 'standalone';
+        console.log("Detected Standalone mode - object model structure only");
+      }
+    } else if (data && typeof data === 'object') {
+      // Direct data without result wrapper - likely SBC mode
+      duetMode = 'sbc';
+      console.log("Detected SBC mode - direct object model format");
+    } else {
+      throw new Error("Unexpected response format");
+    }
+    
+    return duetMode;
+  } catch (error) {
+    console.warn(`Mode detection attempt ${modeDetectionAttempts} failed:`, error);
+    
+    if (modeDetectionAttempts >= MAX_MODE_DETECTION_ATTEMPTS) {
+      // Default to standalone mode after max attempts
+      duetMode = 'standalone';
+      console.log("Defaulting to Standalone mode after failed detection attempts");
+    }
+    
+    return duetMode;
+  }
+}
+
+// FUNCTION: Fetch object model data using key-specific requests (Standalone mode)
+async function fetchObjectModelByKeys() {
+  try {
+    console.log("Fetching object model using key-specific requests (Standalone mode)");
+    
+    // Define the keys we need and fetch them in parallel
+    const keyRequests = [
+      fetchData(`${activeStatusURL}?key=heat&flags=vn`),
+      fetchData(`${activeStatusURL}?key=global&flags=vn`), 
+      fetchData(`${activeStatusURL}?key=state&flags=vn`),
+      fetchData(`${activeStatusURL}?key=boards&flags=vn`),
+      fetchData(`${activeStatusURL}?key=fans&flags=vn`),
+      fetchData(`${activeStatusURL}?key=spindles&flags=vn`)
+    ];
+    
+    const [heatResponse, globalResponse, stateResponse, boardsResponse, fansResponse, spindlesResponse] = 
+      await Promise.all(keyRequests);
+    
+    // Construct the consolidated data structure
+    const consolidatedData = {
+      result: {
+        heat: heatResponse.result || {},
+        global: globalResponse.result || {},
+        state: stateResponse.result || {},
+        boards: boardsResponse.result || [],
+        fans: fansResponse.result || [],
+        spindles: spindlesResponse.result || []
+      }
+    };
+    
+    console.log("Successfully consolidated standalone mode data", consolidatedData);
+    return consolidatedData;
+    
+  } catch (error) {
+    console.error("Error fetching object model by keys:", error);
+    
+    // Fallback: try to get basic structure from full model call
+    console.log("Attempting fallback to full model request");
+    try {
+      const fallbackData = await fetchData(activeStatusURL);
+      console.log("Fallback successful");
+      return fallbackData;
+    } catch (fallbackError) {
+      console.error("Fallback also failed:", fallbackError);
+      throw error; // Throw original error
+    }
   }
 }
 
@@ -60,7 +442,19 @@ async function fetchData(url, options) {
 function updateObjectModel() {
   return new Promise(async (resolve, reject) => {
     try {
-      const data = await fetchData(activeStatusURL); // HTTPS (Self-Signed SSL Certificate)
+      // Detect mode and use appropriate fetching strategy
+      const mode = await detectDuetMode();
+      let data;
+      
+      if (mode === 'standalone') {
+        // Use key-specific requests for standalone mode
+        data = await fetchObjectModelByKeys();
+      } else {
+        // Use full object model request for SBC mode
+        data = await fetchData(activeStatusURL);
+      }
+      
+      console.log(`Fetched data using ${mode} mode strategy`);
 
       // FUNCTION: Find configured heaters in Duet Object Model
       function findHeaters(targetObject) {
@@ -145,15 +539,29 @@ function updateObjectModel() {
         return outputData; // Output extracted values
       }
 
-      // Call FUNCTIONS
-      const configuredHeatersAll = findHeaters(data.heat.heaters);
-      const configuredBedHeaters = findHeaters(data.heat.bedHeaters);
-      const configuredChamberHeaters = findHeaters(data.heat.chamberHeaters);
+      // Debug: Log the response to understand structure
+      console.log("RRF Response:", data);
+      
+      // Handle dual mode response format
+      // In standalone mode, data is wrapped in a 'result' property, in SBC mode it's direct
+      const actualData = data.result || data;
+      
+      // Call FUNCTIONS - Handle RRF object model structure with fallbacks
+      const heatData = actualData.heat || {};
+      const globalData = actualData.global || {};
+      const stateData = actualData.state || {};
+      const boardsData = actualData.boards || [];
+      const fansData = actualData.fans || [];
+      const spindlesData = actualData.spindles || [];
+      
+      const configuredHeatersAll = findHeaters(heatData.heaters || []);
+      const configuredBedHeaters = findHeaters(heatData.bedHeaters || []);
+      const configuredChamberHeaters = findHeaters(heatData.chamberHeaters || []);
       const configuredExtruderHeaters = configuredHeatersAll.slice(
         0,
         defaultNumOfExtruderHeaters
       );
-      const cncSpindle = data.spindles[0];
+      const cncSpindle = spindlesData[0] || {};
 
       configuredBedHeaters.forEach((element, index) => {
         document
@@ -170,7 +578,7 @@ function updateObjectModel() {
       // update Extruder Current Temp
       const extruderHeaterTemps = updateUIdata(
         "extruderHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "current",
         ".temp-data.extruder",
         configuredExtruderHeaters,
@@ -182,7 +590,7 @@ function updateObjectModel() {
       // update Extruder Active Temp
       const extruderHeaterActiveTemps = updateUIdata(
         "activePreheatAllHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "active",
         ".user-input-temp.active",
         configuredExtruderHeaters,
@@ -193,7 +601,7 @@ function updateObjectModel() {
       // update Extruder Preheat (Standby) Temp
       const extruderHeaterPreheatTemps = updateUIdata(
         "activePreheatAllHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "standby",
         ".user-input-temp.preheat",
         configuredExtruderHeaters,
@@ -203,7 +611,7 @@ function updateObjectModel() {
 
       const extruderHeaterStates = updateUIdata(
         "extruderHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "state",
         ".temp-state.extruder",
         configuredExtruderHeaters,
@@ -213,7 +621,7 @@ function updateObjectModel() {
 
       const bedHeaterTemps = updateUIdata(
         "bedHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "current",
         ".temp-data.bed",
         configuredExtruderHeaters,
@@ -225,7 +633,7 @@ function updateObjectModel() {
       // update Bed Active Temp
       const bedHeaterActiveTemps = updateUIdata(
         "activePreheatAllHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "active",
         ".user-input-temp.active",
         configuredExtruderHeaters,
@@ -236,7 +644,7 @@ function updateObjectModel() {
       // update Bed Preheat (Standby) Temp
       const bedHeaterPreheatTemps = updateUIdata(
         "activePreheatAllHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "standby",
         ".user-input-temp.preheat",
         configuredExtruderHeaters,
@@ -246,7 +654,7 @@ function updateObjectModel() {
 
       const bedHeaterStates = updateUIdata(
         "bedHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "state",
         ".temp-state.bed",
         configuredExtruderHeaters,
@@ -259,7 +667,7 @@ function updateObjectModel() {
 
       const allHeaterTemps = updateUIdata(
         "allHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "current",
         ".temp-data",
         configuredExtruderHeaters,
@@ -269,7 +677,7 @@ function updateObjectModel() {
       );
       const allHeaterStates = updateUIdata(
         "allHeaters",
-        data.heat.heaters,
+        heatData.heaters || [],
         "state",
         ".temp-state",
         configuredExtruderHeaters,
@@ -412,7 +820,7 @@ function updateObjectModel() {
       }
 
       // CNC Spindle Speed Live Control
-      if (spindleRunning === true && data.global.EstopFault === false) {
+      if (spindleRunning === true && globalData.EstopFault === false) {
         document.getElementById(
           "radial-gradient-background-cnc-white"
         ).style.display = "none";
@@ -451,7 +859,7 @@ function updateObjectModel() {
       const popup = document.getElementById('e-stop-popup');
       const popupSpace = document.getElementById('e-stop-popup-space');
 
-      if (data.global.EstopFault === true) {
+      if (globalData.EstopFault === true) {
         popupSpace.style.display = "flex"; // Show Background blur
         popup.style.display = "flex"; // Ensure popup is visible
       } else {
@@ -461,16 +869,16 @@ function updateObjectModel() {
 
       // Major Fault Detection - Extruder Servo & Spindle Motor
       // JavaScript to control the visibility and flashing effect
-      if (data.global.toolState === "PE320" && data.global.ExtruderFault === true) {
+      if (globalData.toolState === "PE320" && globalData.ExtruderFault === true) {
         document.getElementById("fault-condition-1").textContent = "Extruder Servo Fault";
         document.getElementById("fault-condition-1").style.display = "flex";
         document.getElementById("fault-warning-container").style.display = "flex";
-      } else if (data.global.toolState === "CNC" && data.global.CNCFault === true) {
+      } else if (globalData.toolState === "CNC" && globalData.CNCFault === true) {
         document.getElementById("fault-condition-2").textContent = "Spindle Motor Fault";
         document.getElementById("fault-condition-2").style.display = "flex";
         document.getElementById("fault-warning-container").style.display = "flex";
-      } else if (data.global.toolState === "No Tool" || data.global.toolState === "Open Circuit" || data.global.toolState === "Short Circuit") {
-        document.getElementById("fault-condition-1").textContent = data.global.toolState;
+      } else if (globalData.toolState === "No Tool" || globalData.toolState === "Open Circuit" || globalData.toolState === "Short Circuit") {
+        document.getElementById("fault-condition-1").textContent = globalData.toolState;
         document.getElementById("fault-condition-1").style.display = "flex";
         document.getElementById("fault-warning-container").style.display = "flex";
       } else {
@@ -480,7 +888,7 @@ function updateObjectModel() {
       }
 
       // Fault Detection - CNC Mill Fault Popup
-      if (data.global.CNCFault === true) {
+      if (globalData.CNCFault === true) {
         sendGcode(`M5`);
         confirmationModal.style.display = 'none';
         slider.disabled = true; // Ensure slider is disabled on page load
@@ -491,7 +899,7 @@ function updateObjectModel() {
         spindleOff == true;
       }
 
-      switch (data.global.toolState) {
+      switch (globalData.toolState) {
         case "PE320":
           console.log("Tool state: PE320 Pellet Extruder Connected");
           document.getElementById("tool-detection-pe320").style.display = "flex";
@@ -542,7 +950,7 @@ function updateObjectModel() {
           document.getElementById("unlockButtonContainer").style.pointerEvents = "auto";
 
           document.querySelector(".start-text").textContent = "▶ Start Spindle";
-          if (data.global.EstopFault === false && data.global.CNCFault === false) {
+          if (globalData.EstopFault === false && globalData.CNCFault === false) {
             if (spindleRunning == false) {
               document.getElementById("indicatorText").textContent = "Spindle is Ready";
               document.getElementById("indicatorLight").style.backgroundColor = "Green";
@@ -688,7 +1096,7 @@ function updateObjectModel() {
       // System Info 
 
       // Get uptime in seconds
-      const uptimeInSeconds = data.sbc.uptime;
+      const uptimeInSeconds = stateData.upTime;
       // Calculate hours, minutes, and seconds
       const hours = Math.floor(uptimeInSeconds / 3600);
       const minutes = Math.floor((uptimeInSeconds % 3600) / 60);
@@ -702,7 +1110,7 @@ function updateObjectModel() {
       // document.getElementById("product-family").textContent = see system-pe320/apollo/zeus
       // document.getElementById("product-family-tools").textContent = see system-pe320/apollo/zeus
       // document.getElementById("software-version").textContent = see GitHub repo
-      document.getElementById("firmware-version").textContent = data.sbc.dsf.version;
+      document.getElementById("firmware-version").textContent = (boardsData[0] || {}).firmwareVersion;
       document.getElementById("bed-count").textContent = configuredBedHeaters.length;
 
       // Update & Restart Firmware
@@ -710,58 +1118,58 @@ function updateObjectModel() {
       // restart-firmware -- see buttonId
 
       // Tool Status
-      if (data.global.toolState === null) {
+      if (globalData.toolState === null) {
         document.getElementById("connected-tool").textContent = "null";
       } else {
-        document.getElementById("connected-tool").textContent = data.global.toolState;
+        document.getElementById("connected-tool").textContent = globalData.toolState;
       }
     
       // PE320 Pellet Extruder
       // document.getElementById("extruder-state-container").textContent = "available by default";
       // Check if any heater is in "fault" state
       if (
-        data.heat.heaters[0].state === "fault" ||
-        data.heat.heaters[1].state === "fault" ||
-        data.heat.heaters[2].state === "fault" ||
-        data.heat.heaters[3].state === "fault"
+        ((heatData.heaters || [])[0] || {}).state === "fault" ||
+        ((heatData.heaters || [])[1] || {}).state === "fault" ||
+        ((heatData.heaters || [])[2] || {}).state === "fault" ||
+        ((heatData.heaters || [])[3] || {}).state === "fault"
       ) {
         document.getElementById("extruder-state").textContent = "FAULT";
       }
       // Check if any heater is in "active" state
       else if (
-        data.heat.heaters[0].state === "active" ||
-        data.heat.heaters[1].state === "active" ||
-        data.heat.heaters[2].state === "active" ||
-        data.heat.heaters[3].state === "active"
+        ((heatData.heaters || [])[0] || {}).state === "active" ||
+        ((heatData.heaters || [])[1] || {}).state === "active" ||
+        ((heatData.heaters || [])[2] || {}).state === "active" ||
+        ((heatData.heaters || [])[3] || {}).state === "active"
       ) {
         document.getElementById("extruder-state").textContent = "ACTIVE";
       }
       // Check if any heater is in "standby" state
       else if (
-        data.heat.heaters[0].state === "standby" ||
-        data.heat.heaters[1].state === "standby" ||
-        data.heat.heaters[2].state === "standby" ||
-        data.heat.heaters[3].state === "standby"
+        ((heatData.heaters || [])[0] || {}).state === "standby" ||
+        ((heatData.heaters || [])[1] || {}).state === "standby" ||
+        ((heatData.heaters || [])[2] || {}).state === "standby" ||
+        ((heatData.heaters || [])[3] || {}).state === "standby"
       ) {
-        document.getElementById("extruder-state").textContent = "PREHEAT";
+        document.getElementById("extruder-state").textContent = "preheat";
       }
       // Check if all heaters are in "off" state
       else if (
-        data.heat.heaters[0].state === "off" &&
-        data.heat.heaters[1].state === "off" &&
-        data.heat.heaters[2].state === "off" &&
-        data.heat.heaters[3].state === "off"
+        ((heatData.heaters || [])[0] || {}).state === "off" &&
+        ((heatData.heaters || [])[1] || {}).state === "off" &&
+        ((heatData.heaters || [])[2] || {}).state === "off" &&
+        ((heatData.heaters || [])[3] || {}).state === "off"
       ) {
         document.getElementById("extruder-state").textContent = "OFF";
       }
       // Default to the state of the nozzle heater (heater 3)
       else {
-        document.getElementById("extruder-state").textContent = (data.heat.heaters[3].state).toUpperCase();
+        document.getElementById("extruder-state").textContent = (((heatData.heaters || [])[3] || {}).state || "unknown");
       }
 
       // document.getElementById("extruder-runtime").textContent = "n/a";
-      // document.getElementById("material-sensor-left").textContent = data.global.materialSensorLEFT;
-      // document.getElementById("material-sensor-right").textContent = data.global.materialSensorRIGHT;
+      // document.getElementById("material-sensor-left").textContent = globalData.materialSensorLEFT;
+      // document.getElementById("material-sensor-right").textContent = globalData.materialSensorRIGHT;
       // document.getElementById("heatsink-fan").textContent = see Embedded;
       // document.getElementById("barrel-fan").textContent = see Embedded;
 
@@ -820,9 +1228,6 @@ function updateObjectModel() {
     }
   });
 }
-
-// Polling interval (in milliseconds)
-const POLL_INTERVAL = 2000;
 
 // Function to continuously check the server status and send commands once on state change from error to available
 async function pollServerAndSendOnceOnStateChange() {
@@ -933,10 +1338,130 @@ async function sendGcode(gcode) {
   }
 }
 
+// Polling configuration
+const POLL_INTERVAL = 1000; // 1 second - faster updates for better responsiveness
+const POLL_INTERVAL_SLOW = 5000; // 5 seconds - when errors occur
+const POLL_INTERVAL_FAST = 500; // 0.5 seconds - when actively monitoring (optional)
+
+let currentPollInterval = POLL_INTERVAL;
+let consecutiveErrors = 0;
+let updateIntervalId = null;
+
+// Function to continuously check the server status and send commands once on state change from error to available
+async function pollServerAndSendOnceOnStateChange() {
+  let serverWasUnavailable = true; // Track whether the server was previously in an error state
+
+  while (true) {
+    try {
+      // Use the same dual strategy approach for polling
+      const mode = await detectDuetMode();
+      let response;
+      
+      if (mode === 'standalone') {
+        response = await fetchObjectModelByKeys();
+      } else {
+        response = await fetchData(activeStatusURL);
+      }
+
+      // Check if response includes a 503 status
+      if (response.status && response.status === 503) {
+        console.log("503 Service Unavailable. Polling again after delay...");
+        serverWasUnavailable = true; // Update the server state as unavailable
+        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+        continue; // Keep polling if the server is unavailable
+      }
+
+      console.log("Server is available.");
+
+      // Only send commands once after server becomes available
+      if (serverWasUnavailable) {
+        console.log("Server state changed to available. Sending G-code commands once...");
+        await sendCommandsOnce();
+        serverWasUnavailable = false; // Update state to reflect that commands have been sent
+      }
+
+      // Wait before polling again
+      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+
+    } catch (error) {
+      console.error(`Error checking server status: ${error}`);
+      serverWasUnavailable = true; // Treat any fetch error as a temporary unavailability
+      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL)); // Delay before retrying
+    }
+  }
+}
+
+// Function to send G-code commands based on states in localStorage using fetchData
+async function sendCommandsOnce() {
+  try {
+    const partCoolingState = localStorage.getItem("partCoolingState") || "off";
+    console.log(`Sending G-code for partCoolingState: ${partCoolingState}`);
+
+    if (partCoolingState === "on") {
+      if (document.getElementById("part-cooling-on").style.display === "none") {
+        document.getElementById("part-cooling-toggle").click();
+      }
+      await sendGcode('set global.partCooling = true');
+      await sendGcode('M98 P"Part cooling on.g"');
+    } else {
+      await sendGcode('set global.partCooling = false');
+      await sendGcode('M98 P"Part cooling off.g"');
+    }
+
+    const bedFixturePlateState = localStorage.getItem("bedFixturePlateState") || "off";
+    console.log(`Sending G-code for bedFixturePlateState: ${bedFixturePlateState}`);
+
+    if (bedFixturePlateState === "on") {
+      if (document.getElementById("bed-fixture-plate-on").style.display === "none") {
+        document.getElementById("bed-fixture-plate-toggle").click();
+      }
+      await sendGcode('set global.bedFixturePlate = true');
+      await sendGcode('M98 P"Bed_PID_fixture_plate_on.g"');
+    } else {
+      await sendGcode('set global.bedFixturePlate = false');
+      await sendGcode('M98 P"Bed_PID_fixture_plate_off.g"');
+    }
+
+    console.log("All commands executed successfully.");
+
+  } catch (error) {
+    console.error(`Error executing G-code commands: ${error}`);
+  }
+}
+
+// Function to send individual G-code command with retry logic for 503 and unknown variable errors using fetchData
+async function sendGcode(gcode) {
+  while (true) {
+    try {
+      const response = await fetchData(`${activeCodeURL}?gcode=${encodeURIComponent(gcode)}`);
+
+      if (response.status && response.status === 503) {
+        console.warn("503 Service Unavailable while sending G-code. Retrying...");
+        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+        continue; // Retry if server returns 503 error
+      }
+
+      // Check for unknown variable error in the response text
+      if (typeof response === "string" && response.includes("Error: unknown variable")) {
+        console.warn(`Unknown variable error detected in response. Retrying G-code '${gcode}'...`);
+        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+        continue; // Retry if unknown variable error is present
+      }
+
+      console.log(`Response from sending G-code '${gcode}': ${response}`);
+      return response; // Exit loop on successful command execution without errors
+
+    } catch (error) {
+      console.error(`Error sending G-code '${gcode}': ${error}`);
+      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL)); // Delay before retrying
+    }
+  }
+}
+
 // Start the continuous polling process
 pollServerAndSendOnceOnStateChange();
 
-// FUNCTION: call updateObjectModel & retrieve results
+// FUNCTION: call updateObjectModel & retrieve results with adaptive polling
 async function update() {
   try {
     ({
@@ -953,8 +1478,25 @@ async function update() {
       allHeaterStates,
       cncSpindle,
     } = await updateObjectModel());
+    
+    // Success - reset error count and use normal polling
+    consecutiveErrors = 0;
+    if (currentPollInterval !== POLL_INTERVAL) {
+      console.log("Connection stable, returning to normal polling interval");
+      currentPollInterval = POLL_INTERVAL;
+      restartPolling();
+    }
+    
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error in update():", error);
+    consecutiveErrors++;
+    
+    // Adaptive polling - slow down when errors occur
+    if (consecutiveErrors >= 3 && currentPollInterval !== POLL_INTERVAL_SLOW) {
+      console.log(`${consecutiveErrors} consecutive errors, slowing polling to ${POLL_INTERVAL_SLOW}ms`);
+      currentPollInterval = POLL_INTERVAL_SLOW;
+      restartPolling();
+    }
   }
 }
 // =====================================================================================================================
@@ -1197,57 +1739,8 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("bed-2-preheat").style.display = "block";
   });
 
-// Ensure fetchLatestTag is called on window load
-window.onload = function() {
-  fetchLatestTag();
-};
-
-// ================================================ Github Repo =================================================
-
-async function fetchLatestTag() {
-  const url = 'http://localhost:8080/tags.txt'; // Local server URL to tags.txt
-
-  try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch tags file');
-
-      const text = await response.text();
-      const latestTag = text.split('\n')[0].trim(); // Get the first line (latest tag)
-
-      document.getElementById('software-version').textContent = `${latestTag}`;
-  } catch (error) {
-      console.error('Error fetching latest tag from local server:', error);
-      
-      // Fallback to check machine status and fetch version from GitHub if necessary
-      const result = await fetchData("https://192.168.1.64/machine/status");
-      if (result) {
-          // If `fetchData` is successful, try fetching from GitHub
-          fetchLatestVersion();
-      } else {
-          document.getElementById('software-version').textContent = 'Failed to fetch version';
-      }
-  }
-}
-
-async function fetchLatestVersion() {
-  const owner = "Evo3D-RapidFusion";
-  const repo = "Epicurus_UI";
-
-  try {
-      const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases?per_page=1`); // Fetch releases (including pre-releases)
-      
-      if (!response.ok) {
-          throw new Error("Network response was not ok");
-      }
-      
-      const data = await response.json();
-      const versionName = data[0]?.tag_name || "No releases found"; // Extract the latest release (including pre-releases)
-      document.getElementById("software-version").textContent = versionName; // Display the version
-  } catch (error) {
-      console.error("Error fetching GitHub version:", error);
-      document.getElementById("software-version").textContent = 'Failed to fetch version from GitHub';
-  }
-}
+// Set software version
+document.getElementById('software-version').textContent = 'v3.0-pulsar-exeter-uni';
 
 // ================================================ Developer Settings =================================================
 
@@ -2439,4 +2932,60 @@ function resetlocalStorageSettings() {
 
   window.location.reload();
 }
+
+// FUNCTION: Restart polling with new interval
+function restartPolling() {
+  if (updateIntervalId) {
+    clearInterval(updateIntervalId);
+  }
+  updateIntervalId = setInterval(update, currentPollInterval);
+  console.log(`Polling restarted with ${currentPollInterval}ms interval`);
+}
+
+// FUNCTION: Stop polling (useful for debugging or manual control)
+function stopPolling() {
+  if (updateIntervalId) {
+    clearInterval(updateIntervalId);
+    updateIntervalId = null;
+    console.log("Polling stopped");
+  }
+}
+
+// FUNCTION: Start polling (useful for debugging or manual control)  
+function startPolling(interval = POLL_INTERVAL) {
+  stopPolling();
+  currentPollInterval = interval;
+  updateIntervalId = setInterval(update, currentPollInterval);
+  console.log(`Polling started with ${currentPollInterval}ms interval`);
+}
+
+// FUNCTION: Get current polling status (useful for debugging)
+function getPollingStatus() {
+  return {
+    isPolling: updateIntervalId !== null,
+    currentInterval: currentPollInterval,
+    consecutiveErrors,
+    isConnected,
+    availableIntervals: {
+      normal: POLL_INTERVAL,
+      slow: POLL_INTERVAL_SLOW, 
+      fast: POLL_INTERVAL_FAST
+    }
+  };
+}
+
+// Expose polling controls globally for debugging
+window.epicurusDebug = {
+  stopPolling,
+  startPolling,
+  getPollingStatus,
+  testConnection: testDuetConnection,
+  updateIP: updateDuetIP,
+  getConnectionStatus,
+  sendGcode: (command) => sendGcode(command)
+};
+
+// Start adaptive polling system
+startPolling();
+
 // =====================================================================================================================
