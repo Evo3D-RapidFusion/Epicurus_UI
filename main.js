@@ -1114,7 +1114,7 @@ function updateObjectModel() {
       document.getElementById("bed-count").textContent = configuredBedHeaters.length;
 
       // Update & Restart Firmware
-      // check-for-updates -- see buttonId
+      // check-for-updates -- see buttonId (now reload UI)
       // restart-firmware -- see buttonId
 
       // Tool Status
@@ -1717,7 +1717,11 @@ window.addEventListener("load", () => {
     case "zeus":
       document.getElementById("system-zeus").click();
       break;
+    case "pe320":
+      document.getElementById("system-pe320").click();
+      break;
     default: // pe320 as default
+      localStorage.setItem("systemFamily", "pe320"); // Ensure pe320 is saved as default
       document.getElementById("system-pe320").click();
   }
 
@@ -2035,11 +2039,12 @@ buttonIds.forEach((buttonId) => {
         localStorage.setItem("bedFixturePlateState", "on");
         break;
       case "check-for-updates":
-        window.alert(`System up to date.`)
+        // Reload the UI immediately
+        location.reload();
         break;
       case "restart-firmware":
-        // Prompt the user to restart machine
-        const restartFirmware = window.confirm(`Restart Firmware?`);
+        // Warn the user about the consequences of restarting firmware
+        const restartFirmware = window.confirm(`⚠️ WARNING: RESTART FIRMWARE ⚠️\n\nConfirming will RESET ALL Extruder Heater & Bed temperatures to OFF.\n\nAll heating processes will be stopped immediately.\n\nAre you sure you want to proceed?`);
         if (restartFirmware) {
           sendGcode('M999');
           location.reload();
