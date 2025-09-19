@@ -575,7 +575,7 @@ function updateObjectModel() {
       const mainActualData = mainData.result || mainData;
       const expansionActualData = expansionData.result || expansionData;
       
-      // Merge heating data - combine main controller (extruders + beds 0-3) with expansion (beds 4-8, bed9 hidden)
+      // Merge heating data - combine main controller (extruders + beds 0-3) with expansion (beds 4-9)
       const mainHeatData = mainActualData.heat || {};
       // Expansion controller returns heat data directly in result, no nested heat property
       const expansionHeatData = expansionActualData;
@@ -743,8 +743,7 @@ function updateObjectModel() {
       );
       const cncSpindle = spindlesData[0] || {};
 
-      // Show only the configured main controller bed heaters (0-3)
-      // Beds 4-8 are permanently visible (bed9 always hidden), so only process beds 0-3 here
+      // Show configured main controller bed heaters (0-3)
       const mainConfiguredBedHeaters = configuredBedHeaters.slice(0, 4); // Only take first 4 beds
       
       mainConfiguredBedHeaters.forEach((element, index) => {
@@ -759,6 +758,45 @@ function updateObjectModel() {
           tabElement.style.display = "flex";
         }
       });
+
+      // Detect and show expansion bed heaters (4-9)
+      const expansionConfiguredBedHeaters = configuredBedHeaters.slice(4, 10); // Beds 4-9 (includes bed9)
+      
+      expansionConfiguredBedHeaters.forEach((bedHeaterIndex, arrayIndex) => {
+        if (bedHeaterIndex !== -1) { // If heater is configured
+          const bedIndex = arrayIndex + 4; // Convert to actual bed index (4-9)
+          
+          // Show bed elements
+          document
+            .querySelectorAll(`.bed${bedIndex}`)
+            .forEach((element) => (element.style.visibility = "visible"));
+            
+          // Show bed temperature popup tab
+          const tabElement = document.querySelectorAll(`.temp-tab-link.heater`)[bedIndex + 4]; // Bed tab indices start at 8
+          if (tabElement) {
+            tabElement.style.display = "flex";
+          }
+        }
+      });
+
+      // Hide expansion beds that are NOT detected (beds 4-9)
+      for (let bedIndex = 4; bedIndex < 10; bedIndex++) {
+        const arrayIndex = bedIndex - 4; // Convert bed index to array index
+        const bedHeaterIndex = expansionConfiguredBedHeaters[arrayIndex];
+        
+        if (bedHeaterIndex === -1 || bedHeaterIndex === undefined) {
+          // Hide bed elements if not configured
+          document
+            .querySelectorAll(`.bed${bedIndex}`)
+            .forEach((element) => (element.style.visibility = "hidden"));
+            
+          // Hide bed temperature popup tab
+          const tabElement = document.querySelectorAll(`.temp-tab-link.heater`)[bedIndex + 4];
+          if (tabElement) {
+            tabElement.style.display = "none";
+          }
+        }
+      }
 
       // update Extruder Current Temp
       const extruderHeaterTemps = updateUIdata(
@@ -2101,34 +2139,18 @@ function initializeDefaultSettings() {
 // Load temperature settings on page load
 settings = loadSettings();
 
-// Hide temp popup tabs on startup - only hide beds 0-3, show beds 4-8 permanently, always hide bed9
+// Hide all bed temp popup tabs on startup - visibility will be determined by detection
 var elements = document.querySelectorAll(".temp-tab-link.heater");
-for (var i = 4; i < 8; i++) { // Only hide beds 0-3 tabs (indices 4-7)
+for (var i = 4; i < elements.length; i++) { // Hide all bed tabs (indices 4+ for beds 0-9)
   elements[i].style.display = "none";
 }
-for (var i = 8; i < elements.length - 1; i++) { // Show beds 4-8 tabs (indices 8-12), hide bed9 tab (index 13)
-  elements[i].style.display = "flex";
-}
-// Always hide bed9 tab (Bed 10)
-if (elements[13]) {
-  elements[13].style.display = "none";
-}
 
-// Hide only main controller beds (0-3) on startup, make expansion beds (4-8) permanently visible, always hide bed9
-for (let i = 0; i < 4; i++) { // Only hide beds 0-3
+// Hide all bed elements on startup - visibility will be determined by detection
+for (let i = 0; i < 10; i++) { // Hide all beds 0-9
   document
     .querySelectorAll(`.bed${i}`)
     .forEach((element) => (element.style.visibility = "hidden"));
 }
-for (let i = 4; i < 9; i++) { // Make beds 4-8 permanently visible
-  document
-    .querySelectorAll(`.bed${i}`)
-    .forEach((element) => (element.style.visibility = "visible"));
-}
-// Always hide bed9 (Bed 10)
-document
-  .querySelectorAll(`.bed9`)
-  .forEach((element) => (element.style.visibility = "hidden"));
 
 // Start adaptive polling system
 startPolling();
