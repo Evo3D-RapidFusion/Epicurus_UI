@@ -95,6 +95,12 @@ body {
 }
 
 /* Bed Control Scrollable Table Styles */
+#bed-temp-table {
+  box-sizing: border-box;
+  width: calc(100% - 17px); /* Reserve space for scrollbar (17px width) */
+  margin-right: 2px; /* Small margin for visual spacing */
+}
+
 #bed-temp-table::-webkit-scrollbar-thumb {
   -webkit-border-radius: 20px;
   border-radius: 20px;
