@@ -590,15 +590,10 @@ function updateObjectModel() {
       }
       
       // Add expansion bed heaters (4-9) from heater indices 8-13
-      console.log("🔍 Processing expansion heaters, array length:", expansionHeatData.heaters?.length);
-      
       if (expansionHeatData.heaters && expansionHeatData.heaters.length > 8) {
-        console.log("✅ Expansion heaters array has sufficient length, processing indices 8-13");
-        
         // Expansion controller has bed heaters at indices 8-13 (mapping to beds 4-9)
         for (let i = 8; i < Math.min(14, expansionHeatData.heaters.length); i++) {
           const expansionHeater = expansionHeatData.heaters[i];
-          console.log(`🔍 Expansion heater ${i}:`, expansionHeater);
           
           // Check if this is a valid heater (not null and has properties)
           if (expansionHeater !== null && expansionHeater !== undefined) {
@@ -608,22 +603,13 @@ function updateObjectModel() {
             
             // Map expansion heater index 8-13 to bed positions 4-9
             const bedHeaterIndex = i - 4; // 8->4, 9->5, 10->6, 11->7, 12->8, 13->9
-            console.log(`✅ Added expansion heater ${i} to merged heaters at index ${mergedHeaterIndex}, mapped to bed ${bedHeaterIndex}`);
-            
             if (bedHeaterIndex < 10) { // Maximum 10 bed heaters supported
               mergedBedHeaters[bedHeaterIndex] = mergedHeaterIndex;
             }
-          } else {
-            console.log(`❌ Expansion heater ${i} is null/undefined`);
           }
         }
-      } else {
-        console.log("❌ Expansion heaters array is too short or missing");
       }
       
-      // Also merge the bedHeaters arrays from both controllers
-      console.log("🔍 Main bedHeaters:", mainHeatData.bedHeaters);
-      console.log("🔍 Final merged bedHeaters before creating heat data:", mergedBedHeaters);
       
       // Create merged heat data structure
       const mergedHeatData = {
@@ -641,23 +627,6 @@ function updateObjectModel() {
       // Use the existing variable names for compatibility
       const data = { result: actualData };
       
-      console.log("Merged heating data from both controllers:", {
-        totalHeaters: mergedHeaters.length,
-        totalBedHeaters: mergedBedHeaters.length,
-        mainHeaters: mainHeatData.heaters?.length || 0,
-        expansionHeaters: expansionHeatData.heaters?.length || 0
-      });
-      
-      console.log("🔍 Expansion heat data structure:", expansionHeatData);
-      console.log("🔍 Expansion heaters array:", expansionHeatData.heaters);
-      console.log("🔍 Expansion bedHeaters array:", expansionHeatData.bedHeaters);
-      
-      console.log("📊 FINAL MERGED RESULTS:");
-      console.log(`   Total heaters: ${mergedHeaters.length} (expected: 14)`);
-      console.log(`   Main controller heaters: ${mainHeatData.heaters?.length || 0}`);
-      console.log(`   Expansion controller heaters: ${expansionHeatData.heaters?.length || 0}`);
-      console.log(`   Merged bed heaters array length: ${mergedBedHeaters.length}`);
-      console.log(`   Merged bed heaters:`, mergedBedHeaters);
 
       // FUNCTION: Find configured heaters in Duet Object Model
       function findHeaters(targetObject) {
@@ -1770,7 +1739,7 @@ window.epicurusDebug = {
     }
   },
   simulateFault: (heaterIndex) => {
-    console.log(`🧪 Simulating fault on heater ${heaterIndex}`);
+    console.log(`Simulating fault on heater ${heaterIndex}`);
     heaterFaults[heaterIndex] = false; // Reset flag to allow popup
     
     const resetFault = window.confirm(
@@ -1801,7 +1770,7 @@ window.epicurusDebug = {
     });
   },
   triggerFaultCheck: () => {
-    console.log("🔍 Manually triggering fault check...");
+    console.log("Manually triggering fault check...");
     // This will be called during the next update cycle
   },
   debugHeaterFaults: false, // Set to true to enable verbose fault logging
@@ -1861,25 +1830,23 @@ window.epicurusDebug = {
     return settings;
   },
   testResetAllFaults: () => {
-    console.log("🧪 Testing Reset All Heater Faults button");
+    console.log("Testing Reset All Heater Faults button");
     showResetAllHeaterFaultsPopup();
   },
   showResetButton: () => {
     const resetButton = document.getElementById("reset-all-heater-faults");
     if (resetButton) {
       resetButton.style.display = "flex";
-      console.log("✅ Reset All Heater Faults header button is now visible");
     } else {
-      console.error("❌ Reset All Heater Faults header button not found");
+      console.error("Reset All Heater Faults header button not found");
     }
   },
   hideResetButton: () => {
     const resetButton = document.getElementById("reset-all-heater-faults");
     if (resetButton) {
       resetButton.style.display = "none";
-      console.log("✅ Reset All Heater Faults header button is now hidden");
     } else {
-      console.error("❌ Reset All Heater Faults header button not found");
+      console.error("Reset All Heater Faults header button not found");
     }
   }
 };
