@@ -1925,8 +1925,8 @@ function toggleHeaterStates(heaterState, heaterIndex) {
   // Route bed heaters 8-13 (bed4-bed9) to expansion controller
   if (heaterIndex >= 8 && heaterIndex <= 13) {
     sendFunction = sendExpansionGcode;
-    targetHeaterIndex = heaterIndex - 8; // Map to expansion heater indices 0-5
-    console.log(`Routing heater ${heaterIndex} (${heaterType[heaterIndex] || `bed${heaterIndex-4}`}) to expansion controller as heater ${targetHeaterIndex}`);
+    targetHeaterIndex = heaterIndex; // Use direct P8-P13 addressing on expansion controller
+    console.log(`Routing heater ${heaterIndex} (${heaterType[heaterIndex] || `bed${heaterIndex-4}`}) to expansion controller as heater P${targetHeaterIndex}`);
   }
   
   let setTemp = "";
@@ -2013,8 +2013,8 @@ function configureBedHeaters(mode, configuredBedHeaters) {
           index + configuredExtruderHeaters.length
         } S${activeTemp} R${preheatTemp} A${mode} `;
       } else {
-        // Expansion controller: bed heaters 4-9 (map to expansion heater indices 0-5)
-        const expansionHeaterIndex = index - 4;
+        // Expansion controller: bed heaters 4-9 (map to expansion heater indices 8-13)
+        const expansionHeaterIndex = index + 4; // Map index 4->P8, 5->P9, 6->P10, 7->P11, 8->P12, 9->P13
         expansionGcodeString += `M568 P${expansionHeaterIndex} S${activeTemp} R${preheatTemp} A${mode} `;
       }
     }
@@ -2410,13 +2410,24 @@ buttonIds.forEach((buttonId) => {
         document
           .querySelectorAll(".user-input-temp.bed.active")
           .forEach((element) => (element.textContent = "0")); // set text to 0
-        configureBedHeaters(0, configuredBedHeaters); // mode 0 == off
+        
+        // Send explicit off commands to all bed heaters on both controllers for safety
+        // Main controller: Turn off bed heaters P4-P7 (beds 0-3)
+        sendGcode("M568 P4 S0 R0 A0 M568 P5 S0 R0 A0 M568 P6 S0 R0 A0 M568 P7 S0 R0 A0");
+        
+        // Expansion controller: Turn off bed heaters P8-P13 (beds 4-9)
+        sendExpansionGcode("M568 P8 S0 R0 A0 M568 P9 S0 R0 A0 M568 P10 S0 R0 A0 M568 P11 S0 R0 A0 M568 P12 S0 R0 A0 M568 P13 S0 R0 A0");
         break;
       case "preheat-bed":
+        // Use the existing configureBedHeaters function which already handles dual-controller routing
         configureBedHeaters(1, configuredBedHeaters); // mode 1 == preheat (standby)
+        
+        // Ensure both controllers are addressed (configureBedHeaters already handles this intelligently)
+        console.log("Preheat bed command sent to both main and expansion controllers based on bed configuration");
         break;
       case "emergency-stop":
         sendGcode("M112");
+        sendExpansionGcode("M112");
         break;
       case "part-cooling-on":
       case "part-cooling-on-icon":
@@ -2432,6 +2443,7 @@ buttonIds.forEach((buttonId) => {
         break;
       case "reset-machine":
         sendGcode("M999");
+        sendExpansionGcode("M999");
         break;
       case "confirmYes":
         if (spindleRunning == true) {
@@ -2643,6 +2655,7 @@ buttonIds.forEach((buttonId) => {
         const restartFirmware = window.confirm(`⚠️ WARNING: RESTART FIRMWARE ⚠️\n\nConfirming will RESET ALL Extruder Heater & Bed temperatures to OFF.\n\nAll heating processes will be stopped immediately.\n\nAre you sure you want to proceed?`);
         if (restartFirmware) {
           sendGcode('M999');
+          sendExpansionGcode('M999');
           location.reload();
         }
         break;
@@ -2894,11 +2907,10 @@ function setTemp(tabpane, buttonIndex) {
   let sendFunction = sendGcode;
   let targetHeater = heater;
   
-  // Route bed heaters P8-P13 (bed4-bed9) to expansion controller as P0-P5
+  // Route bed heaters P8-P13 (bed4-bed9) to expansion controller with direct addressing
   if (heater >= "P8" && heater <= "P13") {
     sendFunction = sendExpansionGcode;
-    const heaterNum = parseInt(heater.substring(1)); // Extract number from P8, P9, etc.
-    targetHeater = `P${heaterNum - 8}`; // Map P8->P0, P9->P1, P10->P2, P11->P3, P12->P4, P13->P5
+    targetHeater = heater; // Use direct P8-P13 addressing on expansion controller
     console.log(`Routing ${heater} to expansion controller as ${targetHeater}`);
   }
 
@@ -3082,8 +3094,8 @@ document
           // Main controller: bed heaters 0-3
           mainGcodeString += `M568 P${index + 4} S${bedTemp} R${bedTemp} A1 `;
         } else {
-          // Expansion controller: bed heaters 4-9 (map to expansion heater indices 0-5)
-          const expansionHeaterIndex = index - 4;
+          // Expansion controller: bed heaters 4-9 (map to expansion heater indices 8-13)
+          const expansionHeaterIndex = index + 4; // Map index 4->P8, 5->P9, 6->P10, 7->P11, 8->P12, 9->P13
           expansionGcodeString += `M568 P${expansionHeaterIndex} S${bedTemp} R${bedTemp} A1 `;
         }
       });
