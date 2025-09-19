@@ -37,9 +37,7 @@ const RETRY_DELAY = 1000; // 1 second base delay
 
 // Mode detection and caching
 let duetMode = null; // null = not detected, 'sbc' = SBC mode, 'standalone' = standalone mode
-let expansionMode = null; // null = not detected, 'sbc' = SBC mode, 'standalone' = standalone mode
 let modeDetectionAttempts = 0;
-let expansionModeDetectionAttempts = 0;
 const MAX_MODE_DETECTION_ATTEMPTS = 3;
 
 // Helper function to create timeout-enabled fetch requests
@@ -415,110 +413,7 @@ async function fetchExpansionData(url, options = {}, retryCount = 0) {
   }
 }
 
-// FUNCTION: Detect expansion controller mode (SBC vs Standalone)
-async function detectExpansionMode() {
-  if (expansionMode !== null && expansionModeDetectionAttempts < MAX_MODE_DETECTION_ATTEMPTS) {
-    return expansionMode; // Return cached result if available and within attempt limit
-  }
-  
-  try {
-    expansionModeDetectionAttempts++;
-    console.log(`Attempting expansion controller mode detection (attempt ${expansionModeDetectionAttempts})`);
-    
-    const data = await fetchExpansionData(expansionStatusURL);
-    
-    // Check if we got a standalone response format with result wrapper
-    if (data.result && typeof data.result === 'object') {
-      const actualData = data.result;
-      
-      // Check if any of the key sections have actual data beyond empty objects
-      const heatData = actualData.heat || {};
-      const globalData = actualData.global || {};
-      const stateData = actualData.state || {};
-      
-      // Test if we have meaningful data in any section
-      const hasHeatData = heatData.heaters && Array.isArray(heatData.heaters) && 
-                         heatData.heaters.some(heater => heater && typeof heater === 'object' && Object.keys(heater).length > 0);
-      const hasGlobalData = Object.keys(globalData).length > 0;
-      const hasStateData = Object.keys(stateData).length > 0;
-      
-      if (hasHeatData || hasGlobalData || hasStateData) {
-        expansionMode = 'sbc';
-        console.log("Detected expansion controller SBC mode - full object model contains data");
-      } else {
-        expansionMode = 'standalone';
-        console.log("Detected expansion controller Standalone mode - object model structure only");
-      }
-    } else if (data && typeof data === 'object') {
-      // Direct data without result wrapper - likely SBC mode
-      expansionMode = 'sbc';
-      console.log("Detected expansion controller SBC mode - direct object model format");
-    } else {
-      throw new Error("Unexpected response format from expansion controller");
-    }
-    
-    return expansionMode;
-  } catch (error) {
-    console.warn(`Expansion mode detection attempt ${expansionModeDetectionAttempts} failed:`, error);
-    
-    if (expansionModeDetectionAttempts >= MAX_MODE_DETECTION_ATTEMPTS) {
-      // Default to standalone mode after max attempts
-      expansionMode = 'standalone';
-      console.log("Defaulting expansion controller to Standalone mode after failed detection attempts");
-    }
-    
-    return expansionMode;
-  }
-}
 
-// FUNCTION: Fetch expansion controller object model data using key-specific requests (Standalone mode)
-async function fetchExpansionObjectModelByKeys() {
-  try {
-    console.log("Fetching expansion controller object model using key-specific requests (Standalone mode)");
-    
-    // Define the keys we need and fetch them in parallel from expansion controller
-    const keyRequests = [
-      fetchExpansionData(`${expansionStatusURL}?key=heat&flags=vn`),
-      fetchExpansionData(`${expansionStatusURL}?key=global&flags=vn`), 
-      fetchExpansionData(`${expansionStatusURL}?key=state&flags=vn`),
-      fetchExpansionData(`${expansionStatusURL}?key=boards&flags=vn`),
-      fetchExpansionData(`${expansionStatusURL}?key=fans&flags=vn`),
-      fetchExpansionData(`${expansionStatusURL}?key=spindles&flags=vn`)
-    ];
-    
-    const [heatResponse, globalResponse, stateResponse, boardsResponse, fansResponse, spindlesResponse] = 
-      await Promise.all(keyRequests);
-    
-    // Construct the consolidated data structure for expansion controller
-    const consolidatedData = {
-      result: {
-        heat: heatResponse.result || {},
-        global: globalResponse.result || {},
-        state: stateResponse.result || {},
-        boards: boardsResponse.result || [],
-        fans: fansResponse.result || [],
-        spindles: spindlesResponse.result || []
-      }
-    };
-    
-    console.log("Successfully consolidated expansion controller standalone mode data", consolidatedData);
-    return consolidatedData;
-    
-  } catch (error) {
-    console.error("Error fetching expansion controller object model by keys:", error);
-    
-    // Fallback: try to get basic structure from full model call
-    console.log("Attempting fallback to full expansion controller model request");
-    try {
-      const fallbackData = await fetchExpansionData(expansionStatusURL);
-      console.log("Expansion controller fallback successful");
-      return fallbackData;
-    } catch (fallbackError) {
-      console.error("Expansion controller fallback also failed:", fallbackError);
-      throw error; // Throw original error
-    }
-  }
-}
 
 // FUNCTION: Detect Duet mode (SBC vs Standalone)
 async function detectDuetMode() {
@@ -632,11 +527,8 @@ function updateObjectModel() {
       // Fetch from both controllers in parallel
       console.log("Fetching data from both main controller and expansion controller...");
       
-      // Detect modes for both controllers
-      const [mainMode, expansionMode] = await Promise.all([
-        detectDuetMode(),
-        detectExpansionMode()
-      ]);
+      // Detect mode for main controller only (expansion uses simple heat endpoint)
+      const mainMode = await detectDuetMode();
       
       // Fetch data from both controllers based on their modes
       let mainDataPromise, expansionDataPromise;
@@ -647,11 +539,8 @@ function updateObjectModel() {
         mainDataPromise = fetchData(activeStatusURL);
       }
       
-      if (expansionMode === 'standalone') {
-        expansionDataPromise = fetchExpansionObjectModelByKeys();
-      } else {
-        expansionDataPromise = fetchExpansionData(expansionStatusURL);
-      }
+      // Expansion controller only needs heat data - always use the specific heat endpoint
+      expansionDataPromise = fetchExpansionData(`${expansionStatusURL}?key=heat&flags=vn`);
       
       // Fetch data with error handling for expansion controller
       let mainData, expansionData;
@@ -668,12 +557,19 @@ function updateObjectModel() {
           throw mainError;
         }
         
-        // Create empty expansion data if expansion controller failed
-        expansionData = { result: { heat: { heaters: [] } } };
-        console.log("Using empty expansion data due to controller unavailability");
+        // Create empty expansion heat data if expansion controller failed
+        expansionData = { 
+          key: "heat", 
+          flags: "vn", 
+          result: { 
+            heaters: [],
+            bedHeaters: [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
+          } 
+        };
+        console.log("Using empty expansion heat data due to controller unavailability");
       }
       
-      console.log(`Fetched main data using ${mainMode} mode, expansion data using ${expansionMode} mode`);
+      console.log(`Fetched main data using ${mainMode} mode, expansion data using heat endpoint`);
 
       // Extract data from both controllers
       const mainActualData = mainData.result || mainData;
@@ -692,20 +588,20 @@ function updateObjectModel() {
         mergedBedHeaters.push(-1); // Initialize unused slots with -1
       }
       
-      // Add expansion bed heaters (4-9) to the merged arrays
-      if (expansionHeatData.heaters && expansionHeatData.heaters.length > 0) {
-        // Map expansion heaters to positions 4-9 in bed heater array
-        for (let i = 0; i < 6 && i < expansionHeatData.heaters.length; i++) {
+      // Add expansion bed heaters (4-9) from heater indices 8-13
+      if (expansionHeatData.heaters && expansionHeatData.heaters.length > 8) {
+        // Expansion controller has bed heaters at indices 8-13 (mapping to beds 4-9)
+        for (let i = 8; i < Math.min(14, expansionHeatData.heaters.length); i++) {
           const expansionHeater = expansionHeatData.heaters[i];
           
-          // Check if this is a valid heater (not -1 and has properties)
-          if (expansionHeater !== null && expansionHeater !== undefined && expansionHeater !== -1) {
+          // Check if this is a valid heater (not null and has properties)
+          if (expansionHeater !== null && expansionHeater !== undefined) {
             // Add to merged heaters array (append to main heaters)
             const mergedHeaterIndex = mergedHeaters.length;
             mergedHeaters.push(expansionHeater);
             
-            // Add to merged bed heaters array at position 4+i
-            const bedHeaterIndex = 4 + i;
+            // Map expansion heater index 8-13 to bed positions 4-9
+            const bedHeaterIndex = i - 4; // 8->4, 9->5, 10->6, 11->7, 12->8, 13->9
             if (bedHeaterIndex < 10) { // Maximum 10 bed heaters supported
               mergedBedHeaters[bedHeaterIndex] = mergedHeaterIndex;
             }
