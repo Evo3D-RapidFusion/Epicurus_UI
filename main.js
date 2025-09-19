@@ -575,7 +575,7 @@ function updateObjectModel() {
       const mainActualData = mainData.result || mainData;
       const expansionActualData = expansionData.result || expansionData;
       
-      // Merge heating data - combine main controller (extruders + beds 0-3) with expansion (beds 4-9)
+      // Merge heating data - combine main controller (extruders + beds 0-3) with expansion (beds 4-8, bed9 hidden)
       const mainHeatData = mainActualData.heat || {};
       // Expansion controller returns heat data directly in result, no nested heat property
       const expansionHeatData = expansionActualData;
@@ -744,7 +744,7 @@ function updateObjectModel() {
       const cncSpindle = spindlesData[0] || {};
 
       // Show only the configured main controller bed heaters (0-3)
-      // Beds 4-9 are permanently visible, so only process beds 0-3 here
+      // Beds 4-8 are permanently visible (bed9 always hidden), so only process beds 0-3 here
       const mainConfiguredBedHeaters = configuredBedHeaters.slice(0, 4); // Only take first 4 beds
       
       mainConfiguredBedHeaters.forEach((element, index) => {
@@ -2101,26 +2101,34 @@ function initializeDefaultSettings() {
 // Load temperature settings on page load
 settings = loadSettings();
 
-// Hide temp popup tabs on startup - only hide beds 0-3, show beds 4-9 permanently
+// Hide temp popup tabs on startup - only hide beds 0-3, show beds 4-8 permanently, always hide bed9
 var elements = document.querySelectorAll(".temp-tab-link.heater");
 for (var i = 4; i < 8; i++) { // Only hide beds 0-3 tabs (indices 4-7)
   elements[i].style.display = "none";
 }
-for (var i = 8; i < elements.length; i++) { // Show beds 4-9 tabs (indices 8+) permanently
+for (var i = 8; i < elements.length - 1; i++) { // Show beds 4-8 tabs (indices 8-12), hide bed9 tab (index 13)
   elements[i].style.display = "flex";
 }
+// Always hide bed9 tab (Bed 10)
+if (elements[13]) {
+  elements[13].style.display = "none";
+}
 
-// Hide only main controller beds (0-3) on startup, make expansion beds (4-9) permanently visible
+// Hide only main controller beds (0-3) on startup, make expansion beds (4-8) permanently visible, always hide bed9
 for (let i = 0; i < 4; i++) { // Only hide beds 0-3
   document
     .querySelectorAll(`.bed${i}`)
     .forEach((element) => (element.style.visibility = "hidden"));
 }
-for (let i = 4; i < 10; i++) { // Make beds 4-9 permanently visible
+for (let i = 4; i < 9; i++) { // Make beds 4-8 permanently visible
   document
     .querySelectorAll(`.bed${i}`)
     .forEach((element) => (element.style.visibility = "visible"));
 }
+// Always hide bed9 (Bed 10)
+document
+  .querySelectorAll(`.bed9`)
+  .forEach((element) => (element.style.visibility = "hidden"));
 
 // Start adaptive polling system
 startPolling();
