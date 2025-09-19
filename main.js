@@ -1011,6 +1011,9 @@ function updateObjectModel() {
       // Enhanced Heater fault error Popup with debugging and timing controls
       let anyHeaterHasFault = false;
       
+      // Clear pending fault heaters for this update cycle
+      pendingFaultHeaters = [];
+      
       // Check if fault detection should be suspended
       const currentTime = Date.now();
       const timeSinceLastReset = currentTime - lastFaultResetTime;
@@ -1055,34 +1058,8 @@ function updateObjectModel() {
         if (isFaultCondition && !isFaulted && !shouldSuspendThisHeater) {
           console.warn(`⚠️  HEATER FAULT DETECTED: Heater ${i + 1} has faulted!`);
           
-          // Use setTimeout to ensure the popup doesn't interfere with the update loop
-          setTimeout(() => {
-            const resetFault = window.confirm(
-              `🔥 HEATER FAULT DETECTED! 🔥\n\nHeater ${i + 1} has a temperature fault.\n\nReset the fault? If fault persists, contact local distributor or Rapid Fusion for support.`
-            );
-            
-            if (resetFault) {
-              console.log(`User chose to reset fault for heater ${i + 1}`);
-              sendGcode(`M292`); // Clear all messages first
-              sendGcode(`M562 P${i}`); // Reset specific heater fault
-              heaterFaults[i] = true;
-              
-              // Set per-heater suspension timestamp
-              perHeaterSuspension[i] = Date.now();
-              
-              // Also suspend global fault detection to prevent duplicate popups
-              suspendFaultDetection(`Individual heater ${i + 1} fault reset`);
-              
-              // Reset the fault flag after extended delay (longer than suspension)
-              setTimeout(() => {
-                heaterFaults[i] = false;
-                console.log(`Fault flag cleared for heater ${i + 1}`);
-              }, FAULT_RESET_DELAY + 1000); // 1 second longer than suspension to ensure no race conditions
-            } else {
-              console.log(`User declined to reset fault for heater ${i + 1} - will not ask again`);
-              heaterFaults[i] = true; // Mark as handled permanently to prevent repeated popups
-            }
-          }, 100); // Small delay to avoid blocking the update loop
+          // Add to pending faults instead of immediately showing popup
+          pendingFaultHeaters.push(i + 1); // Store 1-based heater numbers for display
         }
       }
 
@@ -1095,6 +1072,60 @@ function updateObjectModel() {
         } else {
           resetAllFaultsButton.style.display = "flex";
         }
+      }
+
+      // Handle pending fault popups (batch multiple faults into one popup)
+      if (pendingFaultHeaters.length > 0 && !faultPopupActive) {
+        faultPopupActive = true;
+        
+        // Use setTimeout to ensure the popup doesn't interfere with the update loop
+        setTimeout(() => {
+          const heaterList = pendingFaultHeaters.join(', ');
+          const heaterText = pendingFaultHeaters.length === 1 ? 'Heater' : 'Heaters';
+          const hasHave = pendingFaultHeaters.length === 1 ? 'has' : 'have';
+          const faultFaults = pendingFaultHeaters.length === 1 ? 'fault' : 'faults';
+          
+          const resetFault = window.confirm(
+            `🔥 HEATER ${faultFaults.toUpperCase()} DETECTED! 🔥\n\n${heaterText} ${heaterList} ${hasHave} temperature ${faultFaults}.\n\nReset the ${faultFaults}? If ${faultFaults} persist, contact local distributor or Rapid Fusion for support.`
+          );
+          
+          if (resetFault) {
+            console.log(`User chose to reset faults for heaters ${heaterList}`);
+            sendGcode(`M292`); // Clear all messages first
+            sendGcode("M562"); // Reset all heater faults on main controller
+            sendExpansionGcode("M562"); // Reset all heater faults on expansion controller
+            
+            // Mark all pending heaters as handled
+            pendingFaultHeaters.forEach((heaterNumber) => {
+              const heaterIndex = heaterNumber - 1; // Convert back to 0-based index
+              heaterFaults[heaterIndex] = true;
+              // Set per-heater suspension timestamp
+              perHeaterSuspension[heaterIndex] = Date.now();
+            });
+            
+            // Suspend global fault detection to prevent duplicate popups
+            suspendFaultDetection(`Batch heater fault reset for heaters: ${heaterList}`);
+            
+            // Reset all fault flags after extended delay
+            setTimeout(() => {
+              pendingFaultHeaters.forEach((heaterNumber) => {
+                const heaterIndex = heaterNumber - 1;
+                heaterFaults[heaterIndex] = false;
+                console.log(`Fault flag cleared for heater ${heaterNumber}`);
+              });
+            }, FAULT_RESET_DELAY + 1000);
+            
+          } else {
+            console.log(`User declined to reset faults for heaters ${heaterList} - will not ask again`);
+            // Mark all pending heaters as handled permanently
+            pendingFaultHeaters.forEach((heaterNumber) => {
+              const heaterIndex = heaterNumber - 1;
+              heaterFaults[heaterIndex] = true;
+            });
+          }
+          
+          faultPopupActive = false; // Reset popup active flag
+        }, 100); // Small delay to avoid blocking the update loop
       }
 
       // CNC Spindle Speed Live Control
@@ -1521,6 +1552,8 @@ let lastFaultResetTime = 0;
 const FAULT_RESET_DELAY = 8000; // 8 seconds after M562 before resuming fault detection (increased for better stability)
 let faultDetectionSuspended = false;
 let perHeaterSuspension = new Array(defaultNumOfHeaters).fill(0); // Track individual heater suspension timestamps
+let faultPopupActive = false; // Track if a fault popup is currently showing
+let pendingFaultHeaters = []; // Track which heaters have faults in current update cycle
 
 // FUNCTION: Suspend fault detection after M562 commands
 function suspendFaultDetection(reason = "M562 command sent") {
@@ -2317,7 +2350,8 @@ function showResetAllHeaterFaultsPopup() {
   
   if (popup) {
     console.log("User confirmed reset of all heater faults");
-    sendGcode("M562"); // Reset all heater faults
+    sendGcode("M562"); // Reset all heater faults on main controller
+    sendExpansionGcode("M562"); // Reset all heater faults on expansion controller
     
     // Suspend fault detection to prevent duplicate popups after reset
     suspendFaultDetection("Reset all heater faults command");
@@ -2342,7 +2376,7 @@ function showResetAllHeaterFaultsPopup() {
       resetButton.style.display = "none";
     }
     
-    console.log("All heater faults reset command sent (M562) - fault detection suspended");
+    console.log("All heater faults reset command sent to both controllers (M562) - fault detection suspended");
   } else {
     console.log("User cancelled reset of all heater faults");
   }
