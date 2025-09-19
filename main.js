@@ -1224,7 +1224,7 @@ function updateObjectModel() {
           document.getElementById("extruder-state-container").style.opacity = 1;
           document.getElementById("cnc-state-container").style.opacity = 0.6;
           document.getElementById("extruder-state-container").style.pointerEvents = "auto";
-          document.getElementById("cnc-state-container").style.pointerEvents = "none";
+          // document.getElementById("cnc-state-container").style.pointerEvents = "none"; // DISABLED: Allow free CNC toggle
 
           resetCNCUI();
           document.querySelector(".start-text").innerHTML = `
@@ -1253,7 +1253,7 @@ function updateObjectModel() {
           document.getElementById("extruder-state-container").style.opacity = 0.6;
           document.getElementById("cnc-state-container").style.opacity = 1;
           document.getElementById("extruder-state-container").style.pointerEvents = "none";
-          document.getElementById("cnc-state-container").style.pointerEvents = "auto";
+          // document.getElementById("cnc-state-container").style.pointerEvents = "auto"; // DISABLED: Allow free CNC toggle
 
           document.getElementById("startSpindle").style.pointerEvents = "auto";
           document.getElementById("unlockButtonContainer").style.pointerEvents = "auto";
@@ -1292,7 +1292,7 @@ function updateObjectModel() {
           document.getElementById("extruder-state-container").style.opacity = 0.6;
           document.getElementById("cnc-state-container").style.opacity = 0.6;
           document.getElementById("extruder-state-container").style.pointerEvents = "none";
-          document.getElementById("cnc-state-container").style.pointerEvents = "none";
+          // document.getElementById("cnc-state-container").style.pointerEvents = "none"; // DISABLED: Allow free CNC toggle
 
           resetCNCUI();
           document.querySelector(".start-text").innerHTML = `
@@ -1321,7 +1321,7 @@ function updateObjectModel() {
           document.getElementById("extruder-state-container").style.opacity = 0.6;
           document.getElementById("cnc-state-container").style.opacity = 0.6;
           document.getElementById("extruder-state-container").style.pointerEvents = "none";
-          document.getElementById("cnc-state-container").style.pointerEvents = "none";
+          // document.getElementById("cnc-state-container").style.pointerEvents = "none"; // DISABLED: Allow free CNC toggle
 
           resetCNCUI();
           document.querySelector(".start-text").innerHTML = `
@@ -1350,7 +1350,7 @@ function updateObjectModel() {
           document.getElementById("extruder-state-container").style.opacity = 0.6;
           document.getElementById("cnc-state-container").style.opacity = 0.6;
           document.getElementById("extruder-state-container").style.pointerEvents = "none";
-          document.getElementById("cnc-state-container").style.pointerEvents = "none";
+          // document.getElementById("cnc-state-container").style.pointerEvents = "none"; // DISABLED: Allow free CNC toggle
 
           resetCNCUI();
           document.querySelector(".start-text").innerHTML = `
@@ -1377,7 +1377,7 @@ function updateObjectModel() {
           document.getElementById("tool-detection-cnc").style.color = ""; // Resetting color if previously set
 
           document.getElementById("extruder-state-container").style.pointerEvents = "none";
-          document.getElementById("cnc-state-container").style.pointerEvents = "none";
+          // document.getElementById("cnc-state-container").style.pointerEvents = "none"; // DISABLED: Allow free CNC toggle
 
           if (localStorage.getItem("toolDetectionState") === "on") {
             document.getElementById("extruder-state-container").style.opacity = 0.6;
@@ -2521,7 +2521,7 @@ buttonIds.forEach((buttonId) => {
         break;
       case "cnc-on":
         // MUST enable tool detection for CNC!!!
-        document.getElementById("tool-detection-on").click();
+        // document.getElementById("tool-detection-on").click(); // DISABLED: Allow free CNC toggle
         const cncOn = document.getElementById("cnc-mill");
         cncOn.style.display = "block";
         document.getElementById("cnc-on").style.backgroundColor = ""; // Pressed State (default)
@@ -2550,7 +2550,11 @@ buttonIds.forEach((buttonId) => {
         // Save state to local storage
         localStorage.setItem("cncState", "on");
         document.getElementById("cnc-state-container").style.display = "flex";
-        document.getElementById("tool-detection-off").style.display = "none";
+        // Only hide tool-detection-off if not Zeus system
+        const systemFamily = localStorage.getItem("systemFamily");
+        if (systemFamily !== "zeus") {
+          document.getElementById("tool-detection-off").style.display = "none";
+        }
         break;
       case "cnc-off":
         const cncOff = document.getElementById("cnc-mill");
@@ -2629,6 +2633,8 @@ buttonIds.forEach((buttonId) => {
         document.getElementById("logo-text").style.display = "flex";
         document.getElementById("aisync-slicer-option").style.display = "flex"; // AiSync option
         document.getElementById("cnc-mill-option").style.display = "flex"; // CNC option
+        // For Zeus, always show tool-detection-off button
+        document.getElementById("tool-detection-off").style.display = "flex";
         if (localStorage.getItem("toolDetectionState") === "on") {
           document.getElementById("tool-detection-on").click();
         } else {
