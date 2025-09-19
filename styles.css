@@ -99,12 +99,6 @@ body {
   margin-right: 0 !important; /* Remove any inherited right margins */
 }
 
-/* Bed Control Button Layout - Position bed heaters button on far left */
-.tab-pane-bed-control .button-container {
-  justify-content: flex-start !important; /* Override space-between to start from left */
-  gap: 20px !important; /* Add consistent spacing between buttons */
-}
-
 #bed-temp-table::-webkit-scrollbar-thumb {
   -webkit-border-radius: 20px;
   border-radius: 20px;
