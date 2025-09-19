@@ -99,6 +99,11 @@ body {
   margin-right: 0 !important; /* Remove any inherited right margins */
 }
 
+/* Bed Control Button Layout - Even spacing between buttons and container edges */
+.tab-pane-bed-control .button-container {
+  justify-content: space-evenly !important; /* Equal spacing between buttons and edges */
+}
+
 #bed-temp-table::-webkit-scrollbar-thumb {
   -webkit-border-radius: 20px;
   border-radius: 20px;
