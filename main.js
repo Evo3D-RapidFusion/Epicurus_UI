@@ -18,12 +18,17 @@ let selectedBarrelFan = "0";
 
 // Configuration for Duet connection - can be modified via UI or localStorage
 let duetIP = localStorage.getItem('duetIP') || "10.10.10.100";
+let duetExpansionIP = localStorage.getItem('duetExpansionIP') || "10.10.10.101";
 let activeStatusURL = `http://${duetIP}/rr_model`;
 let activeCodeURL = `http://${duetIP}/rr_gcode`;
 let activeConnectURL = `http://${duetIP}/rr_connect`;
+let expansionStatusURL = `http://${duetExpansionIP}/rr_model`;
+let expansionCodeURL = `http://${duetExpansionIP}/rr_gcode`;
+let expansionConnectURL = `http://${duetExpansionIP}/rr_connect`;
 
 // Session management
 let isConnected = false;
+let isExpansionConnected = false;
 
 // Network configuration
 const NETWORK_TIMEOUT = 5000; // 5 seconds timeout for requests
@@ -32,7 +37,9 @@ const RETRY_DELAY = 1000; // 1 second base delay
 
 // Mode detection and caching
 let duetMode = null; // null = not detected, 'sbc' = SBC mode, 'standalone' = standalone mode
+let expansionMode = null; // null = not detected, 'sbc' = SBC mode, 'standalone' = standalone mode
 let modeDetectionAttempts = 0;
+let expansionModeDetectionAttempts = 0;
 const MAX_MODE_DETECTION_ATTEMPTS = 3;
 
 // Helper function to create timeout-enabled fetch requests
@@ -331,6 +338,188 @@ async function parseResponse(response) {
   return data;
 }
 
+// FUNCTION: Establish connection to expansion controller with timeout
+async function connectToExpansionRRF(password = "reprap") {
+  try {
+    console.log(`Attempting to connect to expansion controller at ${duetExpansionIP}...`);
+    const response = await fetchWithTimeout(`${expansionConnectURL}?password=${encodeURIComponent(password)}`, {}, NETWORK_TIMEOUT);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.err === 0) {
+      console.log("Successfully connected to expansion controller");
+      isExpansionConnected = true;
+      return data;
+    } else {
+      console.error(`Expansion controller connection failed with error code: ${data.err}`);
+      isExpansionConnected = false;
+      throw new Error(`Expansion controller connection failed: ${data.err}`);
+    }
+  } catch (error) {
+    console.error("Failed to connect to expansion controller:", error);
+    isExpansionConnected = false;
+    throw error;
+  }
+}
+
+// FUNCTION: Enhanced async GET/POST requests to expansion controller with timeouts and retry logic
+async function fetchExpansionData(url, options = {}, retryCount = 0) {
+  try {
+    // Ensure we're connected before making requests
+    if (!isExpansionConnected && !url.includes('rr_connect')) {
+      await connectToExpansionRRF();
+    }
+    
+    // Use timeout-enabled fetch
+    const response = await fetchWithTimeout(url, options, NETWORK_TIMEOUT);
+
+    // Handle 401 Unauthorized - need to reconnect
+    if (response.status === 401) {
+      console.warn("Expansion controller received 401 Unauthorized, attempting to reconnect...");
+      isExpansionConnected = false;
+      await connectToExpansionRRF();
+      // Retry the original request
+      const retryResponse = await fetchWithTimeout(url, options, NETWORK_TIMEOUT);
+      if (!retryResponse.ok) {
+        console.error(`Expansion controller error: Network response was not ok. Status: ${retryResponse.status}`);
+        throw new Error(`HTTP error! Status: ${retryResponse.status}`);
+      }
+      return await parseResponse(retryResponse);
+    }
+
+    if (!response.ok) {
+      console.error(`Expansion controller error: Network response was not ok. Status: ${response.status}`);
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    return await parseResponse(response);
+  } catch (error) {
+    // Implement retry logic for network errors
+    if (retryCount < MAX_RETRIES && (
+        error.message.includes('timeout') ||
+        error.message.includes('fetch') ||
+        error.message.includes('NetworkError') ||
+        error.message.includes('Failed to fetch')
+    )) {
+      console.warn(`Expansion controller request failed, retrying in ${RETRY_DELAY}ms... (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      return await fetchExpansionData(url, options, retryCount + 1);
+    } else {
+      console.error("Network or SSL error with expansion controller, unable to fetch data. Please check your connection or SSL settings.");
+      throw error;
+    }
+  }
+}
+
+// FUNCTION: Detect expansion controller mode (SBC vs Standalone)
+async function detectExpansionMode() {
+  if (expansionMode !== null && expansionModeDetectionAttempts < MAX_MODE_DETECTION_ATTEMPTS) {
+    return expansionMode; // Return cached result if available and within attempt limit
+  }
+  
+  try {
+    expansionModeDetectionAttempts++;
+    console.log(`Attempting expansion controller mode detection (attempt ${expansionModeDetectionAttempts})`);
+    
+    const data = await fetchExpansionData(expansionStatusURL);
+    
+    // Check if we got a standalone response format with result wrapper
+    if (data.result && typeof data.result === 'object') {
+      const actualData = data.result;
+      
+      // Check if any of the key sections have actual data beyond empty objects
+      const heatData = actualData.heat || {};
+      const globalData = actualData.global || {};
+      const stateData = actualData.state || {};
+      
+      // Test if we have meaningful data in any section
+      const hasHeatData = heatData.heaters && Array.isArray(heatData.heaters) && 
+                         heatData.heaters.some(heater => heater && typeof heater === 'object' && Object.keys(heater).length > 0);
+      const hasGlobalData = Object.keys(globalData).length > 0;
+      const hasStateData = Object.keys(stateData).length > 0;
+      
+      if (hasHeatData || hasGlobalData || hasStateData) {
+        expansionMode = 'sbc';
+        console.log("Detected expansion controller SBC mode - full object model contains data");
+      } else {
+        expansionMode = 'standalone';
+        console.log("Detected expansion controller Standalone mode - object model structure only");
+      }
+    } else if (data && typeof data === 'object') {
+      // Direct data without result wrapper - likely SBC mode
+      expansionMode = 'sbc';
+      console.log("Detected expansion controller SBC mode - direct object model format");
+    } else {
+      throw new Error("Unexpected response format from expansion controller");
+    }
+    
+    return expansionMode;
+  } catch (error) {
+    console.warn(`Expansion mode detection attempt ${expansionModeDetectionAttempts} failed:`, error);
+    
+    if (expansionModeDetectionAttempts >= MAX_MODE_DETECTION_ATTEMPTS) {
+      // Default to standalone mode after max attempts
+      expansionMode = 'standalone';
+      console.log("Defaulting expansion controller to Standalone mode after failed detection attempts");
+    }
+    
+    return expansionMode;
+  }
+}
+
+// FUNCTION: Fetch expansion controller object model data using key-specific requests (Standalone mode)
+async function fetchExpansionObjectModelByKeys() {
+  try {
+    console.log("Fetching expansion controller object model using key-specific requests (Standalone mode)");
+    
+    // Define the keys we need and fetch them in parallel from expansion controller
+    const keyRequests = [
+      fetchExpansionData(`${expansionStatusURL}?key=heat&flags=vn`),
+      fetchExpansionData(`${expansionStatusURL}?key=global&flags=vn`), 
+      fetchExpansionData(`${expansionStatusURL}?key=state&flags=vn`),
+      fetchExpansionData(`${expansionStatusURL}?key=boards&flags=vn`),
+      fetchExpansionData(`${expansionStatusURL}?key=fans&flags=vn`),
+      fetchExpansionData(`${expansionStatusURL}?key=spindles&flags=vn`)
+    ];
+    
+    const [heatResponse, globalResponse, stateResponse, boardsResponse, fansResponse, spindlesResponse] = 
+      await Promise.all(keyRequests);
+    
+    // Construct the consolidated data structure for expansion controller
+    const consolidatedData = {
+      result: {
+        heat: heatResponse.result || {},
+        global: globalResponse.result || {},
+        state: stateResponse.result || {},
+        boards: boardsResponse.result || [],
+        fans: fansResponse.result || [],
+        spindles: spindlesResponse.result || []
+      }
+    };
+    
+    console.log("Successfully consolidated expansion controller standalone mode data", consolidatedData);
+    return consolidatedData;
+    
+  } catch (error) {
+    console.error("Error fetching expansion controller object model by keys:", error);
+    
+    // Fallback: try to get basic structure from full model call
+    console.log("Attempting fallback to full expansion controller model request");
+    try {
+      const fallbackData = await fetchExpansionData(expansionStatusURL);
+      console.log("Expansion controller fallback successful");
+      return fallbackData;
+    } catch (fallbackError) {
+      console.error("Expansion controller fallback also failed:", fallbackError);
+      throw error; // Throw original error
+    }
+  }
+}
+
 // FUNCTION: Detect Duet mode (SBC vs Standalone)
 async function detectDuetMode() {
   if (duetMode !== null && modeDetectionAttempts < MAX_MODE_DETECTION_ATTEMPTS) {
@@ -436,23 +625,91 @@ async function fetchObjectModelByKeys() {
   }
 }
 
-// FUNCTION: Fetch & update Duet Object Model via HTTP GET requests
+// FUNCTION: Fetch & update Duet Object Model via HTTP GET requests with dual-stream support
 function updateObjectModel() {
   return new Promise(async (resolve, reject) => {
     try {
-      // Detect mode and use appropriate fetching strategy
-      const mode = await detectDuetMode();
-      let data;
+      // Fetch from both controllers in parallel
+      console.log("Fetching data from both main controller and expansion controller...");
       
-      if (mode === 'standalone') {
-        // Use key-specific requests for standalone mode
-        data = await fetchObjectModelByKeys();
+      // Detect modes for both controllers
+      const [mainMode, expansionMode] = await Promise.all([
+        detectDuetMode(),
+        detectExpansionMode()
+      ]);
+      
+      // Fetch data from both controllers based on their modes
+      let mainDataPromise, expansionDataPromise;
+      
+      if (mainMode === 'standalone') {
+        mainDataPromise = fetchObjectModelByKeys();
       } else {
-        // Use full object model request for SBC mode
-        data = await fetchData(activeStatusURL);
+        mainDataPromise = fetchData(activeStatusURL);
       }
       
-      console.log(`Fetched data using ${mode} mode strategy`);
+      if (expansionMode === 'standalone') {
+        expansionDataPromise = fetchExpansionObjectModelByKeys();
+      } else {
+        expansionDataPromise = fetchExpansionData(expansionStatusURL);
+      }
+      
+      const [mainData, expansionData] = await Promise.all([mainDataPromise, expansionDataPromise]);
+      
+      console.log(`Fetched main data using ${mainMode} mode, expansion data using ${expansionMode} mode`);
+
+      // Extract data from both controllers
+      const mainActualData = mainData.result || mainData;
+      const expansionActualData = expansionData.result || expansionData;
+      
+      // Merge heating data - combine main controller (extruders + beds 0-3) with expansion (beds 4-9)
+      const mainHeatData = mainActualData.heat || {};
+      const expansionHeatData = expansionActualData.heat || {};
+      
+      // Create merged heater arrays
+      const mergedHeaters = [...(mainHeatData.heaters || [])]; // Start with all main heaters
+      const mergedBedHeaters = [...(mainHeatData.bedHeaters || [])]; // Start with main bed heaters (0-3)
+      
+      // Add expansion bed heaters (4-9) to the merged arrays
+      if (expansionHeatData.heaters && expansionHeatData.heaters.length > 0) {
+        // Map expansion heaters to positions 4-9 in bed heater array
+        for (let i = 0; i < 6 && i < expansionHeatData.heaters.length; i++) {
+          const expansionHeater = expansionHeatData.heaters[i];
+          if (expansionHeater && expansionHeater !== -1) {
+            // Add to merged heaters array (append to main heaters)
+            const mergedHeaterIndex = mergedHeaters.length;
+            mergedHeaters.push(expansionHeater);
+            
+            // Add to merged bed heaters array at position 4+i
+            const bedHeaterIndex = 4 + i;
+            if (bedHeaterIndex < 10) { // Maximum 10 bed heaters supported
+              mergedBedHeaters[bedHeaterIndex] = mergedHeaterIndex;
+            }
+          }
+        }
+      }
+      
+      // Create merged heat data structure
+      const mergedHeatData = {
+        ...mainHeatData,
+        heaters: mergedHeaters,
+        bedHeaters: mergedBedHeaters
+      };
+      
+      // Create consolidated actualData with merged heating information
+      const actualData = {
+        ...mainActualData,
+        heat: mergedHeatData
+      };
+      
+      // Use the existing variable names for compatibility
+      const data = { result: actualData };
+      
+      console.log("Merged heating data from both controllers:", {
+        totalHeaters: mergedHeaters.length,
+        totalBedHeaters: mergedBedHeaters.length,
+        mainHeaters: mainHeatData.heaters?.length || 0,
+        expansionHeaters: expansionHeatData.heaters?.length || 0
+      });
 
       // FUNCTION: Find configured heaters in Duet Object Model
       function findHeaters(targetObject) {
@@ -540,9 +797,7 @@ function updateObjectModel() {
       // Debug: Log the response to understand structure
       console.log("RRF Response:", data);
       
-      // Handle standalone mode response format only
-      // In standalone mode, data is wrapped in a 'result' property
-      const actualData = data.result;
+      // actualData is already created above with merged heating information
       
       // Call FUNCTIONS - Handle RRF object model structure with fallbacks
       const heatData = actualData.heat || {};
@@ -1424,6 +1679,35 @@ async function sendGcode(gcode) {
   }
 }
 
+// Function to send individual G-code command to expansion controller with retry logic
+async function sendExpansionGcode(gcode) {
+  while (true) {
+    try {
+      const response = await fetchExpansionData(`${expansionCodeURL}?gcode=${encodeURIComponent(gcode)}`);
+
+      if (response.status && response.status === 503) {
+        console.warn("503 Service Unavailable while sending G-code to expansion controller. Retrying...");
+        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+        continue; // Retry if server returns 503 error
+      }
+
+      // Check for unknown variable error in the response text
+      if (typeof response === "string" && response.includes("Error: unknown variable")) {
+        console.warn(`Unknown variable error detected in expansion controller response. Retrying G-code '${gcode}'...`);
+        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+        continue; // Retry if unknown variable error is present
+      }
+
+      console.log(`Response from expansion controller sending G-code '${gcode}': ${response}`);
+      return response; // Exit loop on successful command execution without errors
+
+    } catch (error) {
+      console.error(`Error sending G-code to expansion controller '${gcode}': ${error}`);
+      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL)); // Delay before retrying
+    }
+  }
+}
+
 // Start the continuous polling process
 pollServerAndSendOnceOnStateChange();
 
@@ -1644,7 +1928,7 @@ window.epicurusDebug = {
 
 // ================================= Heaters: Top, Middle, Bottom, Nozzle, Bed, Chamber =================================
 
-// FUNCTION: Toggle heater states
+// FUNCTION: Toggle heater states with dual-controller support
 function toggleHeaterStates(heaterState, heaterIndex) {
   let heaterType = [
     "top",
@@ -1655,13 +1939,30 @@ function toggleHeaterStates(heaterState, heaterIndex) {
     "bed1",
     "bed2",
     "bed3",
+    "bed4",
+    "bed5",
+    "bed6",
+    "bed7",
+    "bed8",
+    "bed9"
   ];
   
   // Normalize state to uppercase and handle Duet terminology
   const normalizedState = heaterState.toUpperCase();
   const duetState = normalizedState === "STANDBY" || normalizedState === "PREHEAT" ? "PREHEAT" : normalizedState;
   
-  console.log(`Heater ${heaterIndex} (${heaterType[heaterIndex]}) clicked: "${heaterState}" -> "${duetState}"`);
+  console.log(`Heater ${heaterIndex} (${heaterType[heaterIndex] || `heater-${heaterIndex}`}) clicked: "${heaterState}" -> "${duetState}"`);
+  
+  // Determine which controller to use and the appropriate heater index
+  let sendFunction = sendGcode;
+  let targetHeaterIndex = heaterIndex;
+  
+  // Route bed heaters 8-13 (bed4-bed9) to expansion controller
+  if (heaterIndex >= 8 && heaterIndex <= 13) {
+    sendFunction = sendExpansionGcode;
+    targetHeaterIndex = heaterIndex - 8; // Map to expansion heater indices 0-5
+    console.log(`Routing heater ${heaterIndex} (${heaterType[heaterIndex] || `bed${heaterIndex-4}`}) to expansion controller as heater ${targetHeaterIndex}`);
+  }
   
   let setTemp = "";
   
@@ -1671,7 +1972,7 @@ function toggleHeaterStates(heaterState, heaterIndex) {
         `user-input-preheat-${heaterType[heaterIndex]}`
       ).textContent;
       console.log(`Switching heater ${heaterIndex} to preheat (standby) at ${setTemp}°C`);
-      sendGcode(`M568 P${heaterIndex} R${setTemp} A1`); // switch to preheat (standby)
+      sendFunction(`M568 P${targetHeaterIndex} R${setTemp} A1`); // switch to preheat (standby)
       break;
       
     case "PREHEAT":
@@ -1679,12 +1980,12 @@ function toggleHeaterStates(heaterState, heaterIndex) {
         `user-input-active-${heaterType[heaterIndex]}`
       ).textContent;
       console.log(`Switching heater ${heaterIndex} to active at ${setTemp}°C`);
-      sendGcode(`M568 P${heaterIndex} S${setTemp} A2`); // switch to active
+      sendFunction(`M568 P${targetHeaterIndex} S${setTemp} A2`); // switch to active
       break;
       
     case "ACTIVE":
       console.log(`Switching heater ${heaterIndex} to off`);
-      sendGcode(`M568 P${heaterIndex} A0`); // switch to off
+      sendFunction(`M568 P${targetHeaterIndex} A0`); // switch to off
       break;
       
     case "FAULT":
@@ -1696,7 +1997,7 @@ function toggleHeaterStates(heaterState, heaterIndex) {
       );
       if (resetFault) {
         console.log(`Resetting fault for heater ${heaterIndex}`);
-        sendGcode(`M292 M562 P${heaterIndex}`); // reset heater fault
+        sendFunction(`M292 M562 P${targetHeaterIndex}`); // reset heater fault
       } else {
         heaterFaults[heaterIndex] = true;
         console.log(`User declined to reset fault for heater ${heaterIndex}`);
@@ -1725,10 +2026,12 @@ function configureHeaters(mode, configuredExtruderHeaters) {
   sendGcode(gcodeString);
 }
 
-// FUNCTION: configureBedHeaters
+// FUNCTION: configureBedHeaters with dual-controller support
 function configureBedHeaters(mode, configuredBedHeaters) {
-  let gcodeString = "";
+  let mainGcodeString = "";
+  let expansionGcodeString = "";
   let heaterType = ["bed0", "bed1", "bed2", "bed3", "bed4", "bed5", "bed6", "bed7", "bed8", "bed9"];
+  
   configuredBedHeaters.forEach((heater, index) => {
     const heaterElement = document.getElementById(`user-input-preheat-${heaterType[index]}`);
     const activeElement = document.getElementById(`user-input-active-${heaterType[index]}`);
@@ -1737,12 +2040,31 @@ function configureBedHeaters(mode, configuredBedHeaters) {
     if (heaterElement && activeElement) {
       preheatTemp = heaterElement.textContent;
       activeTemp = activeElement.textContent;
-      gcodeString += `M568 P${
-        index + configuredExtruderHeaters.length
-      } S${activeTemp} R${preheatTemp} A${mode} `;
+      
+      // Route bed heaters 0-3 to main controller, 4-9 to expansion controller
+      if (index < 4) {
+        // Main controller: bed heaters 0-3
+        mainGcodeString += `M568 P${
+          index + configuredExtruderHeaters.length
+        } S${activeTemp} R${preheatTemp} A${mode} `;
+      } else {
+        // Expansion controller: bed heaters 4-9 (map to expansion heater indices 0-5)
+        const expansionHeaterIndex = index - 4;
+        expansionGcodeString += `M568 P${expansionHeaterIndex} S${activeTemp} R${preheatTemp} A${mode} `;
+      }
     }
   });
-  sendGcode(gcodeString);
+  
+  // Send commands to appropriate controllers
+  if (mainGcodeString.trim()) {
+    console.log(`Sending bed heater commands to main controller: ${mainGcodeString.trim()}`);
+    sendGcode(mainGcodeString);
+  }
+  
+  if (expansionGcodeString.trim()) {
+    console.log(`Sending bed heater commands to expansion controller: ${expansionGcodeString.trim()}`);
+    sendExpansionGcode(expansionGcodeString);
+  }
 }
 // =====================================================================================================================
 
@@ -2603,22 +2925,34 @@ function setTemp(tabpane, buttonIndex) {
     }
   })();
 
+  // Determine which controller to use based on heater parameter
+  let sendFunction = sendGcode;
+  let targetHeater = heater;
+  
+  // Route bed heaters P8-P13 (bed4-bed9) to expansion controller as P0-P5
+  if (heater >= "P8" && heater <= "P13") {
+    sendFunction = sendExpansionGcode;
+    const heaterNum = parseInt(heater.substring(1)); // Extract number from P8, P9, etc.
+    targetHeater = `P${heaterNum - 8}`; // Map P8->P0, P9->P1, P10->P2, P11->P3, P12->P4, P13->P5
+    console.log(`Routing ${heater} to expansion controller as ${targetHeater}`);
+  }
+
   switch (buttonIndex) {
     case 0: // active
       activeTemp.textContent = displayTemp;
-      sendGcode(`M568 ${heater} S${displayTemp} A2`);
+      sendFunction(`M568 ${targetHeater} S${displayTemp} A2`);
       saveSettings();
       break;
     case 1: // preheat
       preheatTemp.textContent = displayTemp;
-      sendGcode(`M568 ${heater} R${displayTemp}`);
+      sendFunction(`M568 ${targetHeater} R${displayTemp}`);
       saveSettings();
       break;
     case 2: // both
       activeTemp.textContent = displayTemp;
-      sendGcode(`M568 ${heater} S${displayTemp} A2`);
+      sendFunction(`M568 ${targetHeater} S${displayTemp} A2`);
       preheatTemp.textContent = displayTemp;
-      sendGcode(`M568 ${heater} R${displayTemp}`);
+      sendFunction(`M568 ${targetHeater} R${displayTemp}`);
       saveSettings();
       break;
   }
@@ -2774,12 +3108,31 @@ document
         `M568 P0 S${topTemp} R${topTemp} A1 M568 P1 S${middleTemp} R${middleTemp} A1 M568 P2 S${bottomTemp} R${bottomTemp} A1 M568 P3 S${nozzleTemp} R${nozzleTemp} A1`
       );
 
-      // Preheat Bed Heaters
-      let gcodeString = "";
+      // Preheat Bed Heaters with dual-controller routing
+      let mainGcodeString = "";
+      let expansionGcodeString = "";
+      
       configuredBedHeaters.forEach((heater, index) => {
-        gcodeString += `M568 P${index + 4} S${bedTemp} R${bedTemp} A1 `;
+        if (index < 4) {
+          // Main controller: bed heaters 0-3
+          mainGcodeString += `M568 P${index + 4} S${bedTemp} R${bedTemp} A1 `;
+        } else {
+          // Expansion controller: bed heaters 4-9 (map to expansion heater indices 0-5)
+          const expansionHeaterIndex = index - 4;
+          expansionGcodeString += `M568 P${expansionHeaterIndex} S${bedTemp} R${bedTemp} A1 `;
+        }
       });
-      sendGcode(gcodeString);
+      
+      // Send commands to appropriate controllers
+      if (mainGcodeString.trim()) {
+        console.log(`Heating profile: Sending bed commands to main controller: ${mainGcodeString.trim()}`);
+        sendGcode(mainGcodeString);
+      }
+      
+      if (expansionGcodeString.trim()) {
+        console.log(`Heating profile: Sending bed commands to expansion controller: ${expansionGcodeString.trim()}`);
+        sendExpansionGcode(expansionGcodeString);
+      }
 
       saveSettings();
       document.getElementById("default-tab").click();
