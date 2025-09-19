@@ -653,7 +653,25 @@ function updateObjectModel() {
         expansionDataPromise = fetchExpansionData(expansionStatusURL);
       }
       
-      const [mainData, expansionData] = await Promise.all([mainDataPromise, expansionDataPromise]);
+      // Fetch data with error handling for expansion controller
+      let mainData, expansionData;
+      try {
+        [mainData, expansionData] = await Promise.all([mainDataPromise, expansionDataPromise]);
+      } catch (error) {
+        console.warn("Error fetching from one or both controllers:", error);
+        // If expansion controller fails, still try to get main controller data
+        try {
+          mainData = await mainDataPromise;
+          console.log("Main controller data retrieved despite expansion controller error");
+        } catch (mainError) {
+          console.error("Main controller also failed:", mainError);
+          throw mainError;
+        }
+        
+        // Create empty expansion data if expansion controller failed
+        expansionData = { result: { heat: { heaters: [] } } };
+        console.log("Using empty expansion data due to controller unavailability");
+      }
       
       console.log(`Fetched main data using ${mainMode} mode, expansion data using ${expansionMode} mode`);
 
@@ -669,12 +687,21 @@ function updateObjectModel() {
       const mergedHeaters = [...(mainHeatData.heaters || [])]; // Start with all main heaters
       const mergedBedHeaters = [...(mainHeatData.bedHeaters || [])]; // Start with main bed heaters (0-3)
       
+      // Ensure mergedBedHeaters array is properly sized (initialize empty slots for beds 4-9)
+      while (mergedBedHeaters.length < 10) {
+        mergedBedHeaters.push(-1); // Initialize unused slots with -1
+      }
+      
       // Add expansion bed heaters (4-9) to the merged arrays
       if (expansionHeatData.heaters && expansionHeatData.heaters.length > 0) {
+        console.log("Processing expansion heaters:", expansionHeatData.heaters);
+        
         // Map expansion heaters to positions 4-9 in bed heater array
         for (let i = 0; i < 6 && i < expansionHeatData.heaters.length; i++) {
           const expansionHeater = expansionHeatData.heaters[i];
-          if (expansionHeater && expansionHeater !== -1) {
+          console.log(`Expansion heater ${i}:`, expansionHeater);
+          
+          if (expansionHeater && typeof expansionHeater === 'object' && Object.keys(expansionHeater).length > 0) {
             // Add to merged heaters array (append to main heaters)
             const mergedHeaterIndex = mergedHeaters.length;
             mergedHeaters.push(expansionHeater);
@@ -683,9 +710,12 @@ function updateObjectModel() {
             const bedHeaterIndex = 4 + i;
             if (bedHeaterIndex < 10) { // Maximum 10 bed heaters supported
               mergedBedHeaters[bedHeaterIndex] = mergedHeaterIndex;
+              console.log(`Mapped expansion bed heater ${bedHeaterIndex} to heater index ${mergedHeaterIndex}`);
             }
           }
         }
+      } else {
+        console.log("No expansion heaters found or expansion controller not responding");
       }
       
       // Create merged heat data structure
@@ -708,7 +738,13 @@ function updateObjectModel() {
         totalHeaters: mergedHeaters.length,
         totalBedHeaters: mergedBedHeaters.length,
         mainHeaters: mainHeatData.heaters?.length || 0,
-        expansionHeaters: expansionHeatData.heaters?.length || 0
+        expansionHeaters: expansionHeatData.heaters?.length || 0,
+        mergedBedHeatersArray: mergedBedHeaters,
+        mainBedHeaters: mainHeatData.bedHeaters || [],
+        finalHeatData: {
+          totalHeaters: mergedHeaters.length,
+          bedHeaters: mergedBedHeaters
+        }
       });
 
       // FUNCTION: Find configured heaters in Duet Object Model
@@ -809,6 +845,8 @@ function updateObjectModel() {
       
       const configuredHeatersAll = findHeaters(heatData.heaters || []);
       const configuredBedHeaters = findHeaters(heatData.bedHeaters || []);
+      console.log("Configured bed heaters found:", configuredBedHeaters);
+      console.log("Heat data bed heaters array:", heatData.bedHeaters);
       const configuredChamberHeaters = findHeaters(heatData.chamberHeaters || []);
       const configuredExtruderHeaters = configuredHeatersAll.slice(
         0,
@@ -817,8 +855,10 @@ function updateObjectModel() {
       const cncSpindle = spindlesData[0] || {};
 
       // Show only the configured bed heaters
+      console.log("Setting bed heater visibility for:", configuredBedHeaters);
       configuredBedHeaters.forEach((element, index) => {
         if (index < 10) { // Limit to maximum 10 beds
+          console.log(`Making bed${index} visible (heater data:`, element, `)`);
           document
             .querySelectorAll(`.bed${index}`)
             .forEach((element) => (element.style.visibility = "visible"));
@@ -826,9 +866,11 @@ function updateObjectModel() {
       });
 
       configuredBedHeaters.forEach((element, index) => {
-        document.querySelectorAll(`.temp-tab-link.heater`)[
-          index + 4
-        ].style.display = "flex";
+        const tabElement = document.querySelectorAll(`.temp-tab-link.heater`)[index + 4];
+        if (tabElement) {
+          console.log(`Making temp tab ${index + 4} visible for bed${index}`);
+          tabElement.style.display = "flex";
+        }
       });
 
       // update Extruder Current Temp
