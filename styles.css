@@ -41,7 +41,7 @@ body {
 
 /*General Scrollbar Styling */
 ::-webkit-scrollbar {
-  width: 17px;
+  width: 20px;
 }
 
 ::-webkit-scrollbar-track {
@@ -94,7 +94,7 @@ body {
 #bed-temp-table {
   /* Keep base .temp-table padding (60px 100px) for natural flex space-between distribution */
   /* Only adjust right padding to accommodate scrollbar while maintaining visual balance */
-  padding-right: 80px !important; /* Reduce from 100px to 80px for 17px scrollbar + margin */
+  padding-right: 80px !important; /* Reduce from 100px to 80px for 20px scrollbar */
 }
 
 #bed-temp-table::-webkit-scrollbar-thumb {
