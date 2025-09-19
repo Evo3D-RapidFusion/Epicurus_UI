@@ -656,26 +656,21 @@ function updateObjectModel() {
       // Fetch data with error handling for expansion controller
       let mainData, expansionData;
       try {
-        console.log("🌐 Fetching data from both controllers...");
         [mainData, expansionData] = await Promise.all([mainDataPromise, expansionDataPromise]);
-        console.log("✅ Successfully fetched data from both controllers");
-        console.log("📊 Main controller data:", mainData);
-        console.log("📊 Expansion controller data:", expansionData);
       } catch (error) {
-        console.warn("⚠️ Error fetching from one or both controllers:", error);
+        console.warn("Error fetching from one or both controllers:", error);
         // If expansion controller fails, still try to get main controller data
         try {
           mainData = await mainDataPromise;
-          console.log("✅ Main controller data retrieved despite expansion controller error");
-          console.log("📊 Main controller data:", mainData);
+          console.log("Main controller data retrieved despite expansion controller error");
         } catch (mainError) {
-          console.error("❌ Main controller also failed:", mainError);
+          console.error("Main controller also failed:", mainError);
           throw mainError;
         }
         
         // Create empty expansion data if expansion controller failed
         expansionData = { result: { heat: { heaters: [] } } };
-        console.log("🔄 Using empty expansion data due to controller unavailability");
+        console.log("Using empty expansion data due to controller unavailability");
       }
       
       console.log(`Fetched main data using ${mainMode} mode, expansion data using ${expansionMode} mode`);
@@ -699,13 +694,9 @@ function updateObjectModel() {
       
       // Add expansion bed heaters (4-9) to the merged arrays
       if (expansionHeatData.heaters && expansionHeatData.heaters.length > 0) {
-        console.log("Processing expansion heaters:", expansionHeatData.heaters);
-        console.log("Expansion heat data structure:", expansionHeatData);
-        
         // Map expansion heaters to positions 4-9 in bed heater array
         for (let i = 0; i < 6 && i < expansionHeatData.heaters.length; i++) {
           const expansionHeater = expansionHeatData.heaters[i];
-          console.log(`Expansion heater ${i}:`, expansionHeater);
           
           // Check if this is a valid heater (not -1 and has properties)
           if (expansionHeater !== null && expansionHeater !== undefined && expansionHeater !== -1) {
@@ -717,18 +708,9 @@ function updateObjectModel() {
             const bedHeaterIndex = 4 + i;
             if (bedHeaterIndex < 10) { // Maximum 10 bed heaters supported
               mergedBedHeaters[bedHeaterIndex] = mergedHeaterIndex;
-              console.log(`✓ Mapped expansion bed heater ${bedHeaterIndex} to heater index ${mergedHeaterIndex}`, expansionHeater);
             }
-          } else {
-            console.log(`✗ Expansion heater ${i} is not configured:`, expansionHeater);
           }
         }
-        
-        console.log("Final merged bed heaters array after expansion mapping:", mergedBedHeaters);
-      } else {
-        console.log("⚠️ No expansion heaters found or expansion controller not responding");
-        console.log("Expansion heat data:", expansionHeatData);
-        console.log("Expansion data structure:", expansionData);
       }
       
       // Create merged heat data structure
@@ -751,13 +733,7 @@ function updateObjectModel() {
         totalHeaters: mergedHeaters.length,
         totalBedHeaters: mergedBedHeaters.length,
         mainHeaters: mainHeatData.heaters?.length || 0,
-        expansionHeaters: expansionHeatData.heaters?.length || 0,
-        mergedBedHeatersArray: mergedBedHeaters,
-        mainBedHeaters: mainHeatData.bedHeaters || [],
-        finalHeatData: {
-          totalHeaters: mergedHeaters.length,
-          bedHeaters: mergedBedHeaters
-        }
+        expansionHeaters: expansionHeatData.heaters?.length || 0
       });
 
       // FUNCTION: Find configured heaters in Duet Object Model
@@ -858,8 +834,6 @@ function updateObjectModel() {
       
       const configuredHeatersAll = findHeaters(heatData.heaters || []);
       const configuredBedHeaters = findHeaters(heatData.bedHeaters || []);
-      console.log("Configured bed heaters found:", configuredBedHeaters);
-      console.log("Heat data bed heaters array:", heatData.bedHeaters);
       const configuredChamberHeaters = findHeaters(heatData.chamberHeaters || []);
       const configuredExtruderHeaters = configuredHeatersAll.slice(
         0,
@@ -867,37 +841,19 @@ function updateObjectModel() {
       );
       const cncSpindle = spindlesData[0] || {};
 
-      // Show only the configured bed heaters
-      console.log("🛏️ Setting bed heater visibility for:", configuredBedHeaters);
-      console.log("🛏️ Total bed heaters found:", configuredBedHeaters.length);
+      // Show only the configured main controller bed heaters (0-3)
+      // Beds 4-9 are permanently visible, so only process beds 0-3 here
+      const mainConfiguredBedHeaters = configuredBedHeaters.slice(0, 4); // Only take first 4 beds
       
-      configuredBedHeaters.forEach((element, index) => {
-        if (index < 10) { // Limit to maximum 10 beds
-          console.log(`🛏️ Making bed${index} visible (heater data:`, element, `)`);
-          const bedElements = document.querySelectorAll(`.bed${index}`);
-          console.log(`🛏️ Found ${bedElements.length} elements with class .bed${index}`);
-          
-          bedElements.forEach((domElement, domIndex) => {
-            domElement.style.visibility = "visible";
-            console.log(`🛏️ Set visibility for bed${index} element ${domIndex}:`, domElement.className, domElement.textContent);
-          });
-        }
+      mainConfiguredBedHeaters.forEach((element, index) => {
+        document
+          .querySelectorAll(`.bed${index}`)
+          .forEach((element) => (element.style.visibility = "visible"));
       });
 
-      // Also explicitly check beds 4-9 visibility
-      console.log("🔍 Checking beds 4-9 visibility status:");
-      for (let i = 4; i < 10; i++) {
-        const bedElements = document.querySelectorAll(`.bed${i}`);
-        console.log(`Bed ${i}: Found ${bedElements.length} elements`);
-        bedElements.forEach((element, elementIndex) => {
-          console.log(`  Element ${elementIndex}: visibility = ${element.style.visibility}, class = ${element.className}`);
-        });
-      }
-
-      configuredBedHeaters.forEach((element, index) => {
+      mainConfiguredBedHeaters.forEach((element, index) => {
         const tabElement = document.querySelectorAll(`.temp-tab-link.heater`)[index + 4];
         if (tabElement) {
-          console.log(`Making temp tab ${index + 4} visible for bed${index}`);
           tabElement.style.display = "flex";
         }
       });
@@ -2245,17 +2201,25 @@ function initializeDefaultSettings() {
 // Load temperature settings on page load
 settings = loadSettings();
 
-// Hide beds in temp popup on startup
+// Hide temp popup tabs on startup - only hide beds 0-3, show beds 4-9 permanently
 var elements = document.querySelectorAll(".temp-tab-link.heater");
-for (var i = 4; i < elements.length; i++) {
+for (var i = 4; i < 8; i++) { // Only hide beds 0-3 tabs (indices 4-7)
   elements[i].style.display = "none";
 }
+for (var i = 8; i < elements.length; i++) { // Show beds 4-9 tabs (indices 8+) permanently
+  elements[i].style.display = "flex";
+}
 
-// Hide beds in bed temperatures on startup - now supports up to 10 beds
-for (let i = 0; i < defaultNumOfBedHeaters; i++) {
+// Hide only main controller beds (0-3) on startup, make expansion beds (4-9) permanently visible
+for (let i = 0; i < 4; i++) { // Only hide beds 0-3
   document
     .querySelectorAll(`.bed${i}`)
     .forEach((element) => (element.style.visibility = "hidden"));
+}
+for (let i = 4; i < 10; i++) { // Make beds 4-9 permanently visible
+  document
+    .querySelectorAll(`.bed${i}`)
+    .forEach((element) => (element.style.visibility = "visible"));
 }
 
 // Start adaptive polling system
