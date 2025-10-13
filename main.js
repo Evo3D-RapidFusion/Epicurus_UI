@@ -18,7 +18,7 @@ let selectedBarrelFan = "0";
 
 // Configuration for Duet connection - can be modified via UI or localStorage
 // Auto-generate version based on commit hash to force cache clear on every commit
-const STORAGE_VERSION = '73f7f56'; // Current commit hash - updated automatically
+const STORAGE_VERSION = 'dfa5127'; // Current commit hash - updated automatically
 const CURRENT_STORAGE_VERSION = localStorage.getItem('storageVersion');
 
 // Always clear localStorage on every load (for every commit/update)
