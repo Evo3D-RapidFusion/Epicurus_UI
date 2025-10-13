@@ -1,83 +1,172 @@
-# Epicurus UI
+# Epicurus UI v3.2
 
-A user interface for the Epicurus Controller that works entirely offline.
+A comprehensive offline user interface for the Epicurus Controller, supporting multiple system families with advanced temperature control, CNC milling capabilities, and automated cache management.
 
-## Setup for Offline Use
+## 🚀 Core Features
 
-This project has been modified to run completely offline with all resources served locally.
+### **System Family Support**
+- **PE320**: Pellet extruder system with temperature control
+- **Apollo**: Advanced extruder system with enhanced features  
+- **Zeus**: Professional system with both extruder and CNC milling capabilities
 
-### Apache Setup (Recommended)
+### **Temperature Control**
+- **Multi-zone heating**: Top, middle, bottom, and nozzle temperature control
+- **Bed heating**: Support for up to 10 bed heaters across dual controllers
+- **Preheat modes**: Standby and active temperature presets
+- **Safety features**: Emergency stop, heater fault detection, and automatic shutdown
+- **Real-time monitoring**: Live temperature display with visual indicators
 
-If you're using Apache to host these files:
+### **CNC Milling (Zeus Systems)**
+- **Spindle control**: Variable speed control with safety interlocks
+- **Tool detection**: Automatic tool presence detection
+- **Speed profiles**: Pre-configured RPM settings for different materials
+- **Safety systems**: Emergency stop and spindle lock mechanisms
 
-1. Make sure your Apache server has the following modules enabled:
-   - mod_rewrite
-   - mod_headers
+### **Material Profiles**
+- **Pre-configured settings**: PLA, ABS, PETG, and custom material profiles
+- **Temperature presets**: Optimized heating profiles for each material
+- **CNC profiles**: Spindle speed settings for milling operations
+- **Custom profiles**: User-defined material settings with save/load functionality
 
-2. Place all files in your Apache document root or a subdirectory
-  
-3. The included `.htaccess` file will:
-   - Route `/machine/status` requests to a static JSON file
-   - Handle `/machine/code` POST requests via a PHP script
-   - Set necessary CORS headers
+### **Advanced Features**
+- **Dual controller support**: Main controller (192.168.1.100) and expansion controller (192.168.1.101)
+- **Part cooling control**: Variable fan speed control
+- **Bed fixture plate**: Optional heated fixture plate support
+- **Tool detection**: Automatic extruder and CNC tool detection
+- **Developer settings**: Advanced configuration options (7 clicks on software version)
 
-4. Open your browser and navigate to:
-   ```
-   http://localhost/path-to-epicurus-ui/
-   ```
+### **Offline Operation**
+- **Complete offline functionality**: No internet connection required
+- **Local fonts**: Roboto fonts hosted locally
+- **Local assets**: All images, CSS, and JavaScript served locally
+- **Automated cache busting**: Automatic version management for updates
 
-### Node.js Setup (Alternative)
+## 🛠️ Setup & Installation
 
-If you prefer to use Node.js instead of Apache:
+### **Quick Start (Node.js)**
 
-1. Install Node.js on your system
-
-2. Start the local web server:
-   ```
-   cd webserver
-   node local.js
-   ```
-
-   Or use npm:
-   ```
+1. **Install Node.js** on your system
+2. **Start the server**:
+   ```bash
    npm start
    ```
+3. **Open browser** to `http://localhost:8080`
 
-3. Open your browser and navigate to:
-   ```
-   http://localhost:8080
-   ```
+### **Alternative Setup (Apache)**
 
-### Main Features
+1. **Enable Apache modules**: `mod_rewrite`, `mod_headers`
+2. **Place files** in Apache document root
+3. **Navigate** to `http://localhost/path-to-epicurus-ui/`
 
-- All resources load from localhost (no internet required)
-- Local font files replace Google Fonts
-- Mock machine status data available through the local server
-- Version information served locally
+## 📁 Project Structure
 
-### Folder Structure
+```
+Epicurus_UI/
+├── index.html              # Main UI interface
+├── main.js                 # Core application logic
+├── styles.css             # Custom styling
+├── build.js               # Automated build script
+├── package.json           # Project configuration
+├── css/                   # Webflow CSS files
+├── fonts/                 # Local Roboto fonts
+├── images/                # UI assets and icons
+├── jquery/                # jQuery library
+├── keyboard/              # On-screen keyboard
+└── webserver/             # Local server files
+```
 
-- `/fonts` - Contains local font files
-- `/images` - Contains all image assets
-- `/jquery` - Contains jQuery library
-- `/keyboard` - Contains keyboard plugin files
-- `/mock-endpoints` - Contains mock data for API endpoints
-- `/webserver` - Contains the Node.js server (alternative to Apache)
+## 🔧 Development
 
-## Development
+### **Automated Cache Management**
+- **Pre-commit hook**: Automatically updates cache-busting parameters
+- **Build script**: `npm run build` for manual cache updates
+- **Version control**: Dynamic timestamp-based versioning
 
-To make changes to the project:
+### **Making Changes**
+1. **Edit files**: Modify HTML, CSS, or JavaScript as needed
+2. **Commit changes**: Cache busting updates automatically
+3. **Test locally**: Use `npm start` for development server
 
-1. Modify HTML, CSS, or JavaScript files as needed
-2. Restart the local server if changes are made to local.js
-3. Refresh your browser to see the changes
+## ⚙️ Configuration
 
-## Troubleshooting
+### **Duet Controller IPs**
+- **Main Controller**: `192.168.1.100` (configurable)
+- **Expansion Controller**: `192.168.1.101` (configurable)
+- **Change IPs**: Access Developer Settings (7 clicks on software version)
 
-If you encounter issues:
+### **System Family Selection**
+- **PE320**: Default extruder system
+- **Apollo**: Advanced extruder with tool detection
+- **Zeus**: Full system with CNC milling capabilities
 
-1. Check if your web server is running properly
-2. For Apache: ensure mod_rewrite and mod_headers are enabled
-3. For Node.js: ensure no other services are using port 8080
-4. Check that all required files are present in their respective directories
-5. Examine your browser's developer tools console for any errors 
+### **Developer Settings**
+- **Access**: Click software version 7 times within 5 seconds
+- **Features**: System family selection, tool detection, cache management
+- **Cache clearing**: Manual cache clear and reload option
+
+## 🚨 Safety Features
+
+### **Emergency Systems**
+- **Emergency Stop**: Immediate system shutdown (M112)
+- **Heater Fault Detection**: Automatic fault detection and reporting
+- **Temperature Monitoring**: Real-time temperature overshoot protection
+- **Spindle Safety**: CNC spindle lock and speed control
+
+### **Temperature Safety**
+- **Multi-zone monitoring**: Individual heater zone monitoring
+- **Fault reset**: Manual heater fault reset capability
+- **Automatic shutdown**: Safety shutdown on critical faults
+
+## 📊 Material Profiles
+
+### **Pre-configured Materials**
+- **PLA**: Standard 3D printing settings
+- **ABS**: High-temperature printing settings
+- **PETG**: Engineering-grade material settings
+- **Custom**: User-defined material profiles
+
+### **Profile Management**
+- **Set profiles**: One-click material profile application
+- **Custom profiles**: Save and load custom settings
+- **Reset to default**: Restore factory default profiles
+
+## 🔄 Cache Management
+
+### **Automatic System**
+- **Dynamic versioning**: Timestamp-based version generation
+- **Cache busting**: Automatic query parameter updates
+- **Clean commits**: No constant git file modifications
+- **User experience**: Automatic cache clearing on updates
+
+### **Manual Control**
+- **Developer settings**: Manual cache clear option
+- **Build script**: `npm run build` for manual updates
+- **Version display**: Dynamic version information
+
+## 🐛 Troubleshooting
+
+### **Common Issues**
+1. **Server not starting**: Check if port 8080 is available
+2. **Cache issues**: Use Developer Settings → Clear Cache & Reload
+3. **Controller connection**: Verify Duet IP addresses
+4. **Temperature faults**: Use heater fault reset in settings
+
+### **Debug Information**
+- **Console logging**: Check browser developer tools
+- **Version info**: Displayed in System Info tab
+- **Controller status**: Real-time connection status
+- **Error reporting**: Detailed error messages in console
+
+## 📝 License
+
+Proprietary - Rapid Fusion
+
+## 👥 Support
+
+For technical support and documentation, contact Rapid Fusion development team.
+
+---
+
+**Version**: v3.2  
+**Last Updated**: 2024  
+**Compatibility**: Duet 3D Printer Controllers
