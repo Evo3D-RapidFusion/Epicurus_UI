@@ -17,8 +17,18 @@ let selectedBarrelFan = "0";
 // let spindleRunning = false; // already declared in embedded code
 
 // Configuration for Duet connection - can be modified via UI or localStorage
-let duetIP = localStorage.getItem('duetIP') || "10.10.10.100";
-let duetExpansionIP = localStorage.getItem('duetExpansionIP') || "10.10.10.101";
+const STORAGE_VERSION = '3.2';
+const CURRENT_STORAGE_VERSION = localStorage.getItem('storageVersion');
+
+// Clear localStorage if version mismatch (for updates)
+if (CURRENT_STORAGE_VERSION !== STORAGE_VERSION) {
+  console.log(`Storage version mismatch (${CURRENT_STORAGE_VERSION} vs ${STORAGE_VERSION}). Clearing localStorage...`);
+  localStorage.clear();
+  localStorage.setItem('storageVersion', STORAGE_VERSION);
+}
+
+let duetIP = localStorage.getItem('duetIP') || "192.168.1.100";
+let duetExpansionIP = localStorage.getItem('duetExpansionIP') || "192.168.1.101";
 let activeStatusURL = `http://${duetIP}/rr_model`;
 let activeCodeURL = `http://${duetIP}/rr_gcode`;
 let activeConnectURL = `http://${duetIP}/rr_connect`;
@@ -3178,6 +3188,17 @@ document.getElementById("reset-profiles").addEventListener("click", () => {
   const resetFault = window.confirm(`Reset to default heating profiles?`);
   if (resetFault) {
     resetlocalStorageSettings(); // reset to default heating profiles
+  }
+});
+
+// Clear Cache button functionality
+document.getElementById("clear-cache").addEventListener("click", () => {
+  const clearCache = window.confirm(`Clear all cache and reload? This will reset all settings to defaults.`);
+  if (clearCache) {
+    localStorage.clear();
+    sessionStorage.clear();
+    // Force reload with cache bypass
+    window.location.reload(true);
   }
 });
 // =====================================================================================================================
