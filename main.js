@@ -17,13 +17,14 @@ let selectedBarrelFan = "0";
 // let spindleRunning = false; // already declared in embedded code
 
 // Configuration for Duet connection - can be modified via UI or localStorage
-// Use static version to avoid constant git changes - update manually when needed
-const STORAGE_VERSION = 'v3.2';
+// Auto-generate version based on build timestamp for automatic cache busting
+const BUILD_TIMESTAMP = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+const STORAGE_VERSION = `v3.2-${BUILD_TIMESTAMP}`;
 const CURRENT_STORAGE_VERSION = localStorage.getItem('storageVersion');
 
-// Clear localStorage only on version change (not every load)
+// Clear localStorage only on version change (automatic on every load)
 if (CURRENT_STORAGE_VERSION !== STORAGE_VERSION) {
-  console.log(`Version change detected (${CURRENT_STORAGE_VERSION} -> ${STORAGE_VERSION}). Clearing cache...`);
+  console.log(`Auto-clearing cache for build update (${CURRENT_STORAGE_VERSION} -> ${STORAGE_VERSION})`);
   localStorage.clear();
   sessionStorage.clear();
   localStorage.setItem('storageVersion', STORAGE_VERSION);

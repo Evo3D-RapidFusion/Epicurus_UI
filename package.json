@@ -5,6 +5,7 @@
   "main": "webserver/local.js",
   "scripts": {
     "start": "node webserver/local.js",
+    "build": "node build.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
