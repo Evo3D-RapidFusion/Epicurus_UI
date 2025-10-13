@@ -1,7 +1,0 @@
-#!/bin/sh
-# Git post-commit hook to automatically update version numbers
-# Place this file in .git/hooks/post-commit and make it executable
-
-echo "Running post-commit hook..."
-node update-version.js
-echo "Version updated for cache busting"

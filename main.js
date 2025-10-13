@@ -17,13 +17,13 @@ let selectedBarrelFan = "0";
 // let spindleRunning = false; // already declared in embedded code
 
 // Configuration for Duet connection - can be modified via UI or localStorage
-// Auto-generate version based on commit hash to force cache clear on every commit
-const STORAGE_VERSION = 'dfa5127'; // Current commit hash - updated automatically
+// Use static version to avoid constant git changes - update manually when needed
+const STORAGE_VERSION = 'v3.2';
 const CURRENT_STORAGE_VERSION = localStorage.getItem('storageVersion');
 
-// Always clear localStorage on every load (for every commit/update)
+// Clear localStorage only on version change (not every load)
 if (CURRENT_STORAGE_VERSION !== STORAGE_VERSION) {
-  console.log(`Auto-clearing cache for commit update (${CURRENT_STORAGE_VERSION} -> ${STORAGE_VERSION})`);
+  console.log(`Version change detected (${CURRENT_STORAGE_VERSION} -> ${STORAGE_VERSION}). Clearing cache...`);
   localStorage.clear();
   sessionStorage.clear();
   localStorage.setItem('storageVersion', STORAGE_VERSION);

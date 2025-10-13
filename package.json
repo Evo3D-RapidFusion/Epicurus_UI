@@ -5,7 +5,6 @@
   "main": "webserver/local.js",
   "scripts": {
     "start": "node webserver/local.js",
-    "update-version": "node update-version.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
