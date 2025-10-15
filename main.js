@@ -3493,7 +3493,7 @@ function initializeDefaultHeatingProfiles() {
     {
       Material: "Airtech PETG-GF",
       Top: 85,
-      Middle: 10,
+      Middle: 100,
       Bottom: 160,
       Nozzle: 205,
       Bed: 50,
