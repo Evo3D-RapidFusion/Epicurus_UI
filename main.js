@@ -30,18 +30,20 @@ if (CURRENT_STORAGE_VERSION !== STORAGE_VERSION) {
   localStorage.setItem('storageVersion', STORAGE_VERSION);
 }
 
-let duetIP = localStorage.getItem('duetIP') || "192.168.1.100";
-let duetExpansionIP = localStorage.getItem('duetExpansionIP') || "192.168.1.101";
+let duetIP = localStorage.getItem('duetIP') || "10.10.10.100";
+// BED EXPANSION DISABLED - Only using beds 0-3
+// let duetExpansionIP = localStorage.getItem('duetExpansionIP') || "10.10.10.101";
 let activeStatusURL = `http://${duetIP}/rr_model`;
 let activeCodeURL = `http://${duetIP}/rr_gcode`;
 let activeConnectURL = `http://${duetIP}/rr_connect`;
-let expansionStatusURL = `http://${duetExpansionIP}/rr_model`;
-let expansionCodeURL = `http://${duetExpansionIP}/rr_gcode`;
-let expansionConnectURL = `http://${duetExpansionIP}/rr_connect`;
+// let expansionStatusURL = `http://${duetExpansionIP}/rr_model`;
+// let expansionCodeURL = `http://${duetExpansionIP}/rr_gcode`;
+// let expansionConnectURL = `http://${duetExpansionIP}/rr_connect`;
 
 // Session management
 let isConnected = false;
-let isExpansionConnected = false;
+// BED EXPANSION DISABLED
+// let isExpansionConnected = false;
 
 // Network configuration
 const NETWORK_TIMEOUT = 5000; // 5 seconds timeout for requests
@@ -349,6 +351,8 @@ async function parseResponse(response) {
   return data;
 }
 
+// BED EXPANSION DISABLED - Expansion controller connection function disabled
+/*
 // FUNCTION: Establish connection to expansion controller with timeout
 async function connectToExpansionRRF(password = "reprap") {
   try {
@@ -376,7 +380,10 @@ async function connectToExpansionRRF(password = "reprap") {
     throw error;
   }
 }
+*/
 
+// BED EXPANSION DISABLED - Expansion data fetching function disabled
+/*
 // FUNCTION: Enhanced async GET/POST requests to expansion controller with timeouts and retry logic
 async function fetchExpansionData(url, options = {}, retryCount = 0) {
   try {
@@ -425,6 +432,7 @@ async function fetchExpansionData(url, options = {}, retryCount = 0) {
     }
   }
 }
+*/
 
 
 
@@ -533,94 +541,55 @@ async function fetchObjectModelByKeys() {
   }
 }
 
-// FUNCTION: Fetch & update Duet Object Model via HTTP GET requests with dual-stream support
+// FUNCTION: Fetch & update Duet Object Model via HTTP GET requests (BED EXPANSION DISABLED)
 function updateObjectModel() {
   return new Promise(async (resolve, reject) => {
     try {
-      // Fetch from both controllers in parallel
-      console.log("Fetching data from both main controller and expansion controller...");
+      // BED EXPANSION DISABLED - Only fetch from main controller
+      console.log("Fetching data from main controller only (bed expansion disabled)...");
       
-      // Detect mode for main controller only (expansion uses simple heat endpoint)
+      // Detect mode for main controller
       const mainMode = await detectDuetMode();
       
-      // Fetch data from both controllers based on their modes
-      let mainDataPromise, expansionDataPromise;
+      // Fetch data from main controller only
+      let mainData;
       
       if (mainMode === 'standalone') {
-        mainDataPromise = fetchObjectModelByKeys();
+        mainData = await fetchObjectModelByKeys();
       } else {
-        mainDataPromise = fetchData(activeStatusURL);
+        mainData = await fetchData(activeStatusURL);
       }
       
-      // Expansion controller only needs heat data - always use the specific heat endpoint
-      expansionDataPromise = fetchExpansionData(`${expansionStatusURL}?key=heat&flags=vn`);
+      // BED EXPANSION DISABLED - Create empty expansion data
+      const expansionData = { 
+        key: "heat", 
+        flags: "vn", 
+        result: { 
+          heaters: [],
+          bedHeaters: [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
+        } 
+      };
+      console.log("Using empty expansion heat data (bed expansion disabled)");
       
-      // Fetch data with error handling for expansion controller
-      let mainData, expansionData;
-      try {
-        [mainData, expansionData] = await Promise.all([mainDataPromise, expansionDataPromise]);
-      } catch (error) {
-        console.warn("Error fetching from one or both controllers:", error);
-        // If expansion controller fails, still try to get main controller data
-        try {
-          mainData = await mainDataPromise;
-          console.log("Main controller data retrieved despite expansion controller error");
-        } catch (mainError) {
-          console.error("Main controller also failed:", mainError);
-          throw mainError;
-        }
-        
-        // Create empty expansion heat data if expansion controller failed
-        expansionData = { 
-          key: "heat", 
-          flags: "vn", 
-          result: { 
-            heaters: [],
-            bedHeaters: [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
-          } 
-        };
-        console.log("Using empty expansion heat data due to controller unavailability");
-      }
-      
-      console.log(`Fetched main data using ${mainMode} mode, expansion data using heat endpoint`);
+      console.log(`Fetched main data using ${mainMode} mode (bed expansion disabled)`);
 
-      // Extract data from both controllers
+      // BED EXPANSION DISABLED - Only extract data from main controller
       const mainActualData = mainData.result || mainData;
-      const expansionActualData = expansionData.result || expansionData;
       
-      // Merge heating data - combine main controller (extruders + beds 0-3) with expansion (beds 4-9)
+      // BED EXPANSION DISABLED - Only use main controller heating data
       const mainHeatData = mainActualData.heat || {};
-      // Expansion controller returns heat data directly in result, no nested heat property
-      const expansionHeatData = expansionActualData;
       
-      // Create merged heater arrays
+      // Create heater arrays with only main controller data (beds 0-3 only)
       const mergedHeaters = [...(mainHeatData.heaters || [])]; // Start with all main heaters
       const mergedBedHeaters = [...(mainHeatData.bedHeaters || [])]; // Start with main bed heaters (0-3)
       
-      // Ensure mergedBedHeaters array is properly sized (initialize empty slots for beds 4-9)
-      while (mergedBedHeaters.length < 10) {
+      // BED EXPANSION DISABLED - Only support beds 0-3, set beds 4-9 to -1
+      while (mergedBedHeaters.length < 4) {
         mergedBedHeaters.push(-1); // Initialize unused slots with -1
       }
-      
-      // Add expansion bed heaters (4-9) from heater indices 8-13
-      if (expansionHeatData.heaters && expansionHeatData.heaters.length > 8) {
-        // Expansion controller has bed heaters at indices 8-13 (mapping to beds 4-9)
-        for (let i = 8; i < Math.min(14, expansionHeatData.heaters.length); i++) {
-          const expansionHeater = expansionHeatData.heaters[i];
-          
-          // Check if this is a valid heater (not null and has properties)
-          if (expansionHeater !== null && expansionHeater !== undefined) {
-            // Add to merged heaters array (append to main heaters)
-            const mergedHeaterIndex = mergedHeaters.length;
-            mergedHeaters.push(expansionHeater);
-            
-            // Map expansion heater index 8-13 to bed positions 4-9
-            const bedHeaterIndex = i - 4; // 8->4, 9->5, 10->6, 11->7, 12->8, 13->9
-            if (bedHeaterIndex < 10) { // Maximum 10 bed heaters supported
-              mergedBedHeaters[bedHeaterIndex] = mergedHeaterIndex;
-            }
-          }
-        }
+      // Ensure beds 4-9 are disabled
+      for (let i = 4; i < 10; i++) {
+        mergedBedHeaters[i] = -1;
       }
       
       
@@ -772,42 +741,17 @@ function updateObjectModel() {
         }
       });
 
-      // Detect and show expansion bed heaters (4-9)
-      const expansionConfiguredBedHeaters = configuredBedHeaters.slice(4, 10); // Beds 4-9 (includes bed9)
-      
-      expansionConfiguredBedHeaters.forEach((bedHeaterIndex, arrayIndex) => {
-        if (bedHeaterIndex !== -1) { // If heater is configured
-          const bedIndex = arrayIndex + 4; // Convert to actual bed index (4-9)
-          
-          // Show bed elements
-          document
-            .querySelectorAll(`.bed${bedIndex}`)
-            .forEach((element) => (element.style.visibility = "visible"));
-            
-          // Show bed temperature popup tab
-          const tabElement = document.querySelectorAll(`.temp-tab-link.heater`)[bedIndex + 4]; // Bed tab indices start at 8
-          if (tabElement) {
-            tabElement.style.display = "flex";
-          }
-        }
-      });
-
-      // Hide expansion beds that are NOT detected (beds 4-9)
+      // BED EXPANSION DISABLED - Hide all expansion bed heaters (4-9)
       for (let bedIndex = 4; bedIndex < 10; bedIndex++) {
-        const arrayIndex = bedIndex - 4; // Convert bed index to array index
-        const bedHeaterIndex = expansionConfiguredBedHeaters[arrayIndex];
-        
-        if (bedHeaterIndex === -1 || bedHeaterIndex === undefined) {
-          // Hide bed elements if not configured
-          document
-            .querySelectorAll(`.bed${bedIndex}`)
-            .forEach((element) => (element.style.visibility = "hidden"));
-            
-          // Hide bed temperature popup tab
-          const tabElement = document.querySelectorAll(`.temp-tab-link.heater`)[bedIndex + 4];
-          if (tabElement) {
-            tabElement.style.display = "none";
-          }
+        // Hide bed elements
+        document
+          .querySelectorAll(`.bed${bedIndex}`)
+          .forEach((element) => (element.style.visibility = "hidden"));
+          
+        // Hide bed temperature popup tab
+        const tabElement = document.querySelectorAll(`.temp-tab-link.heater`)[bedIndex + 4];
+        if (tabElement) {
+          tabElement.style.display = "none";
         }
       }
 
@@ -1106,7 +1050,8 @@ function updateObjectModel() {
             console.log(`User chose to reset faults for heaters ${heaterList}`);
             sendGcode(`M292`); // Clear all messages first
             sendGcode("M562"); // Reset all heater faults on main controller
-            sendExpansionGcode("M562"); // Reset all heater faults on expansion controller
+            // BED EXPANSION DISABLED
+            // sendExpansionGcode("M562"); // Reset all heater faults on expansion controller
             
             // Mark all pending heaters as handled
             pendingFaultHeaters.forEach((heaterNumber) => {
@@ -1692,6 +1637,8 @@ async function sendGcode(gcode) {
   }
 }
 
+// BED EXPANSION DISABLED - Expansion G-code function disabled
+/*
 // Function to send individual G-code command to expansion controller with retry logic
 async function sendExpansionGcode(gcode) {
   while (true) {
@@ -1720,6 +1667,7 @@ async function sendExpansionGcode(gcode) {
     }
   }
 }
+*/
 
 // Start the continuous polling process
 pollServerAndSendOnceOnStateChange();
@@ -1941,6 +1889,7 @@ window.epicurusDebug = {
 
 // FUNCTION: Toggle heater states with dual-controller support
 function toggleHeaterStates(heaterState, heaterIndex) {
+  // BED EXPANSION DISABLED - Only include beds 0-3
   let heaterType = [
     "top",
     "middle",
@@ -1949,13 +1898,7 @@ function toggleHeaterStates(heaterState, heaterIndex) {
     "bed0",
     "bed1",
     "bed2",
-    "bed3",
-    "bed4",
-    "bed5",
-    "bed6",
-    "bed7",
-    "bed8",
-    "bed9"
+    "bed3"
   ];
   
   // Normalize state to uppercase and handle Duet terminology
@@ -1968,12 +1911,12 @@ function toggleHeaterStates(heaterState, heaterIndex) {
   let sendFunction = sendGcode;
   let targetHeaterIndex = heaterIndex;
   
-  // Route bed heaters 8-13 (bed4-bed9) to expansion controller
-  if (heaterIndex >= 8 && heaterIndex <= 13) {
-    sendFunction = sendExpansionGcode;
-    targetHeaterIndex = heaterIndex; // Use direct P8-P13 addressing on expansion controller
-    console.log(`Routing heater ${heaterIndex} (${heaterType[heaterIndex] || `bed${heaterIndex-4}`}) to expansion controller as heater P${targetHeaterIndex}`);
-  }
+  // BED EXPANSION DISABLED - No routing to expansion controller
+  // if (heaterIndex >= 8 && heaterIndex <= 13) {
+  //   sendFunction = sendExpansionGcode;
+  //   targetHeaterIndex = heaterIndex; // Use direct P8-P13 addressing on expansion controller
+  //   console.log(`Routing heater ${heaterIndex} (${heaterType[heaterIndex] || `bed${heaterIndex-4}`}) to expansion controller as heater P${targetHeaterIndex}`);
+  // }
   
   let setTemp = "";
   
@@ -2041,7 +1984,8 @@ function configureHeaters(mode, configuredExtruderHeaters) {
 function configureBedHeaters(mode, configuredBedHeaters) {
   let mainGcodeString = "";
   let expansionGcodeString = "";
-  let heaterType = ["bed0", "bed1", "bed2", "bed3", "bed4", "bed5", "bed6", "bed7", "bed8", "bed9"];
+  // BED EXPANSION DISABLED - Only include beds 0-3
+  let heaterType = ["bed0", "bed1", "bed2", "bed3"];
   
   configuredBedHeaters.forEach((heater, index) => {
     const heaterElement = document.getElementById(`user-input-preheat-${heaterType[index]}`);
@@ -2072,10 +2016,11 @@ function configureBedHeaters(mode, configuredBedHeaters) {
     sendGcode(mainGcodeString);
   }
   
-  if (expansionGcodeString.trim()) {
-    console.log(`Sending bed heater commands to expansion controller: ${expansionGcodeString.trim()}`);
-    sendExpansionGcode(expansionGcodeString);
-  }
+  // BED EXPANSION DISABLED
+  // if (expansionGcodeString.trim()) {
+  //   console.log(`Sending bed heater commands to expansion controller: ${expansionGcodeString.trim()}`);
+  //   sendExpansionGcode(expansionGcodeString);
+  // }
 }
 // =====================================================================================================================
 
@@ -2091,13 +2036,7 @@ function saveSettings() {
     "bed0",
     "bed1",
     "bed2",
-    "bed3",
-    "bed4",
-    "bed5",
-    "bed6",
-    "bed7",
-    "bed8",
-    "bed9",
+    "bed3"
   ];
 
   const settings = categories.reduce((acc, category) => {
@@ -2364,7 +2303,8 @@ function showResetAllHeaterFaultsPopup() {
   if (popup) {
     console.log("User confirmed reset of all heater faults");
     sendGcode("M562"); // Reset all heater faults on main controller
-    sendExpansionGcode("M562"); // Reset all heater faults on expansion controller
+    // BED EXPANSION DISABLED
+    // sendExpansionGcode("M562"); // Reset all heater faults on expansion controller
     
     // Suspend fault detection to prevent duplicate popups after reset
     suspendFaultDetection("Reset all heater faults command");
@@ -2463,7 +2403,8 @@ buttonIds.forEach((buttonId) => {
         sendGcode("M568 P4 S0 R0 A0 M568 P5 S0 R0 A0 M568 P6 S0 R0 A0 M568 P7 S0 R0 A0");
         
         // Expansion controller: Turn off bed heaters P8-P13 (beds 4-9)
-        sendExpansionGcode("M568 P8 S0 R0 A0 M568 P9 S0 R0 A0 M568 P10 S0 R0 A0 M568 P11 S0 R0 A0 M568 P12 S0 R0 A0 M568 P13 S0 R0 A0");
+        // BED EXPANSION DISABLED
+        // sendExpansionGcode("M568 P8 S0 R0 A0 M568 P9 S0 R0 A0 M568 P10 S0 R0 A0 M568 P11 S0 R0 A0 M568 P12 S0 R0 A0 M568 P13 S0 R0 A0");
         break;
       case "preheat-bed":
         // Use the existing configureBedHeaters function which already handles dual-controller routing
@@ -2474,7 +2415,8 @@ buttonIds.forEach((buttonId) => {
         break;
       case "emergency-stop":
         sendGcode("M112");
-        sendExpansionGcode("M112");
+        // BED EXPANSION DISABLED
+        // sendExpansionGcode("M112");
         break;
       case "part-cooling-on":
       case "part-cooling-on-icon":
@@ -2490,7 +2432,8 @@ buttonIds.forEach((buttonId) => {
         break;
       case "reset-machine":
         sendGcode("M999");
-        sendExpansionGcode("M999");
+        // BED EXPANSION DISABLED
+        // sendExpansionGcode("M999");
         break;
       case "confirmYes":
         if (spindleRunning == true) {
@@ -2708,7 +2651,8 @@ buttonIds.forEach((buttonId) => {
         const restartFirmware = window.confirm(`⚠️ WARNING: RESTART FIRMWARE ⚠️\n\nConfirming will RESET ALL Extruder Heater & Bed temperatures to OFF.\n\nAll heating processes will be stopped immediately.\n\nAre you sure you want to proceed?`);
         if (restartFirmware) {
           sendGcode('M999');
-          sendExpansionGcode('M999');
+          // BED EXPANSION DISABLED
+          // sendExpansionGcode('M999');
           location.reload();
         }
         break;
@@ -2917,42 +2861,43 @@ function setTemp(tabpane, buttonIndex) {
           document.getElementById("user-input-preheat-bed3"),
           "P7",
         ];
-      case ".tab-pane-bed4":
-        return [
-          document.getElementById("user-input-active-bed4"),
-          document.getElementById("user-input-preheat-bed4"),
-          "P8",
-        ];
-      case ".tab-pane-bed5":
-        return [
-          document.getElementById("user-input-active-bed5"),
-          document.getElementById("user-input-preheat-bed5"),
-          "P9",
-        ];
-      case ".tab-pane-bed6":
-        return [
-          document.getElementById("user-input-active-bed6"),
-          document.getElementById("user-input-preheat-bed6"),
-          "P10",
-        ];
-      case ".tab-pane-bed7":
-        return [
-          document.getElementById("user-input-active-bed7"),
-          document.getElementById("user-input-preheat-bed7"),
-          "P11",
-        ];
-      case ".tab-pane-bed8":
-        return [
-          document.getElementById("user-input-active-bed8"),
-          document.getElementById("user-input-preheat-bed8"),
-          "P12",
-        ];
-      case ".tab-pane-bed9":
-        return [
-          document.getElementById("user-input-active-bed9"),
-          document.getElementById("user-input-preheat-bed9"),
-          "P13",
-        ];
+      // BED EXPANSION DISABLED - Expansion bed tabs removed
+      // case ".tab-pane-bed4":
+      //   return [
+      //     document.getElementById("user-input-active-bed4"),
+      //     document.getElementById("user-input-preheat-bed4"),
+      //     "P8",
+      //   ];
+      // case ".tab-pane-bed5":
+      //   return [
+      //     document.getElementById("user-input-active-bed5"),
+      //     document.getElementById("user-input-preheat-bed5"),
+      //     "P9",
+      //   ];
+      // case ".tab-pane-bed6":
+      //   return [
+      //     document.getElementById("user-input-active-bed6"),
+      //     document.getElementById("user-input-preheat-bed6"),
+      //     "P10",
+      //   ];
+      // case ".tab-pane-bed7":
+      //   return [
+      //     document.getElementById("user-input-active-bed7"),
+      //     document.getElementById("user-input-preheat-bed7"),
+      //     "P11",
+      //   ];
+      // case ".tab-pane-bed8":
+      //   return [
+      //     document.getElementById("user-input-active-bed8"),
+      //     document.getElementById("user-input-preheat-bed8"),
+      //     "P12",
+      //   ];
+      // case ".tab-pane-bed9":
+      //   return [
+      //     document.getElementById("user-input-active-bed9"),
+      //     document.getElementById("user-input-preheat-bed9"),
+      //     "P13",
+      //   ];
     }
   })();
 
@@ -2960,12 +2905,12 @@ function setTemp(tabpane, buttonIndex) {
   let sendFunction = sendGcode;
   let targetHeater = heater;
   
-  // Route bed heaters P8-P13 (bed4-bed9) to expansion controller with direct addressing
-  if (heater >= "P8" && heater <= "P13") {
-    sendFunction = sendExpansionGcode;
-    targetHeater = heater; // Use direct P8-P13 addressing on expansion controller
-    console.log(`Routing ${heater} to expansion controller as ${targetHeater}`);
-  }
+  // BED EXPANSION DISABLED - No routing to expansion controller
+  // if (heater >= "P8" && heater <= "P13") {
+  //   sendFunction = sendExpansionGcode;
+  //   targetHeater = heater; // Use direct P8-P13 addressing on expansion controller
+  //   console.log(`Routing ${heater} to expansion controller as ${targetHeater}`);
+  // }
 
   switch (buttonIndex) {
     case 0: // active
@@ -2996,13 +2941,14 @@ function setTemp(tabpane, buttonIndex) {
   ".tab-pane-bed0",
   ".tab-pane-bed1",
   ".tab-pane-bed2",
-  ".tab-pane-bed3",
-  ".tab-pane-bed4",
-  ".tab-pane-bed5",
-  ".tab-pane-bed6",
-  ".tab-pane-bed7",
-  ".tab-pane-bed8",
-  ".tab-pane-bed9",
+  ".tab-pane-bed3"
+  // BED EXPANSION DISABLED - Expansion bed tabs removed
+  // ".tab-pane-bed4",
+  // ".tab-pane-bed5",
+  // ".tab-pane-bed6",
+  // ".tab-pane-bed7",
+  // ".tab-pane-bed8",
+  // ".tab-pane-bed9",
 ].forEach((tabpane) => {
   document
     .querySelectorAll(`${tabpane} .number-container`)
@@ -3159,10 +3105,11 @@ document
         sendGcode(mainGcodeString);
       }
       
-      if (expansionGcodeString.trim()) {
-        console.log(`Heating profile: Sending bed commands to expansion controller: ${expansionGcodeString.trim()}`);
-        sendExpansionGcode(expansionGcodeString);
-      }
+      // BED EXPANSION DISABLED
+      // if (expansionGcodeString.trim()) {
+      //   console.log(`Heating profile: Sending bed commands to expansion controller: ${expansionGcodeString.trim()}`);
+      //   sendExpansionGcode(expansionGcodeString);
+      // }
 
       saveSettings();
       document.getElementById("default-tab").click();
