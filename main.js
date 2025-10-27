@@ -1142,27 +1142,36 @@ function updateObjectModel() {
       }
 
       // CNC Spindle Speed Live Control
-      if (spindleRunning === true && globalData.EstopFault === false) {
-        document.getElementById(
-          "radial-gradient-background-cnc-white"
-        ).style.display = "none";
-        document.getElementById(
-          "radial-gradient-background-cnc-red"
-        ).style.display = "inline-block";
-        // Warning On
-        document.getElementById("cnc-running-icon").style.display = "flex";
-
-        // Update Spindle RPM from Duet Object Model
-        // document.getElementById("speedSlider").value = cncSpindle.current;
-        // updateSliderBackground();
-        // spindleSpeed = cncSpindle.current;
-
+      // MODIFIED: Always send speed commands (as if constantly running)
+      if (globalData.EstopFault === false) {
+        // Always send speed updates when no e-stop fault
         updatedSpindleSpeed = document.getElementById("speedValue").textContent;
         sendGcode(`M3 P0 S${spindleSpeed}`); // run spindle clockwise at slider rpm
         spindleSpeed = updatedSpindleSpeed;
-        spindleOff == false;
+        spindleOff = false;
 
+        // Visual indicators for actual running state
+        if (spindleRunning === true) {
+          document.getElementById(
+            "radial-gradient-background-cnc-white"
+          ).style.display = "none";
+          document.getElementById(
+            "radial-gradient-background-cnc-red"
+          ).style.display = "inline-block";
+          // Warning On
+          document.getElementById("cnc-running-icon").style.display = "flex";
+        } else {
+          document.getElementById(
+            "radial-gradient-background-cnc-red"
+          ).style.display = "none";
+          document.getElementById(
+            "radial-gradient-background-cnc-white"
+          ).style.display = "inline-block";
+          // Warning Off
+          document.getElementById("cnc-running-icon").style.display = "none";
+        }
       } else {
+        // Only stop on e-stop fault
         document.getElementById(
           "radial-gradient-background-cnc-red"
         ).style.display = "none";
@@ -1173,7 +1182,7 @@ function updateObjectModel() {
         document.getElementById("cnc-running-icon").style.display = "none";
         if (spindleOff == false) {
           sendGcode(`M5`);
-          spindleOff == true;
+          spindleOff = true;
         }
       }
 
@@ -1245,10 +1254,11 @@ function updateObjectModel() {
                 <rect x="5" y="0" width="4" height="18"></rect>
                 <rect x="15" y="0" width="4" height="18"></rect>
             </svg> Not Ready`;
-          document.getElementById("startSpindle").style.pointerEvents = "none";
-          document.getElementById("unlockButtonContainer").style.pointerEvents = "none";
-          document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
-          document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
+          // REMOVED: Tool detection constraints - slider can now be unlocked freely
+          // document.getElementById("startSpindle").style.pointerEvents = "none";
+          // document.getElementById("unlockButtonContainer").style.pointerEvents = "none";
+          // document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
+          // document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
           break;
           
         case "CNC":
@@ -1268,26 +1278,13 @@ function updateObjectModel() {
           document.getElementById("extruder-state-container").style.pointerEvents = "none";
           // document.getElementById("cnc-state-container").style.pointerEvents = "auto"; // DISABLED: Allow free CNC toggle
 
-          document.getElementById("startSpindle").style.pointerEvents = "auto";
-          document.getElementById("unlockButtonContainer").style.pointerEvents = "auto";
+          // REMOVED: Tool detection constraints - slider can now be unlocked freely
+          // document.getElementById("startSpindle").style.pointerEvents = "auto";
+          // document.getElementById("unlockButtonContainer").style.pointerEvents = "auto";
 
-          document.querySelector(".start-text").textContent = "▶ Start Spindle";
-          if (globalData.EstopFault === false && globalData.CNCFault === false) {
-            if (spindleRunning == false) {
-              document.getElementById("indicatorText").textContent = "Spindle is Ready";
-              document.getElementById("indicatorLight").style.backgroundColor = "Green";
-              // Stop Spindle is handled in .stop-text class which is hidden by default
-            } else {
-              document.getElementById("indicatorText").textContent = "Caution: Spindle is Running";
-              document.getElementById("indicatorLight").style.backgroundColor = "Red";
-            }
-          } else {
-              document.getElementById("stopSpindle").click();
-              document.getElementById("confirmYes").click();
-              document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
-              document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
-              resetCNCUI();
-          }
+          // System permanently in "ready & running" state
+          document.getElementById("indicatorText").textContent = "Spindle is Ready";
+          document.getElementById("indicatorLight").style.backgroundColor = "Green";
           break;
       
         case "No Tool":
@@ -1308,15 +1305,11 @@ function updateObjectModel() {
           // document.getElementById("cnc-state-container").style.pointerEvents = "none"; // DISABLED: Allow free CNC toggle
 
           resetCNCUI();
-          document.querySelector(".start-text").innerHTML = `
-            <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" fill="#a74e9e" viewBox="0 0 24 24" style="vertical-align: middle;">
-                <rect x="5" y="0" width="4" height="18"></rect>
-                <rect x="15" y="0" width="4" height="18"></rect>
-            </svg> Not Ready`;
-          document.getElementById("startSpindle").style.pointerEvents = "none";
-          document.getElementById("unlockButtonContainer").style.pointerEvents = "none";
-          document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
-          document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
+          // REMOVED: Tool detection constraints - slider can now be unlocked freely
+          // document.getElementById("startSpindle").style.pointerEvents = "none";
+          // document.getElementById("unlockButtonContainer").style.pointerEvents = "none";
+          // document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
+          // document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
           break;
 
         case "Open Circuit":
@@ -1337,15 +1330,11 @@ function updateObjectModel() {
           // document.getElementById("cnc-state-container").style.pointerEvents = "none"; // DISABLED: Allow free CNC toggle
 
           resetCNCUI();
-          document.querySelector(".start-text").innerHTML = `
-            <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" fill="#a74e9e" viewBox="0 0 24 24" style="vertical-align: middle;">
-                <rect x="5" y="0" width="4" height="18"></rect>
-                <rect x="15" y="0" width="4" height="18"></rect>
-            </svg> Not Ready`;
-          document.getElementById("startSpindle").style.pointerEvents = "none";
-          document.getElementById("unlockButtonContainer").style.pointerEvents = "none";
-          document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
-          document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
+          // REMOVED: Tool detection constraints - slider can now be unlocked freely
+          // document.getElementById("startSpindle").style.pointerEvents = "none";
+          // document.getElementById("unlockButtonContainer").style.pointerEvents = "none";
+          // document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
+          // document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
           break;
 
         case "Short Circuit":
@@ -1366,15 +1355,11 @@ function updateObjectModel() {
           // document.getElementById("cnc-state-container").style.pointerEvents = "none"; // DISABLED: Allow free CNC toggle
 
           resetCNCUI();
-          document.querySelector(".start-text").innerHTML = `
-            <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" fill="#a74e9e" viewBox="0 0 24 24" style="vertical-align: middle;">
-                <rect x="5" y="0" width="4" height="18"></rect>
-                <rect x="15" y="0" width="4" height="18"></rect>
-            </svg> Not Ready`;
-          document.getElementById("startSpindle").style.pointerEvents = "none";
-          document.getElementById("unlockButtonContainer").style.pointerEvents = "none";
-          document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
-          document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
+          // REMOVED: Tool detection constraints - slider can now be unlocked freely
+          // document.getElementById("startSpindle").style.pointerEvents = "none";
+          // document.getElementById("unlockButtonContainer").style.pointerEvents = "none";
+          // document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
+          // document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
           break;
       
         default:
@@ -1401,15 +1386,11 @@ function updateObjectModel() {
           }
 
           resetCNCUI();
-          document.querySelector(".start-text").innerHTML = `
-            <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" fill="#a74e9e" viewBox="0 0 24 24" style="vertical-align: middle;">
-                <rect x="5" y="0" width="4" height="18"></rect>
-                <rect x="15" y="0" width="4" height="18"></rect>
-            </svg> Not Ready`;
-          document.getElementById("startSpindle").style.pointerEvents = "none";
-          document.getElementById("unlockButtonContainer").style.pointerEvents = "none";
-          document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
-          document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
+          // REMOVED: Tool detection constraints - slider can now be unlocked freely
+          // document.getElementById("startSpindle").style.pointerEvents = "none";
+          // document.getElementById("unlockButtonContainer").style.pointerEvents = "none";
+          // document.getElementById("indicatorText").textContent = "Spindle is Not Ready";
+          // document.getElementById("indicatorLight").style.backgroundColor = "Yellow";
           break;
       }    
       
@@ -2240,6 +2221,17 @@ document.addEventListener("DOMContentLoaded", function () {
   loadTempsOnEdit();
 
   sendGcode(`M5`);
+  
+  // Hide spindle controls
+  document.getElementById("spindleControlTitle").style.display = "none";
+  document.getElementById("controlButtonsContainer").style.display = "none";
+  
+  // Keep unlock button always enabled (no tool detection constraints)
+  document.getElementById("unlockButtonContainer").style.pointerEvents = "auto";
+  
+  // System permanently in "ready" state
+  document.getElementById("indicatorText").textContent = "Spindle is Ready";
+  document.getElementById("indicatorLight").style.backgroundColor = "Green";
 });
 
 // Set software version
