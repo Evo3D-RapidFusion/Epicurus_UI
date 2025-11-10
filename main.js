@@ -2337,25 +2337,88 @@ function resetCNCUI() {
   spindleOff = true; // Set spindleOff to true
 }
 
+// Function to restore system family state directly (bypasses Webflow tab click issues)
+function restoreSystemFamilyState() {
+  const systemFamilyState = localStorage.getItem("systemFamily");
+  if (!systemFamilyState) {
+    return false; // No saved state
+  }
+  
+  // Get the button element
+  const systemFamilyButtonId = systemFamilyState === "apollo" ? "system-apollo" :
+                                systemFamilyState === "zeus" ? "system-zeus" : "system-pe320";
+  
+  const button = document.getElementById(systemFamilyButtonId);
+  if (!button) {
+    console.warn(`System family button ${systemFamilyButtonId} not found`);
+    return false;
+  }
+
+  // Manually update Webflow tab classes first to ensure proper visual state
+  // Remove w--current from all system family buttons
+  document.querySelectorAll('.product-family .w-tab-link').forEach(link => {
+    link.classList.remove('w--current');
+  });
+  
+  // Add w--current to the selected button
+  button.classList.add('w--current');
+
+  // Also update the corresponding tab pane
+  const tabPanes = document.querySelectorAll('.product-family .w-tab-pane');
+  tabPanes.forEach(pane => {
+    pane.classList.remove('w--tab-active');
+  });
+  
+  const targetTabName = systemFamilyState === "apollo" ? "Apollo" :
+                        systemFamilyState === "zeus" ? "Zeus" : "PE320";
+  const targetPane = Array.from(tabPanes).find(pane => 
+    pane.getAttribute('data-w-tab') === targetTabName
+  );
+  if (targetPane) {
+    targetPane.classList.add('w--tab-active');
+  }
+
+  // Now trigger the button click to execute the handler logic
+  // Use both click() and dispatchEvent to ensure it fires
+  try {
+    // Create and dispatch a click event
+    const clickEvent = new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      view: window
+    });
+    button.dispatchEvent(clickEvent);
+    
+    // Also try the native click method
+    button.click();
+  } catch (e) {
+    console.warn(`Error triggering system family button:`, e);
+    return false;
+  }
+
+  return true;
+}
+
 // Developer Options Toggle
 // Check saved state from local storage on load and initialize
 window.addEventListener("load", () => {
-  // Restore system family FIRST, as it controls which UI elements are available
-  // The system family button handlers will restore dependent states (cncState, aisyncState, toolDetectionState)
-  const systemFamilyState = localStorage.getItem("systemFamily");
-  switch (systemFamilyState) {
-    case "apollo":
-      document.getElementById("system-apollo").click();
-      break;
-    case "zeus":
-      document.getElementById("system-zeus").click();
-      break;
-    default: // pe320 as default
-      document.getElementById("system-pe320").click();
-  }
+  // Use requestAnimationFrame + setTimeout to ensure all event listeners and DOM elements are fully initialized
+  // This is especially important after firmware restart when location.reload() is called
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      // Restore system family FIRST, as it controls which UI elements are available
+      // The system family button handlers will restore dependent states (cncState, aisyncState, toolDetectionState)
+      if (!restoreSystemFamilyState()) {
+        // Retry after a longer delay if button not found
+        setTimeout(() => {
+          restoreSystemFamilyState();
+        }, 200);
+      }
 
-  // Note: cncState, aisyncState, and toolDetectionState are restored by the system family button handlers above
-  // No need for separate restoration here as the button click handlers check localStorage and restore all dependent states
+      // Note: cncState, aisyncState, and toolDetectionState are restored by the system family button handlers above
+      // No need for separate restoration here as the button click handlers check localStorage and restore all dependent states
+    }, 100); // Increased delay to ensure Webflow tabs are initialized
+  });
 
   // const partCoolingState = localStorage.getItem("partCoolingState");
   // switch (partCoolingState) {
