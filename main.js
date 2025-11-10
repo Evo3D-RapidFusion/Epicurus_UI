@@ -1282,9 +1282,7 @@ function updateObjectModel() {
           // document.getElementById("startSpindle").style.pointerEvents = "auto";
           // document.getElementById("unlockButtonContainer").style.pointerEvents = "auto";
 
-          // System permanently in "ready & running" state
-          document.getElementById("indicatorText").textContent = "Spindle is Ready";
-          document.getElementById("indicatorLight").style.backgroundColor = "Green";
+          // Spindle controls hidden - controlled externally
           break;
       
         case "No Tool":
@@ -2222,16 +2220,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   sendGcode(`M5`);
   
-  // Hide spindle controls
+  // Hide spindle controls (controlled externally)
   document.getElementById("spindleControlTitle").style.display = "none";
   document.getElementById("controlButtonsContainer").style.display = "none";
+  document.getElementById("spindleIndicator").style.display = "none";
   
   // Keep unlock button always enabled (no tool detection constraints)
   document.getElementById("unlockButtonContainer").style.pointerEvents = "auto";
-  
-  // System permanently in "ready" state
-  document.getElementById("indicatorText").textContent = "Spindle is Ready";
-  document.getElementById("indicatorLight").style.backgroundColor = "Green";
 });
 
 // Set software version

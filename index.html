@@ -2430,39 +2430,15 @@
   slider.addEventListener('input', updateSliderBackground);
   updateSliderBackground();
   function updateSpindleState(running) {
+    // Spindle controls hidden - controlled externally
+    // This function kept for compatibility but indicators are hidden
     if (running) {
       spindleRunning = true;
-      stopButton.style.display = 'block';
-      startButton.style.display = 'none';
-      controlButtonsContainer.style.justifyContent = 'center';
-      stopButton.style.backgroundColor = 'white';
-      stopButton.style.color = '#75366f';
-      // Lock the slider and set the title to reflect that
-      slider.disabled = true;
-      speedControlTitle.textContent = 'Speed Control Locked';
-      indicatorText.textContent = 'Caution: Spindle is Running';
-      indicatorLight.style.backgroundColor = 'red';
-      // Ensure slider is locked when spindle is running
-      sliderUnlocked = false;
-      updateLockIcon(); // Ensure the lock icon reflects this change
       // Remove the 'grayed-out' class when spindle is running
       speedValueDisplay.classList.remove('grayed-out');
       document.querySelector('.rpm-label').classList.remove('grayed-out'); // Remove class from RPM text
     } else {
       spindleRunning = false;
-      stopButton.style.display = 'none';
-      startButton.style.display = 'block';
-      controlButtonsContainer.style.justifyContent = 'center';
-      startButton.style.backgroundColor = 'white';
-      startButton.style.color = '#75366f';
-      // Reset state: Lock the slider initially when spindle is stopped
-      slider.disabled = true;
-      speedControlTitle.textContent = 'Speed Control Locked';
-      indicatorText.textContent = 'Spindle is Ready';
-      indicatorLight.style.backgroundColor = 'green';
-      // Ensure the slider is considered "locked" after spindle is stopped
-      sliderUnlocked = false;
-      updateLockIcon(); // Ensure the lock icon reflects this change
       // Add the 'grayed-out' class when spindle is ready (not running)
       speedValueDisplay.classList.add('grayed-out');
       document.querySelector('.rpm-label').classList.add('grayed-out'); // Add class to RPM text
