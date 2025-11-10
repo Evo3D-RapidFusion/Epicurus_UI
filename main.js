@@ -498,7 +498,7 @@ async function fetchObjectModelByKeys() {
       fetchData(`${activeStatusURL}?key=state&flags=vn`),
       fetchData(`${activeStatusURL}?key=boards&flags=vn`),
       fetchData(`${activeStatusURL}?key=fans&flags=vn`),
-      fetchData(`${activeStatusURL}?key=spindles&flags=vn`)
+      fetchData(`${activeStatusURL}?key=spindles`) // Removed flags for spindles
     ];
     
     const [heatResponse, globalResponse, stateResponse, boardsResponse, fansResponse, spindlesResponse] = 
@@ -1146,13 +1146,18 @@ function updateObjectModel() {
       // CNC Spindle Speed Live Control
       // Send speed commands when speed changes
       if (globalData.EstopFault === false) {
-        // Read current speed from slider
-        updatedSpindleSpeed = document.getElementById("speedValue").textContent;
+        // Read current speed from slider (ensure it's a number)
+        updatedSpindleSpeed = document.getElementById("speedValue").textContent.trim();
+        const speedNum = parseInt(updatedSpindleSpeed, 10);
+        
         // Only send command if speed has changed
-        if (spindleSpeed !== updatedSpindleSpeed) {
-          sendGcode(`M3 P0 S${updatedSpindleSpeed}`); // run spindle clockwise at slider rpm
+        if (spindleSpeed !== updatedSpindleSpeed && !isNaN(speedNum) && speedNum > 0) {
+          // Send M3 command to set spindle speed (M3 P0 S{value} sets speed for spindle 0)
+          const command = `M3 P0 S${speedNum}`;
+          console.log(`Sending spindle speed command: ${command}`);
+          sendGcode(command);
           spindleSpeed = updatedSpindleSpeed;
-          console.log(`Spindle speed updated to: ${updatedSpindleSpeed} RPM`);
+          console.log(`Spindle speed updated to: ${speedNum} RPM`);
         }
         spindleOff = false;
 
