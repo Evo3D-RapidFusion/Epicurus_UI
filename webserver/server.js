@@ -3,6 +3,8 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = 8080;
+const DUET_IP = process.env.DUET_IP || '192.168.1.100';
+const DUET_EXPANSION_IP = process.env.DUET_EXPANSION_IP || '192.168.1.101';
 const CONTENT_TYPES = {
   '.html': 'text/html',
   '.css': 'text/css',
@@ -20,6 +22,52 @@ const CONTENT_TYPES = {
   '.txt': 'text/plain'
 };
 
+// Proxy function to forward requests to Duet board
+function proxyToDuet(req, res, targetIP) {
+  const options = {
+    hostname: targetIP,
+    port: 80,
+    path: req.url,
+    method: req.method,
+    headers: {
+      ...req.headers,
+      host: targetIP
+    }
+  };
+
+  // Remove host header to avoid issues
+  delete options.headers.host;
+
+  const proxyReq = http.request(options, (proxyRes) => {
+    // Set CORS headers
+    const headers = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    };
+    
+    // Copy content-type from response if present
+    if (proxyRes.headers['content-type']) {
+      headers['Content-Type'] = proxyRes.headers['content-type'];
+    }
+    
+    res.writeHead(proxyRes.statusCode, headers);
+    proxyRes.pipe(res);
+  });
+
+  proxyReq.on('error', (error) => {
+    console.error(`Proxy error to ${targetIP}: ${error.message}`);
+    res.writeHead(502, { 
+      'Content-Type': 'text/plain',
+      'Access-Control-Allow-Origin': '*'
+    });
+    res.end(`Bad Gateway: Unable to connect to Duet board at ${targetIP}`);
+  });
+
+  // Forward request body for POST requests
+  req.pipe(proxyReq);
+}
+
 const server = http.createServer((req, res) => {
   console.log(`Request: ${req.method} ${req.url}`);
   
@@ -32,6 +80,21 @@ const server = http.createServer((req, res) => {
       'Access-Control-Max-Age': '86400'
     });
     res.end();
+    return;
+  }
+  
+  // Proxy requests to Duet board (main controller)
+  if (req.url.startsWith('/rr_model') || req.url.startsWith('/rr_gcode') || req.url.startsWith('/rr_connect')) {
+    proxyToDuet(req, res, DUET_IP);
+    return;
+  }
+  
+  // Proxy requests to expansion controller
+  if (req.url.startsWith('/expansion/rr_model') || req.url.startsWith('/expansion/rr_gcode') || req.url.startsWith('/expansion/rr_connect')) {
+    const expansionUrl = req.url.replace('/expansion', '');
+    const modifiedReq = Object.create(req);
+    modifiedReq.url = expansionUrl;
+    proxyToDuet(modifiedReq, res, DUET_EXPANSION_IP);
     return;
   }
   

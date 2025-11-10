@@ -32,12 +32,13 @@ if (CURRENT_STORAGE_VERSION !== STORAGE_VERSION) {
 
 let duetIP = localStorage.getItem('duetIP') || "192.168.1.100";
 let duetExpansionIP = localStorage.getItem('duetExpansionIP') || "192.168.1.101";
-let activeStatusURL = `http://${duetIP}/rr_model`;
-let activeCodeURL = `http://${duetIP}/rr_gcode`;
-let activeConnectURL = `http://${duetIP}/rr_connect`;
-let expansionStatusURL = `http://${duetExpansionIP}/rr_model`;
-let expansionCodeURL = `http://${duetExpansionIP}/rr_gcode`;
-let expansionConnectURL = `http://${duetExpansionIP}/rr_connect`;
+// Use relative URLs to go through proxy (avoids CORS issues)
+let activeStatusURL = `/rr_model`;
+let activeCodeURL = `/rr_gcode`;
+let activeConnectURL = `/rr_connect`;
+let expansionStatusURL = `/expansion/rr_model`;
+let expansionCodeURL = `/expansion/rr_gcode`;
+let expansionConnectURL = `/expansion/rr_connect`;
 
 // Session management
 let isConnected = false;
@@ -109,9 +110,10 @@ function updateDuetIP(newIP) {
   localStorage.setItem('duetIP', newIP);
   
   // Update all URLs
-  activeStatusURL = `http://${duetIP}/rr_model`;
-  activeCodeURL = `http://${duetIP}/rr_gcode`;
-  activeConnectURL = `http://${duetIP}/rr_connect`;
+  // URLs use proxy, IP is stored for reference only
+  activeStatusURL = `/rr_model`;
+  activeCodeURL = `/rr_gcode`;
+  activeConnectURL = `/rr_connect`;
   
   // Reset connection state
   isConnected = false;
@@ -1142,12 +1144,16 @@ function updateObjectModel() {
       }
 
       // CNC Spindle Speed Live Control
-      // MODIFIED: Always send speed commands (as if constantly running)
+      // Send speed commands when speed changes
       if (globalData.EstopFault === false) {
-        // Always send speed updates when no e-stop fault
+        // Read current speed from slider
         updatedSpindleSpeed = document.getElementById("speedValue").textContent;
-        sendGcode(`M3 P0 S${spindleSpeed}`); // run spindle clockwise at slider rpm
-        spindleSpeed = updatedSpindleSpeed;
+        // Only send command if speed has changed
+        if (spindleSpeed !== updatedSpindleSpeed) {
+          sendGcode(`M3 P0 S${updatedSpindleSpeed}`); // run spindle clockwise at slider rpm
+          spindleSpeed = updatedSpindleSpeed;
+          console.log(`Spindle speed updated to: ${updatedSpindleSpeed} RPM`);
+        }
         spindleOff = false;
 
         // Visual indicators for actual running state
