@@ -17,16 +17,19 @@ let selectedBarrelFan = "0";
 // let spindleRunning = false; // already declared in embedded code
 
 // Configuration for Duet connection - can be modified via UI or localStorage
-// Auto-generate version based on build timestamp for automatic cache busting
-const BUILD_TIMESTAMP = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-const STORAGE_VERSION = `v3.2-${BUILD_TIMESTAMP}`;
+// Static version string - update this when you want to clear cache for all users
+// Only clears cache when version actually changes, not on every reload
+const STORAGE_VERSION = 'v3.2';
 const CURRENT_STORAGE_VERSION = localStorage.getItem('storageVersion');
 
-// Clear localStorage only on version change (automatic on every load)
-if (CURRENT_STORAGE_VERSION !== STORAGE_VERSION) {
-  console.log(`Auto-clearing cache for build update (${CURRENT_STORAGE_VERSION} -> ${STORAGE_VERSION})`);
+// Clear localStorage only on version change (not on every reload)
+if (CURRENT_STORAGE_VERSION && CURRENT_STORAGE_VERSION !== STORAGE_VERSION) {
+  console.log(`Auto-clearing cache for version update (${CURRENT_STORAGE_VERSION} -> ${STORAGE_VERSION})`);
   localStorage.clear();
   sessionStorage.clear();
+  localStorage.setItem('storageVersion', STORAGE_VERSION);
+} else if (!CURRENT_STORAGE_VERSION) {
+  // First time setup - set version without clearing
   localStorage.setItem('storageVersion', STORAGE_VERSION);
 }
 
