@@ -243,8 +243,8 @@ window.forceDuetMode = forceDuetMode;
 
 // ========================================== HTTP requests with Duet Mainboard ========================================
 
-// FUNCTION: Establish connection to RRF with timeout
-async function connectToRRF(password = "reprap") {
+// FUNCTION: Establish connection to RRF with timeout and exponential retry
+async function connectToRRF(password = "reprap", retryCount = 0) {
   try {
     console.log(`Attempting to connect to RRF at ${duetIP}...`);
     const response = await fetchWithTimeout(`${activeConnectURL}?password=${encodeURIComponent(password)}`, {}, NETWORK_TIMEOUT);
@@ -267,6 +267,22 @@ async function connectToRRF(password = "reprap") {
       throw new Error(`RRF connection failed: ${data.err}`);
     }
   } catch (error) {
+    // Retry with exponential backoff for unreachable device errors
+    if (retryCount < MAX_RETRIES && (
+      error.name === 'TypeError' || 
+      error.message.includes('timeout') ||
+      error.message.includes('Failed to fetch') ||
+      error.message.includes('ERR_CONNECTION_RESET') ||
+      error.message.includes('unreachable')
+    )) {
+      const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
+      console.warn(`Device unreachable (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
+      updateConnectionStatusUI('connecting', `Retrying connection... (${retryCount + 1}/${MAX_RETRIES + 1})`);
+      
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return await connectToRRF(password, retryCount + 1);
+    }
+    
     console.error("Failed to connect to RRF:", error);
     isConnected = false;
     updateConnectionStatusUI('error', error.message);
@@ -306,18 +322,24 @@ async function fetchData(url, options = {}, retryCount = 0) {
 
     return await parseResponse(response);
   } catch (error) {
-    // Implement retry logic for network errors
+    // Implement retry logic for network errors with exponential backoff
     if (retryCount < MAX_RETRIES && (
       error.name === 'TypeError' || 
       error.message.includes('timeout') ||
       error.message.includes('ERR_CONNECTION_RESET') ||
-      error.message.includes('Failed to fetch')
+      error.message.includes('Failed to fetch') ||
+      error.message.includes('unreachable')
     )) {
       const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
       console.warn(`Network error (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
       
       await new Promise(resolve => setTimeout(resolve, delay));
-      return await fetchData(url, options, retryCount + 1);
+      const result = await fetchData(url, options, retryCount + 1);
+      // On successful reconnection, ensure UI shows connected
+      if (isConnected) {
+        updateConnectionStatusUI('connected');
+      }
+      return result;
     }
 
     // Log specific error types
@@ -349,8 +371,8 @@ async function parseResponse(response) {
   return data;
 }
 
-// FUNCTION: Establish connection to expansion controller with timeout
-async function connectToExpansionRRF(password = "reprap") {
+// FUNCTION: Establish connection to expansion controller with timeout and exponential retry
+async function connectToExpansionRRF(password = "reprap", retryCount = 0) {
   try {
     console.log(`Attempting to connect to expansion controller at ${duetExpansionIP}...`);
     const response = await fetchWithTimeout(`${expansionConnectURL}?password=${encodeURIComponent(password)}`, {}, NETWORK_TIMEOUT);
@@ -371,6 +393,21 @@ async function connectToExpansionRRF(password = "reprap") {
       throw new Error(`Expansion controller connection failed: ${data.err}`);
     }
   } catch (error) {
+    // Retry with exponential backoff for unreachable device errors
+    if (retryCount < MAX_RETRIES && (
+      error.name === 'TypeError' || 
+      error.message.includes('timeout') ||
+      error.message.includes('Failed to fetch') ||
+      error.message.includes('ERR_CONNECTION_RESET') ||
+      error.message.includes('unreachable')
+    )) {
+      const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
+      console.warn(`Expansion device unreachable (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
+      
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return await connectToExpansionRRF(password, retryCount + 1);
+    }
+    
     console.error("Failed to connect to expansion controller:", error);
     isExpansionConnected = false;
     throw error;
@@ -409,16 +446,25 @@ async function fetchExpansionData(url, options = {}, retryCount = 0) {
 
     return await parseResponse(response);
   } catch (error) {
-    // Implement retry logic for network errors
+    // Implement retry logic for network errors with exponential backoff
     if (retryCount < MAX_RETRIES && (
+        error.name === 'TypeError' ||
         error.message.includes('timeout') ||
         error.message.includes('fetch') ||
         error.message.includes('NetworkError') ||
-        error.message.includes('Failed to fetch')
+        error.message.includes('Failed to fetch') ||
+        error.message.includes('ERR_CONNECTION_RESET') ||
+        error.message.includes('unreachable')
     )) {
-      console.warn(`Expansion controller request failed, retrying in ${RETRY_DELAY}ms... (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-      return await fetchExpansionData(url, options, retryCount + 1);
+      const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
+      console.warn(`Expansion controller request failed (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      const result = await fetchExpansionData(url, options, retryCount + 1);
+      // On successful reconnection, ensure UI shows connected if main connection is also active
+      if (isConnected) {
+        updateConnectionStatusUI('connected');
+      }
+      return result;
     } else {
       console.error("Network or SSL error with expansion controller, unable to fetch data. Please check your connection or SSL settings.");
       throw error;
@@ -2294,35 +2340,8 @@ function resetCNCUI() {
 // Developer Options Toggle
 // Check saved state from local storage on load and initialize
 window.addEventListener("load", () => {
-  const savedAisyncState = localStorage.getItem("aisyncState");
-  switch (savedAisyncState) {
-    case "on":
-      document.getElementById("aisync-slicer").style.display = "block";
-      break;
-    default: // off state
-      document.getElementById("aisync-slicer").style.display = "none";
-  }
-
-  const savedCncState = localStorage.getItem("cncState");
-  switch (savedCncState) {
-    case "on":
-      document.getElementById("cnc-mill").style.display = "block";
-      break;
-    default: // off state
-      document.getElementById("cnc-mill").style.display = "none";
-  }
-
-  const toolDetectionState = localStorage.getItem("toolDetectionState");
-  switch (toolDetectionState) {
-    case "on":
-      document.getElementById("extruder-detection-container").style.display = "flex";
-      document.getElementById("cnc-detection-container").style.display = "flex";
-      break;
-    default: // off state
-      document.getElementById("extruder-detection-container").style.display = "none";
-      document.getElementById("cnc-detection-container").style.display = "none";
-  }
-
+  // Restore system family FIRST, as it controls which UI elements are available
+  // The system family button handlers will restore dependent states (cncState, aisyncState, toolDetectionState)
   const systemFamilyState = localStorage.getItem("systemFamily");
   switch (systemFamilyState) {
     case "apollo":
@@ -2334,6 +2353,9 @@ window.addEventListener("load", () => {
     default: // pe320 as default
       document.getElementById("system-pe320").click();
   }
+
+  // Note: cncState, aisyncState, and toolDetectionState are restored by the system family button handlers above
+  // No need for separate restoration here as the button click handlers check localStorage and restore all dependent states
 
   // const partCoolingState = localStorage.getItem("partCoolingState");
   // switch (partCoolingState) {
