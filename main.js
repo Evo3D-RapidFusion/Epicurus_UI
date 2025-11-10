@@ -32,13 +32,12 @@ if (CURRENT_STORAGE_VERSION !== STORAGE_VERSION) {
 
 let duetIP = localStorage.getItem('duetIP') || "192.168.1.100";
 let duetExpansionIP = localStorage.getItem('duetExpansionIP') || "192.168.1.101";
-// Use relative URLs to go through proxy (avoids CORS issues)
-let activeStatusURL = `/rr_model`;
-let activeCodeURL = `/rr_gcode`;
-let activeConnectURL = `/rr_connect`;
-let expansionStatusURL = `/expansion/rr_model`;
-let expansionCodeURL = `/expansion/rr_gcode`;
-let expansionConnectURL = `/expansion/rr_connect`;
+let activeStatusURL = `http://${duetIP}/rr_model`;
+let activeCodeURL = `http://${duetIP}/rr_gcode`;
+let activeConnectURL = `http://${duetIP}/rr_connect`;
+let expansionStatusURL = `http://${duetExpansionIP}/rr_model`;
+let expansionCodeURL = `http://${duetExpansionIP}/rr_gcode`;
+let expansionConnectURL = `http://${duetExpansionIP}/rr_connect`;
 
 // Session management
 let isConnected = false;
@@ -110,10 +109,9 @@ function updateDuetIP(newIP) {
   localStorage.setItem('duetIP', newIP);
   
   // Update all URLs
-  // URLs use proxy, IP is stored for reference only
-  activeStatusURL = `/rr_model`;
-  activeCodeURL = `/rr_gcode`;
-  activeConnectURL = `/rr_connect`;
+  activeStatusURL = `http://${duetIP}/rr_model`;
+  activeCodeURL = `http://${duetIP}/rr_gcode`;
+  activeConnectURL = `http://${duetIP}/rr_connect`;
   
   // Reset connection state
   isConnected = false;
@@ -1144,20 +1142,23 @@ function updateObjectModel() {
       }
 
       // CNC Spindle Speed Live Control
-      // Send speed commands when speed changes
+      // Send speed commands at polling rate (not on every change)
       if (globalData.EstopFault === false) {
         // Read current speed from slider (ensure it's a number)
         updatedSpindleSpeed = document.getElementById("speedValue").textContent.trim();
         const speedNum = parseInt(updatedSpindleSpeed, 10);
         
-        // Only send command if speed has changed
-        if (spindleSpeed !== updatedSpindleSpeed && !isNaN(speedNum) && speedNum > 0) {
+        // Only send command at the configured posting interval rate
+        const now = Date.now();
+        const timeSinceLastPost = now - lastSpindlePostTime;
+        
+        if (!isNaN(speedNum) && speedNum > 0 && timeSinceLastPost >= spindlePostInterval) {
           // Send M3 command to set spindle speed (M3 P0 S{value} sets speed for spindle 0)
           const command = `M3 P0 S${speedNum}`;
-          console.log(`Sending spindle speed command: ${command}`);
           sendGcode(command);
           spindleSpeed = updatedSpindleSpeed;
-          console.log(`Spindle speed updated to: ${speedNum} RPM`);
+          lastSpindlePostTime = now;
+          console.log(`Spindle speed posted: ${speedNum} RPM (interval: ${spindlePostInterval}ms)`);
         }
         spindleOff = false;
 
@@ -1546,6 +1547,10 @@ const POLL_INTERVAL = 1000; // 1 second - faster updates for better responsivene
 const POLL_INTERVAL_SLOW = 5000; // 5 seconds - when errors occur
 const POLL_INTERVAL_FAST = 500; // 0.5 seconds - when actively monitoring (optional)
 
+// Spindle speed posting rate (matches polling rate by default)
+let spindlePostInterval = POLL_INTERVAL;
+let lastSpindlePostTime = 0;
+
 let currentPollInterval = POLL_INTERVAL;
 let consecutiveErrors = 0;
 let updateIntervalId = null;
@@ -1737,6 +1742,7 @@ async function update() {
     if (currentPollInterval !== POLL_INTERVAL) {
       console.log("Connection stable, returning to normal polling interval");
       currentPollInterval = POLL_INTERVAL;
+      spindlePostInterval = POLL_INTERVAL; // Sync spindle posting rate with polling rate
       restartPolling();
     }
     
@@ -1748,6 +1754,7 @@ async function update() {
     if (consecutiveErrors >= 3 && currentPollInterval !== POLL_INTERVAL_SLOW) {
       console.log(`${consecutiveErrors} consecutive errors, slowing polling to ${POLL_INTERVAL_SLOW}ms`);
       currentPollInterval = POLL_INTERVAL_SLOW;
+      spindlePostInterval = POLL_INTERVAL_SLOW; // Sync spindle posting rate with polling rate
       restartPolling();
     }
   }
