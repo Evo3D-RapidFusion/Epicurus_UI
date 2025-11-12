@@ -34,17 +34,17 @@ if (CURRENT_STORAGE_VERSION && CURRENT_STORAGE_VERSION !== STORAGE_VERSION) {
 }
 
 let duetIP = localStorage.getItem('duetIP') || "192.168.1.100";
-let duetExpansionIP = localStorage.getItem('duetExpansionIP') || "192.168.1.101";
+// let duetExpansionIP = localStorage.getItem('duetExpansionIP') || "192.168.1.101";
 let activeStatusURL = `http://${duetIP}/rr_model`;
 let activeCodeURL = `http://${duetIP}/rr_gcode`;
 let activeConnectURL = `http://${duetIP}/rr_connect`;
-let expansionStatusURL = `http://${duetExpansionIP}/rr_model`;
-let expansionCodeURL = `http://${duetExpansionIP}/rr_gcode`;
-let expansionConnectURL = `http://${duetExpansionIP}/rr_connect`;
+// let expansionStatusURL = `http://${duetExpansionIP}/rr_model`;
+// let expansionCodeURL = `http://${duetExpansionIP}/rr_gcode`;
+// let expansionConnectURL = `http://${duetExpansionIP}/rr_connect`;
 
 // Session management
 let isConnected = false;
-let isExpansionConnected = false;
+// let isExpansionConnected = false;
 
 // Network configuration
 const NETWORK_TIMEOUT = 5000; // 5 seconds timeout for requests
@@ -375,105 +375,107 @@ async function parseResponse(response) {
 }
 
 // FUNCTION: Establish connection to expansion controller with timeout and exponential retry
-async function connectToExpansionRRF(password = "reprap", retryCount = 0) {
-  try {
-    console.log(`Attempting to connect to expansion controller at ${duetExpansionIP}...`);
-    const response = await fetchWithTimeout(`${expansionConnectURL}?password=${encodeURIComponent(password)}`, {}, NETWORK_TIMEOUT);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    
-    if (data.err === 0) {
-      console.log("Successfully connected to expansion controller");
-      isExpansionConnected = true;
-      return data;
-    } else {
-      console.error(`Expansion controller connection failed with error code: ${data.err}`);
-      isExpansionConnected = false;
-      throw new Error(`Expansion controller connection failed: ${data.err}`);
-    }
-  } catch (error) {
-    // Retry with exponential backoff for unreachable device errors
-    if (retryCount < MAX_RETRIES && (
-      error.name === 'TypeError' || 
-      error.message.includes('timeout') ||
-      error.message.includes('Failed to fetch') ||
-      error.message.includes('ERR_CONNECTION_RESET') ||
-      error.message.includes('unreachable')
-    )) {
-      const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
-      console.warn(`Expansion device unreachable (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
-      
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return await connectToExpansionRRF(password, retryCount + 1);
-    }
-    
-    console.error("Failed to connect to expansion controller:", error);
-    isExpansionConnected = false;
-    throw error;
-  }
-}
+// COMMENTED OUT - Expansion controller not available in this setup
+// async function connectToExpansionRRF(password = "reprap", retryCount = 0) {
+//   try {
+//     console.log(`Attempting to connect to expansion controller at ${duetExpansionIP}...`);
+//     const response = await fetchWithTimeout(`${expansionConnectURL}?password=${encodeURIComponent(password)}`, {}, NETWORK_TIMEOUT);
+//     
+//     if (!response.ok) {
+//       throw new Error(`HTTP error! Status: ${response.status}`);
+//     }
+//     
+//     const data = await response.json();
+//     
+//     if (data.err === 0) {
+//       console.log("Successfully connected to expansion controller");
+//       isExpansionConnected = true;
+//       return data;
+//     } else {
+//       console.error(`Expansion controller connection failed with error code: ${data.err}`);
+//       isExpansionConnected = false;
+//       throw new Error(`Expansion controller connection failed: ${data.err}`);
+//     }
+//   } catch (error) {
+//     // Retry with exponential backoff for unreachable device errors
+//     if (retryCount < MAX_RETRIES && (
+//       error.name === 'TypeError' || 
+//       error.message.includes('timeout') ||
+//       error.message.includes('Failed to fetch') ||
+//       error.message.includes('ERR_CONNECTION_RESET') ||
+//       error.message.includes('unreachable')
+//     )) {
+//       const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
+//       console.warn(`Expansion device unreachable (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
+//       
+//       await new Promise(resolve => setTimeout(resolve, delay));
+//       return await connectToExpansionRRF(password, retryCount + 1);
+//     }
+//     
+//     console.error("Failed to connect to expansion controller:", error);
+//     isExpansionConnected = false;
+//     throw error;
+//   }
+// }
 
 // FUNCTION: Enhanced async GET/POST requests to expansion controller with timeouts and retry logic
-async function fetchExpansionData(url, options = {}, retryCount = 0) {
-  try {
-    // Ensure we're connected before making requests
-    if (!isExpansionConnected && !url.includes('rr_connect')) {
-      await connectToExpansionRRF();
-    }
-    
-    // Use timeout-enabled fetch
-    const response = await fetchWithTimeout(url, options, NETWORK_TIMEOUT);
+// COMMENTED OUT - Expansion controller not available in this setup
+// async function fetchExpansionData(url, options = {}, retryCount = 0) {
+//   try {
+//     // Ensure we're connected before making requests
+//     if (!isExpansionConnected && !url.includes('rr_connect')) {
+//       await connectToExpansionRRF();
+//     }
+//     
+//     // Use timeout-enabled fetch
+//     const response = await fetchWithTimeout(url, options, NETWORK_TIMEOUT);
 
-    // Handle 401 Unauthorized - need to reconnect
-    if (response.status === 401) {
-      console.warn("Expansion controller received 401 Unauthorized, attempting to reconnect...");
-      isExpansionConnected = false;
-      await connectToExpansionRRF();
-      // Retry the original request
-      const retryResponse = await fetchWithTimeout(url, options, NETWORK_TIMEOUT);
-      if (!retryResponse.ok) {
-        console.error(`Expansion controller error: Network response was not ok. Status: ${retryResponse.status}`);
-        throw new Error(`HTTP error! Status: ${retryResponse.status}`);
-      }
-      return await parseResponse(retryResponse);
-    }
+//     // Handle 401 Unauthorized - need to reconnect
+//     if (response.status === 401) {
+//       console.warn("Expansion controller received 401 Unauthorized, attempting to reconnect...");
+//       isExpansionConnected = false;
+//       await connectToExpansionRRF();
+//       // Retry the original request
+//       const retryResponse = await fetchWithTimeout(url, options, NETWORK_TIMEOUT);
+//       if (!retryResponse.ok) {
+//         console.error(`Expansion controller error: Network response was not ok. Status: ${retryResponse.status}`);
+//         throw new Error(`HTTP error! Status: ${retryResponse.status}`);
+//       }
+//       return await parseResponse(retryResponse);
+//     }
 
-    if (!response.ok) {
-      console.error(`Expansion controller error: Network response was not ok. Status: ${response.status}`);
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
+//     if (!response.ok) {
+//       console.error(`Expansion controller error: Network response was not ok. Status: ${response.status}`);
+//       throw new Error(`HTTP error! Status: ${response.status}`);
+//     }
 
-    return await parseResponse(response);
-  } catch (error) {
-    // Implement retry logic for network errors with exponential backoff
-    if (retryCount < MAX_RETRIES && (
-        error.name === 'TypeError' ||
-        error.message.includes('timeout') ||
-        error.message.includes('fetch') ||
-        error.message.includes('NetworkError') ||
-        error.message.includes('Failed to fetch') ||
-        error.message.includes('ERR_CONNECTION_RESET') ||
-        error.message.includes('unreachable')
-    )) {
-      const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
-      console.warn(`Expansion controller request failed (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
-      await new Promise(resolve => setTimeout(resolve, delay));
-      const result = await fetchExpansionData(url, options, retryCount + 1);
-      // On successful reconnection, ensure UI shows connected if main connection is also active
-      if (isConnected) {
-        updateConnectionStatusUI('connected');
-      }
-      return result;
-    } else {
-      console.error("Network or SSL error with expansion controller, unable to fetch data. Please check your connection or SSL settings.");
-      throw error;
-    }
-  }
-}
+//     return await parseResponse(response);
+//   } catch (error) {
+//     // Implement retry logic for network errors with exponential backoff
+//     if (retryCount < MAX_RETRIES && (
+//         error.name === 'TypeError' ||
+//         error.message.includes('timeout') ||
+//         error.message.includes('fetch') ||
+//         error.message.includes('NetworkError') ||
+//         error.message.includes('Failed to fetch') ||
+//         error.message.includes('ERR_CONNECTION_RESET') ||
+//         error.message.includes('unreachable')
+//     )) {
+//       const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
+//       console.warn(`Expansion controller request failed (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
+//       await new Promise(resolve => setTimeout(resolve, delay));
+//       const result = await fetchExpansionData(url, options, retryCount + 1);
+//       // On successful reconnection, ensure UI shows connected if main connection is also active
+//       if (isConnected) {
+//         updateConnectionStatusUI('connected');
+//       }
+//       return result;
+//     } else {
+//       console.error("Network or SSL error with expansion controller, unable to fetch data. Please check your connection or SSL settings.");
+//       throw error;
+//     }
+//   }
+// }
 
 
 
@@ -586,14 +588,15 @@ async function fetchObjectModelByKeys() {
 function updateObjectModel() {
   return new Promise(async (resolve, reject) => {
     try {
-      // Fetch from both controllers in parallel
-      console.log("Fetching data from both main controller and expansion controller...");
+      // Fetch from main controller only (expansion controller commented out)
+      // console.log("Fetching data from both main controller and expansion controller...");
+      console.log("Fetching data from main controller...");
       
-      // Detect mode for main controller only (expansion uses simple heat endpoint)
+      // Detect mode for main controller
       const mainMode = await detectDuetMode();
       
-      // Fetch data from both controllers based on their modes
-      let mainDataPromise, expansionDataPromise;
+      // Fetch data from main controller based on mode
+      let mainDataPromise;
       
       if (mainMode === 'standalone') {
         mainDataPromise = fetchObjectModelByKeys();
@@ -601,48 +604,28 @@ function updateObjectModel() {
         mainDataPromise = fetchData(activeStatusURL);
       }
       
-      // Expansion controller only needs heat data - always use the specific heat endpoint
-      expansionDataPromise = fetchExpansionData(`${expansionStatusURL}?key=heat&flags=vn`);
+      // COMMENTED OUT - Expansion controller not available in this setup
+      // // Expansion controller only needs heat data - always use the specific heat endpoint
+      // expansionDataPromise = fetchExpansionData(`${expansionStatusURL}?key=heat&flags=vn`);
       
-      // Fetch data with error handling for expansion controller
-      let mainData, expansionData;
+      // Fetch data from main controller only
+      let mainData;
       try {
-        [mainData, expansionData] = await Promise.all([mainDataPromise, expansionDataPromise]);
-      } catch (error) {
-        console.warn("Error fetching from one or both controllers:", error);
-        // If expansion controller fails, still try to get main controller data
-        try {
-          mainData = await mainDataPromise;
-          console.log("Main controller data retrieved despite expansion controller error");
-        } catch (mainError) {
-          console.error("Main controller also failed:", mainError);
-          throw mainError;
-        }
-        
-        // Create empty expansion heat data if expansion controller failed
-        expansionData = { 
-          key: "heat", 
-          flags: "vn", 
-          result: { 
-            heaters: [],
-            bedHeaters: [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
-          } 
-        };
-        console.log("Using empty expansion heat data due to controller unavailability");
+        mainData = await mainDataPromise;
+      } catch (mainError) {
+        console.error("Main controller failed:", mainError);
+        throw mainError;
       }
       
-      console.log(`Fetched main data using ${mainMode} mode, expansion data using heat endpoint`);
+      console.log(`Fetched main data using ${mainMode} mode`);
 
-      // Extract data from both controllers
+      // Extract data from main controller
       const mainActualData = mainData.result || mainData;
-      const expansionActualData = expansionData.result || expansionData;
       
-      // Merge heating data - combine main controller (extruders + beds 0-3) with expansion (beds 4-9)
+      // Use main controller heating data only
       const mainHeatData = mainActualData.heat || {};
-      // Expansion controller returns heat data directly in result, no nested heat property
-      const expansionHeatData = expansionActualData;
       
-      // Create merged heater arrays
+      // Create heater arrays from main controller only
       const mergedHeaters = [...(mainHeatData.heaters || [])]; // Start with all main heaters
       const mergedBedHeaters = [...(mainHeatData.bedHeaters || [])]; // Start with main bed heaters (0-3)
       
@@ -651,26 +634,27 @@ function updateObjectModel() {
         mergedBedHeaters.push(-1); // Initialize unused slots with -1
       }
       
-      // Add expansion bed heaters (4-9) from heater indices 8-13
-      if (expansionHeatData.heaters && expansionHeatData.heaters.length > 8) {
-        // Expansion controller has bed heaters at indices 8-13 (mapping to beds 4-9)
-        for (let i = 8; i < Math.min(14, expansionHeatData.heaters.length); i++) {
-          const expansionHeater = expansionHeatData.heaters[i];
-          
-          // Check if this is a valid heater (not null and has properties)
-          if (expansionHeater !== null && expansionHeater !== undefined) {
-            // Add to merged heaters array (append to main heaters)
-            const mergedHeaterIndex = mergedHeaters.length;
-            mergedHeaters.push(expansionHeater);
-            
-            // Map expansion heater index 8-13 to bed positions 4-9
-            const bedHeaterIndex = i - 4; // 8->4, 9->5, 10->6, 11->7, 12->8, 13->9
-            if (bedHeaterIndex < 10) { // Maximum 10 bed heaters supported
-              mergedBedHeaters[bedHeaterIndex] = mergedHeaterIndex;
-            }
-          }
-        }
-      }
+      // COMMENTED OUT - Expansion controller not available in this setup
+      // // Add expansion bed heaters (4-9) from heater indices 8-13
+      // if (expansionHeatData.heaters && expansionHeatData.heaters.length > 8) {
+      //   // Expansion controller has bed heaters at indices 8-13 (mapping to beds 4-9)
+      //   for (let i = 8; i < Math.min(14, expansionHeatData.heaters.length); i++) {
+      //     const expansionHeater = expansionHeatData.heaters[i];
+      //     
+      //     // Check if this is a valid heater (not null and has properties)
+      //     if (expansionHeater !== null && expansionHeater !== undefined) {
+      //       // Add to merged heaters array (append to main heaters)
+      //       const mergedHeaterIndex = mergedHeaters.length;
+      //       mergedHeaters.push(expansionHeater);
+      //       
+      //       // Map expansion heater index 8-13 to bed positions 4-9
+      //       const bedHeaterIndex = i - 4; // 8->4, 9->5, 10->6, 11->7, 12->8, 13->9
+      //       if (bedHeaterIndex < 10) { // Maximum 10 bed heaters supported
+      //         mergedBedHeaters[bedHeaterIndex] = mergedHeaterIndex;
+      //       }
+      //     }
+      //   }
+      // }
       
       
       // Create merged heat data structure
@@ -797,7 +781,7 @@ function updateObjectModel() {
       const spindlesData = actualData.spindles || [];
       
       const configuredHeatersAll = findHeaters(heatData.heaters || []);
-      const configuredBedHeaters = findHeaters(heatData.bedHeaters || []);
+      const allConfiguredBedHeaters = findHeaters(heatData.bedHeaters || []);
       const configuredChamberHeaters = findHeaters(heatData.chamberHeaters || []);
       const configuredExtruderHeaters = configuredHeatersAll.slice(
         0,
@@ -805,8 +789,11 @@ function updateObjectModel() {
       );
       const cncSpindle = spindlesData[0] || {};
 
+      // Limit to main controller beds only (0-3) - expansion controller not available
+      const configuredBedHeaters = allConfiguredBedHeaters.slice(0, 4); // Only take first 4 beds (0-3)
+
       // Show configured main controller bed heaters (0-3)
-      const mainConfiguredBedHeaters = configuredBedHeaters.slice(0, 4); // Only take first 4 beds
+      const mainConfiguredBedHeaters = configuredBedHeaters; // Already limited to beds 0-3
       
       mainConfiguredBedHeaters.forEach((element, index) => {
         document
@@ -821,44 +808,46 @@ function updateObjectModel() {
         }
       });
 
-      // Detect and show expansion bed heaters (4-9)
-      const expansionConfiguredBedHeaters = configuredBedHeaters.slice(4, 10); // Beds 4-9 (includes bed9)
-      
-      expansionConfiguredBedHeaters.forEach((bedHeaterIndex, arrayIndex) => {
-        if (bedHeaterIndex !== -1) { // If heater is configured
-          const bedIndex = arrayIndex + 4; // Convert to actual bed index (4-9)
-          
-          // Show bed elements
-          document
-            .querySelectorAll(`.bed${bedIndex}`)
-            .forEach((element) => (element.style.visibility = "visible"));
-            
-          // Show bed temperature popup tab
-          const tabElement = document.querySelectorAll(`.temp-tab-link.heater`)[bedIndex + 4]; // Bed tab indices start at 8
-          if (tabElement) {
-            tabElement.style.display = "flex";
-          }
-        }
-      });
+      // COMMENTED OUT - Expansion controller not available in this setup
+      // // Detect and show expansion bed heaters (4-9)
+      // const expansionConfiguredBedHeaters = configuredBedHeaters.slice(4, 10); // Beds 4-9 (includes bed9)
+      // 
+      // expansionConfiguredBedHeaters.forEach((bedHeaterIndex, arrayIndex) => {
+      //   if (bedHeaterIndex !== -1) { // If heater is configured
+      //     const bedIndex = arrayIndex + 4; // Convert to actual bed index (4-9)
+      //     
+      //     // Show bed elements
+      //     document
+      //       .querySelectorAll(`.bed${bedIndex}`)
+      //       .forEach((element) => (element.style.visibility = "visible"));
+      //       
+      //     // Show bed temperature popup tab
+      //     const tabElement = document.querySelectorAll(`.temp-tab-link.heater`)[bedIndex + 4]; // Bed tab indices start at 8
+      //     if (tabElement) {
+      //       tabElement.style.display = "flex";
+      //     }
+      //   }
+      // });
 
-      // Hide expansion beds that are NOT detected (beds 4-9)
-      for (let bedIndex = 4; bedIndex < 10; bedIndex++) {
-        const arrayIndex = bedIndex - 4; // Convert bed index to array index
-        const bedHeaterIndex = expansionConfiguredBedHeaters[arrayIndex];
-        
-        if (bedHeaterIndex === -1 || bedHeaterIndex === undefined) {
-          // Hide bed elements if not configured
-          document
-            .querySelectorAll(`.bed${bedIndex}`)
-            .forEach((element) => (element.style.visibility = "hidden"));
-            
-          // Hide bed temperature popup tab
-          const tabElement = document.querySelectorAll(`.temp-tab-link.heater`)[bedIndex + 4];
-          if (tabElement) {
-            tabElement.style.display = "none";
-          }
-        }
-      }
+      // COMMENTED OUT - Expansion controller not available in this setup
+      // // Hide expansion beds that are NOT detected (beds 4-9)
+      // for (let bedIndex = 4; bedIndex < 10; bedIndex++) {
+      //   const arrayIndex = bedIndex - 4; // Convert bed index to array index
+      //   const bedHeaterIndex = expansionConfiguredBedHeaters[arrayIndex];
+      //   
+      //   if (bedHeaterIndex === -1 || bedHeaterIndex === undefined) {
+      //     // Hide bed elements if not configured
+      //     document
+      //       .querySelectorAll(`.bed${bedIndex}`)
+      //       .forEach((element) => (element.style.visibility = "hidden"));
+      //     
+      //     // Hide bed temperature popup tab
+      //     const tabElement = document.querySelectorAll(`.temp-tab-link.heater`)[bedIndex + 4];
+      //     if (tabElement) {
+      //       tabElement.style.display = "none";
+      //     }
+      //   }
+      // }
 
       // update Extruder Current Temp
       const extruderHeaterTemps = updateUIdata(
@@ -1155,7 +1144,7 @@ function updateObjectModel() {
             console.log(`User chose to reset faults for heaters ${heaterList}`);
             sendGcode(`M292`); // Clear all messages first
             sendGcode("M562"); // Reset all heater faults on main controller
-            sendExpansionGcode("M562"); // Reset all heater faults on expansion controller
+            // sendExpansionGcode("M562"); // Reset all heater faults on expansion controller - COMMENTED OUT
             
             // Mark all pending heaters as handled
             pendingFaultHeaters.forEach((heaterNumber) => {
@@ -1737,33 +1726,34 @@ async function sendGcode(gcode) {
 }
 
 // Function to send individual G-code command to expansion controller with retry logic
-async function sendExpansionGcode(gcode) {
-  while (true) {
-    try {
-      const response = await fetchExpansionData(`${expansionCodeURL}?gcode=${encodeURIComponent(gcode)}`);
+// COMMENTED OUT - Expansion controller not available in this setup
+// async function sendExpansionGcode(gcode) {
+//   while (true) {
+//     try {
+//       const response = await fetchExpansionData(`${expansionCodeURL}?gcode=${encodeURIComponent(gcode)}`);
 
-      if (response.status && response.status === 503) {
-        console.warn("503 Service Unavailable while sending G-code to expansion controller. Retrying...");
-        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
-        continue; // Retry if server returns 503 error
-      }
+//       if (response.status && response.status === 503) {
+//         console.warn("503 Service Unavailable while sending G-code to expansion controller. Retrying...");
+//         await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+//         continue; // Retry if server returns 503 error
+//       }
 
-      // Check for unknown variable error in the response text
-      if (typeof response === "string" && response.includes("Error: unknown variable")) {
-        console.warn(`Unknown variable error detected in expansion controller response. Retrying G-code '${gcode}'...`);
-        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
-        continue; // Retry if unknown variable error is present
-      }
+//       // Check for unknown variable error in the response text
+//       if (typeof response === "string" && response.includes("Error: unknown variable")) {
+//         console.warn(`Unknown variable error detected in expansion controller response. Retrying G-code '${gcode}'...`);
+//         await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+//         continue; // Retry if unknown variable error is present
+//       }
 
-      console.log(`Response from expansion controller sending G-code '${gcode}': ${response}`);
-      return response; // Exit loop on successful command execution without errors
+//       console.log(`Response from expansion controller sending G-code '${gcode}': ${response}`);
+//       return response; // Exit loop on successful command execution without errors
 
-    } catch (error) {
-      console.error(`Error sending G-code to expansion controller '${gcode}': ${error}`);
-      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL)); // Delay before retrying
-    }
-  }
-}
+//     } catch (error) {
+//       console.error(`Error sending G-code to expansion controller '${gcode}': ${error}`);
+//       await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL)); // Delay before retrying
+//     }
+//   }
+// }
 
 // Start the continuous polling process
 pollServerAndSendOnceOnStateChange();
@@ -2014,11 +2004,18 @@ function toggleHeaterStates(heaterState, heaterIndex) {
   let sendFunction = sendGcode;
   let targetHeaterIndex = heaterIndex;
   
-  // Route bed heaters 8-13 (bed4-bed9) to expansion controller
+  // COMMENTED OUT - Expansion controller not available in this setup
+  // // Route bed heaters 8-13 (bed4-bed9) to expansion controller
+  // if (heaterIndex >= 8 && heaterIndex <= 13) {
+  //   sendFunction = sendExpansionGcode;
+  //   targetHeaterIndex = heaterIndex; // Use direct P8-P13 addressing on expansion controller
+  //   console.log(`Routing heater ${heaterIndex} (${heaterType[heaterIndex] || `bed${heaterIndex-4}`}) to expansion controller as heater P${targetHeaterIndex}`);
+  // }
+  
+  // Guard: Prevent sending commands for expansion bed heaters (indices 8-13) since expansion controller is not available
   if (heaterIndex >= 8 && heaterIndex <= 13) {
-    sendFunction = sendExpansionGcode;
-    targetHeaterIndex = heaterIndex; // Use direct P8-P13 addressing on expansion controller
-    console.log(`Routing heater ${heaterIndex} (${heaterType[heaterIndex] || `bed${heaterIndex-4}`}) to expansion controller as heater P${targetHeaterIndex}`);
+    console.warn(`Bed heaters 4-9 (indices 8-13) are not available - expansion controller is not configured`);
+    return; // Exit early to prevent sending invalid commands
   }
   
   let setTemp = "";
@@ -2083,10 +2080,10 @@ function configureHeaters(mode, configuredExtruderHeaters) {
   sendGcode(gcodeString);
 }
 
-// FUNCTION: configureBedHeaters with dual-controller support
+// FUNCTION: configureBedHeaters (main controller only - expansion controller commented out)
 function configureBedHeaters(mode, configuredBedHeaters) {
   let mainGcodeString = "";
-  let expansionGcodeString = "";
+  // let expansionGcodeString = ""; // COMMENTED OUT - Expansion controller not available
   let heaterType = ["bed0", "bed1", "bed2", "bed3", "bed4", "bed5", "bed6", "bed7", "bed8", "bed9"];
   
   configuredBedHeaters.forEach((heater, index) => {
@@ -2098,30 +2095,33 @@ function configureBedHeaters(mode, configuredBedHeaters) {
       preheatTemp = heaterElement.textContent;
       activeTemp = activeElement.textContent;
       
-      // Route bed heaters 0-3 to main controller, 4-9 to expansion controller
+      // Route bed heaters 0-3 to main controller only (expansion controller commented out)
       if (index < 4) {
         // Main controller: bed heaters 0-3
         mainGcodeString += `M568 P${
           index + configuredExtruderHeaters.length
         } S${activeTemp} R${preheatTemp} A${mode} `;
-      } else {
-        // Expansion controller: bed heaters 4-9 (map to expansion heater indices 8-13)
-        const expansionHeaterIndex = index + 4; // Map index 4->P8, 5->P9, 6->P10, 7->P11, 8->P12, 9->P13
-        expansionGcodeString += `M568 P${expansionHeaterIndex} S${activeTemp} R${preheatTemp} A${mode} `;
       }
+      // COMMENTED OUT - Expansion controller not available in this setup
+      // else {
+      //   // Expansion controller: bed heaters 4-9 (map to expansion heater indices 8-13)
+      //   const expansionHeaterIndex = index + 4; // Map index 4->P8, 5->P9, 6->P10, 7->P11, 8->P12, 9->P13
+      //   expansionGcodeString += `M568 P${expansionHeaterIndex} S${activeTemp} R${preheatTemp} A${mode} `;
+      // }
     }
   });
   
-  // Send commands to appropriate controllers
+  // Send commands to main controller only
   if (mainGcodeString.trim()) {
     console.log(`Sending bed heater commands to main controller: ${mainGcodeString.trim()}`);
     sendGcode(mainGcodeString);
   }
   
-  if (expansionGcodeString.trim()) {
-    console.log(`Sending bed heater commands to expansion controller: ${expansionGcodeString.trim()}`);
-    sendExpansionGcode(expansionGcodeString);
-  }
+  // COMMENTED OUT - Expansion controller not available in this setup
+  // if (expansionGcodeString.trim()) {
+  //   console.log(`Sending bed heater commands to expansion controller: ${expansionGcodeString.trim()}`);
+  //   sendExpansionGcode(expansionGcodeString);
+  // }
 }
 // =====================================================================================================================
 
@@ -2457,7 +2457,7 @@ function showResetAllHeaterFaultsPopup() {
   if (popup) {
     console.log("User confirmed reset of all heater faults");
     sendGcode("M562"); // Reset all heater faults on main controller
-    sendExpansionGcode("M562"); // Reset all heater faults on expansion controller
+    // sendExpansionGcode("M562"); // Reset all heater faults on expansion controller - COMMENTED OUT
     
     // Suspend fault detection to prevent duplicate popups after reset
     suspendFaultDetection("Reset all heater faults command");
@@ -2551,23 +2551,25 @@ buttonIds.forEach((buttonId) => {
           .querySelectorAll(".user-input-temp.bed.active")
           .forEach((element) => (element.textContent = "0")); // set text to 0
         
-        // Send explicit off commands to all bed heaters on both controllers for safety
+        // Send explicit off commands to all bed heaters on main controller for safety
         // Main controller: Turn off bed heaters P4-P7 (beds 0-3)
         sendGcode("M568 P4 S0 R0 A0 M568 P5 S0 R0 A0 M568 P6 S0 R0 A0 M568 P7 S0 R0 A0");
         
-        // Expansion controller: Turn off bed heaters P8-P13 (beds 4-9)
-        sendExpansionGcode("M568 P8 S0 R0 A0 M568 P9 S0 R0 A0 M568 P10 S0 R0 A0 M568 P11 S0 R0 A0 M568 P12 S0 R0 A0 M568 P13 S0 R0 A0");
+        // COMMENTED OUT - Expansion controller not available in this setup
+        // // Expansion controller: Turn off bed heaters P8-P13 (beds 4-9)
+        // sendExpansionGcode("M568 P8 S0 R0 A0 M568 P9 S0 R0 A0 M568 P10 S0 R0 A0 M568 P11 S0 R0 A0 M568 P12 S0 R0 A0 M568 P13 S0 R0 A0");
         break;
       case "preheat-bed":
-        // Use the existing configureBedHeaters function which already handles dual-controller routing
+        // Use the existing configureBedHeaters function (main controller only)
         configureBedHeaters(1, configuredBedHeaters); // mode 1 == preheat (standby)
         
-        // Ensure both controllers are addressed (configureBedHeaters already handles this intelligently)
-        console.log("Preheat bed command sent to both main and expansion controllers based on bed configuration");
+        // COMMENTED OUT - Expansion controller not available in this setup
+        // console.log("Preheat bed command sent to both main and expansion controllers based on bed configuration");
+        console.log("Preheat bed command sent to main controller");
         break;
       case "emergency-stop":
         sendGcode("M112");
-        sendExpansionGcode("M112");
+        // sendExpansionGcode("M112"); // COMMENTED OUT - Expansion controller not available
         break;
       case "part-cooling-on":
       case "part-cooling-on-icon":
@@ -2583,7 +2585,7 @@ buttonIds.forEach((buttonId) => {
         break;
       case "reset-machine":
         sendGcode("M999");
-        sendExpansionGcode("M999");
+        // sendExpansionGcode("M999"); // COMMENTED OUT - Expansion controller not available
         break;
       case "confirmYes":
         if (spindleRunning == true) {
@@ -2801,7 +2803,7 @@ buttonIds.forEach((buttonId) => {
         const restartFirmware = window.confirm(`⚠️ WARNING: RESTART FIRMWARE ⚠️\n\nConfirming will RESET ALL Extruder Heater & Bed temperatures to OFF.\n\nAll heating processes will be stopped immediately.\n\nAre you sure you want to proceed?`);
         if (restartFirmware) {
           sendGcode('M999');
-          sendExpansionGcode('M999');
+          // sendExpansionGcode('M999'); // COMMENTED OUT - Expansion controller not available
           location.reload();
         }
         break;
@@ -3010,54 +3012,69 @@ function setTemp(tabpane, buttonIndex) {
           document.getElementById("user-input-preheat-bed3"),
           "P7",
         ];
-      case ".tab-pane-bed4":
-        return [
-          document.getElementById("user-input-active-bed4"),
-          document.getElementById("user-input-preheat-bed4"),
-          "P8",
-        ];
-      case ".tab-pane-bed5":
-        return [
-          document.getElementById("user-input-active-bed5"),
-          document.getElementById("user-input-preheat-bed5"),
-          "P9",
-        ];
-      case ".tab-pane-bed6":
-        return [
-          document.getElementById("user-input-active-bed6"),
-          document.getElementById("user-input-preheat-bed6"),
-          "P10",
-        ];
-      case ".tab-pane-bed7":
-        return [
-          document.getElementById("user-input-active-bed7"),
-          document.getElementById("user-input-preheat-bed7"),
-          "P11",
-        ];
-      case ".tab-pane-bed8":
-        return [
-          document.getElementById("user-input-active-bed8"),
-          document.getElementById("user-input-preheat-bed8"),
-          "P12",
-        ];
-      case ".tab-pane-bed9":
-        return [
-          document.getElementById("user-input-active-bed9"),
-          document.getElementById("user-input-preheat-bed9"),
-          "P13",
-        ];
+      // COMMENTED OUT - Expansion controller not available in this setup
+      // Beds 4-9 (P8-P13) are not available on main controller
+      // case ".tab-pane-bed4":
+      //   return [
+      //     document.getElementById("user-input-active-bed4"),
+      //     document.getElementById("user-input-preheat-bed4"),
+      //     "P8",
+      //   ];
+      // case ".tab-pane-bed5":
+      //   return [
+      //     document.getElementById("user-input-active-bed5"),
+      //     document.getElementById("user-input-preheat-bed5"),
+      //     "P9",
+      //   ];
+      // case ".tab-pane-bed6":
+      //   return [
+      //     document.getElementById("user-input-active-bed6"),
+      //     document.getElementById("user-input-preheat-bed6"),
+      //     "P10",
+      //   ];
+      // case ".tab-pane-bed7":
+      //   return [
+      //     document.getElementById("user-input-active-bed7"),
+      //     document.getElementById("user-input-preheat-bed7"),
+      //     "P11",
+      //   ];
+      // case ".tab-pane-bed8":
+      //   return [
+      //     document.getElementById("user-input-active-bed8"),
+      //     document.getElementById("user-input-preheat-bed8"),
+      //     "P12",
+      //   ];
+      // case ".tab-pane-bed9":
+      //   return [
+      //     document.getElementById("user-input-active-bed9"),
+      //     document.getElementById("user-input-preheat-bed9"),
+      //     "P13",
+      //   ];
     }
   })();
 
+  // Guard: Check if heater/activeTemp/preheatTemp are undefined (bed4-bed9 cases are commented out)
+  if (!heater || !activeTemp || !preheatTemp) {
+    console.warn(`Bed heaters 4-9 are not available - expansion controller is not configured`);
+    return; // Exit early if bed4-bed9 tab was accessed
+  }
+  
   // Determine which controller to use based on heater parameter
   let sendFunction = sendGcode;
   let targetHeater = heater;
   
-  // Route bed heaters P8-P13 (bed4-bed9) to expansion controller with direct addressing
+  // COMMENTED OUT - Expansion controller not available in this setup
+  // // Route bed heaters P8-P13 (bed4-bed9) to expansion controller with direct addressing
+  // if (heater >= "P8" && heater <= "P13") {
+  //   sendFunction = sendExpansionGcode;
+  //   targetHeater = heater; // Use direct P8-P13 addressing on expansion controller
+  //   console.log(`Routing ${heater} to expansion controller as ${targetHeater}`);
+  // }
+  
+  // Additional guard: Prevent sending commands for expansion beds (P8-P13) since expansion controller is not available
   if (heater >= "P8" && heater <= "P13") {
-    sendFunction = sendExpansionGcode;
-    targetHeater = heater; // Use direct P8-P13 addressing on expansion controller
-    console.log(`Routing ${heater} to expansion controller as ${targetHeater}`);
+    console.warn(`Bed heaters P8-P13 (bed4-bed9) are not available - expansion controller is not configured`);
+    return; // Exit early to prevent sending invalid commands
   }
 
   switch (buttonIndex) {
@@ -3231,31 +3248,34 @@ document
         `M568 P0 S${topTemp} R${topTemp} A1 M568 P1 S${middleTemp} R${middleTemp} A1 M568 P2 S${bottomTemp} R${bottomTemp} A1 M568 P3 S${nozzleTemp} R${nozzleTemp} A1`
       );
 
-      // Preheat Bed Heaters with dual-controller routing
+      // Preheat Bed Heaters (main controller only - expansion controller commented out)
       let mainGcodeString = "";
-      let expansionGcodeString = "";
+      // let expansionGcodeString = ""; // COMMENTED OUT - Expansion controller not available
       
       configuredBedHeaters.forEach((heater, index) => {
         if (index < 4) {
           // Main controller: bed heaters 0-3
           mainGcodeString += `M568 P${index + 4} S${bedTemp} R${bedTemp} A1 `;
-        } else {
-          // Expansion controller: bed heaters 4-9 (map to expansion heater indices 8-13)
-          const expansionHeaterIndex = index + 4; // Map index 4->P8, 5->P9, 6->P10, 7->P11, 8->P12, 9->P13
-          expansionGcodeString += `M568 P${expansionHeaterIndex} S${bedTemp} R${bedTemp} A1 `;
         }
+        // COMMENTED OUT - Expansion controller not available in this setup
+        // else {
+        //   // Expansion controller: bed heaters 4-9 (map to expansion heater indices 8-13)
+        //   const expansionHeaterIndex = index + 4; // Map index 4->P8, 5->P9, 6->P10, 7->P11, 8->P12, 9->P13
+        //   expansionGcodeString += `M568 P${expansionHeaterIndex} S${bedTemp} R${bedTemp} A1 `;
+        // }
       });
       
-      // Send commands to appropriate controllers
+      // Send commands to main controller only
       if (mainGcodeString.trim()) {
         console.log(`Heating profile: Sending bed commands to main controller: ${mainGcodeString.trim()}`);
         sendGcode(mainGcodeString);
       }
       
-      if (expansionGcodeString.trim()) {
-        console.log(`Heating profile: Sending bed commands to expansion controller: ${expansionGcodeString.trim()}`);
-        sendExpansionGcode(expansionGcodeString);
-      }
+      // COMMENTED OUT - Expansion controller not available in this setup
+      // if (expansionGcodeString.trim()) {
+      //   console.log(`Heating profile: Sending bed commands to expansion controller: ${expansionGcodeString.trim()}`);
+      //   sendExpansionGcode(expansionGcodeString);
+      // }
 
       saveSettings();
       document.getElementById("default-tab").click();
