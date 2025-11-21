@@ -16,39 +16,201 @@ let selectedHeatsinkFan = "0";
 let selectedBarrelFan = "0";
 // let spindleRunning = false; // already declared in embedded code
 
+// Configuration for SBC mode connection
+// Static version string - update this when you want to clear cache for all users
+// Only clears cache when version actually changes, not on every reload
+const STORAGE_VERSION = 'v3.2';
+const CURRENT_STORAGE_VERSION = localStorage.getItem('storageVersion');
+
+// Clear localStorage only on version change (not on every reload)
+if (CURRENT_STORAGE_VERSION && CURRENT_STORAGE_VERSION !== STORAGE_VERSION) {
+  console.log(`Auto-clearing cache for version update (${CURRENT_STORAGE_VERSION} -> ${STORAGE_VERSION})`);
+  localStorage.clear();
+  sessionStorage.clear();
+  localStorage.setItem('storageVersion', STORAGE_VERSION);
+} else if (!CURRENT_STORAGE_VERSION) {
+  // First time setup - set version without clearing
+  localStorage.setItem('storageVersion', STORAGE_VERSION);
+}
+
+// SBC mode URLs - using localhost endpoints
 let activeStatusURL = "http://localhost/machine/status";
 let activeCodeURL = "http://localhost/machine/code";
+
+// Session management
+let isConnected = false;
+
+// Network configuration
+const NETWORK_TIMEOUT = 5000; // 5 seconds timeout for requests
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second base delay
 
 // ============================= index.html HEADER - Fetch Machine Status with Fallback URLs ===============================
 
 // ========================================== HTTP requests with Duet Mainboard ========================================
 
-// FUNCTION: HTTPS async GET/POST requests to Duet Mainboard
-// Enhanced fetchData function to handle various error cases
-async function fetchData(url, options) {
+// Helper function to create timeout-enabled fetch requests
+function fetchWithTimeout(url, options = {}, timeout = NETWORK_TIMEOUT) {
+  return new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error(`Request timeout after ${timeout}ms`));
+    }, timeout);
+
+    fetch(url, options)
+      .then(response => {
+        clearTimeout(timeoutId);
+        resolve(response);
+      })
+      .catch(error => {
+        clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
+}
+
+// FUNCTION: Update connection status indicator in UI
+function updateConnectionStatusUI(status, message = null) {
+  const indicator = document.getElementById('connection-indicator');
+  const text = document.getElementById('connection-text');
+  
+  if (!indicator || !text) return; // Elements not found, skip UI update
+  
+  switch (status) {
+    case 'connected':
+      indicator.style.backgroundColor = '#44ff44';
+      text.textContent = message || 'Connected';
+      text.className = 'toggle-text-on';
+      break;
+    case 'connecting':
+      indicator.style.backgroundColor = '#ffaa44';
+      text.textContent = message || 'Connecting...';
+      text.className = 'toggle-text-off';
+      break;
+    case 'disconnected':
+      indicator.style.backgroundColor = '#ff4444';
+      text.textContent = message || 'Disconnected';
+      text.className = 'toggle-text-off';
+      break;
+    case 'error':
+      indicator.style.backgroundColor = '#ff0044';
+      text.textContent = message || 'Connection Error';
+      text.className = 'toggle-text-off';
+      break;
+    default:
+      indicator.style.backgroundColor = '#888888';
+      text.textContent = message || 'Status Unknown';
+      text.className = 'toggle-text-off';
+  }
+}
+
+// FUNCTION: Initialize connection status on page load
+function initializeConnectionStatus() {
+  // Set initial status
+  updateConnectionStatusUI('connecting');
+  
+  // Try to establish connection
+  setTimeout(async () => {
+    try {
+      // Test connection by attempting a status fetch
+      const testResponse = await fetchWithTimeout(activeStatusURL, {}, 2000);
+      if (testResponse.ok) {
+        isConnected = true;
+        updateConnectionStatusUI('connected');
+      } else {
+        isConnected = false;
+        updateConnectionStatusUI('disconnected', 'Server error');
+      }
+    } catch (error) {
+      isConnected = false;
+      updateConnectionStatusUI('disconnected', 'Offline');
+    }
+  }, 1000);
+}
+
+// FUNCTION: Enhanced async GET/POST requests with timeouts and retry logic
+async function fetchData(url, options = {}, retryCount = 0) {
   try {
-    const response = await fetch(url, options);
+    // Use timeout-enabled fetch
+    const response = await fetchWithTimeout(url, options, NETWORK_TIMEOUT);
+
+    // Handle 401 Unauthorized - need to reconnect
+    if (response.status === 401) {
+      console.warn("Received 401 Unauthorized, attempting to reconnect...");
+      isConnected = false;
+      updateConnectionStatusUI('disconnected', 'Authentication required');
+      // Retry the original request after a delay
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      const retryResponse = await fetchWithTimeout(url, options, NETWORK_TIMEOUT);
+      if (!retryResponse.ok) {
+        console.error(`Error: Network response was not ok. Status: ${retryResponse.status}`);
+        throw new Error(`HTTP error! Status: ${retryResponse.status}`);
+      }
+      isConnected = true;
+      updateConnectionStatusUI('connected');
+      return await parseResponse(retryResponse);
+    }
 
     if (!response.ok) {
       console.error(`Error: Network response was not ok. Status: ${response.status}`);
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
-    const contentType = response.headers.get("content-type");
-    const data =
-      contentType && contentType.includes("application/json")
-        ? await response.json()
-        : await response.text();
+    // Mark as connected on successful response
+    if (!isConnected) {
+      isConnected = true;
+      updateConnectionStatusUI('connected');
+    }
 
-    return data;
+    return await parseResponse(response);
   } catch (error) {
+    // Implement retry logic for network errors with exponential backoff
+    if (retryCount < MAX_RETRIES && (
+      error.name === 'TypeError' || 
+      error.message.includes('timeout') ||
+      error.message.includes('ERR_CONNECTION_RESET') ||
+      error.message.includes('Failed to fetch') ||
+      error.message.includes('unreachable')
+    )) {
+      const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
+      console.warn(`Network error (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
+      updateConnectionStatusUI('connecting', `Retrying... (${retryCount + 1}/${MAX_RETRIES + 1})`);
+      
+      await new Promise(resolve => setTimeout(resolve, delay));
+      const result = await fetchData(url, options, retryCount + 1);
+      // On successful reconnection, ensure UI shows connected
+      if (isConnected) {
+        updateConnectionStatusUI('connected');
+      }
+      return result;
+    }
+
+    // Log specific error types
     if (error.name === 'TypeError') {
-      console.error("Network or SSL error, unable to fetch data. Please check your connection or SSL settings.");
+      console.error("Network error, unable to fetch data. Please check your connection.");
+    } else if (error.message.includes('timeout')) {
+      console.error(`Request timeout after ${NETWORK_TIMEOUT}ms. The device may be slow to respond or unreachable.`);
     } else {
       console.error("There has been a problem with your fetch operation:", error);
     }
+    
+    // Mark as disconnected for network-related errors
+    if (error.name === 'TypeError' || error.message.includes('timeout')) {
+      isConnected = false;
+      updateConnectionStatusUI('disconnected', 'Connection lost');
+    }
+    
     throw error;
   }
+}
+
+// Helper function to parse response
+async function parseResponse(response) {
+  const contentType = response.headers.get("content-type");
+  const data =
+    contentType && contentType.includes("application/json")
+      ? await response.json()
+      : await response.text();
+  return data;
 }
 
 // FUNCTION: Fetch & update Duet Object Model via HTTP GET requests
@@ -815,6 +977,7 @@ async function pollServerAndSendOnceOnStateChange() {
       if (response.status && response.status === 503) {
         console.log("503 Service Unavailable. Polling again after delay...");
         serverWasUnavailable = true; // Update the server state as unavailable
+        updateConnectionStatusUI('connecting', 'Service unavailable');
         await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
         continue; // Keep polling if the server is unavailable
       }
@@ -824,6 +987,7 @@ async function pollServerAndSendOnceOnStateChange() {
       // Only send commands once after server becomes available
       if (serverWasUnavailable) {
         console.log("Server state changed to available. Sending G-code commands once...");
+        updateConnectionStatusUI('connected');
         await sendCommandsOnce();
         serverWasUnavailable = false; // Update state to reflect that commands have been sent
       }
@@ -834,6 +998,7 @@ async function pollServerAndSendOnceOnStateChange() {
     } catch (error) {
       console.error(`Error checking server status: ${error}`);
       serverWasUnavailable = true; // Treat any fetch error as a temporary unavailability
+      updateConnectionStatusUI('disconnected', 'Connection lost');
       await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL)); // Delay before retrying
     }
   }
@@ -891,6 +1056,7 @@ async function sendGcode(gcode) {
 
       if (response.status && response.status === 503) {
         console.warn("503 Service Unavailable while sending G-code. Retrying...");
+        updateConnectionStatusUI('connecting', 'Service unavailable, retrying...');
         await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
         continue; // Retry if server returns 503 error
       }
@@ -903,10 +1069,18 @@ async function sendGcode(gcode) {
       }
 
       console.log(`Response from sending G-code '${gcode}': ${response}`);
+      // Ensure connection status is updated on success
+      if (isConnected) {
+        updateConnectionStatusUI('connected');
+      }
       return response; // Exit loop on successful command execution without errors
 
     } catch (error) {
       console.error(`Error sending G-code '${gcode}': ${error}`);
+      // Update connection status on error
+      if (error.name === 'TypeError' || error.message.includes('timeout')) {
+        updateConnectionStatusUI('disconnected', 'Connection lost');
+      }
       await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL)); // Delay before retrying
     }
   }
@@ -1140,6 +1314,9 @@ for (let i = 0; i < defaultNumOfBedHeaters; i++) {
 setInterval(update, 500);
 
 document.addEventListener("DOMContentLoaded", function () { 
+  // Initialize connection status UI
+  initializeConnectionStatus();
+  
   // Select Default Tabs on page load
   document.getElementById("default-tab").click();
   document.getElementById("system-info").click();
