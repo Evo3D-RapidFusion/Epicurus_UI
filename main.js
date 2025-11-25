@@ -406,7 +406,7 @@ async function fetchObjectModelByKeys() {
       fetchData(`${activeStatusURL}?key=state&flags=vn`),
       fetchData(`${activeStatusURL}?key=boards&flags=vn`),
       fetchData(`${activeStatusURL}?key=fans&flags=vn`),
-      fetchData(`${activeStatusURL}?key=spindles&flags=vn`)
+      fetchData(`${activeStatusURL}?key=spindles`) // Removed flags for spindles
     ];
     
     const [heatResponse, globalResponse, stateResponse, boardsResponse, fansResponse, spindlesResponse] = 
@@ -825,6 +825,7 @@ function updateObjectModel() {
       }
 
       // CNC Spindle Speed Live Control
+      // Send speed commands at polling rate (not on every change)
       if (spindleRunning === true && globalData.EstopFault === false) {
         document.getElementById(
           "radial-gradient-background-cnc-white"
@@ -840,9 +841,21 @@ function updateObjectModel() {
         // updateSliderBackground();
         // spindleSpeed = cncSpindle.current;
 
-        updatedSpindleSpeed = document.getElementById("speedValue").textContent;
-        sendGcode(`M3 P0 S${spindleSpeed}`); // run spindle clockwise at slider rpm
-        spindleSpeed = updatedSpindleSpeed;
+        // Read current speed from slider (ensure it's a number)
+        updatedSpindleSpeed = document.getElementById("speedValue").textContent.trim();
+        const speedNum = parseInt(updatedSpindleSpeed, 10);
+        
+        // Only send command at the configured posting interval rate
+        const now = Date.now();
+        const timeSinceLastPost = now - lastSpindlePostTime;
+        
+        if (!isNaN(speedNum) && speedNum > 0 && timeSinceLastPost >= spindlePostInterval) {
+          // Send M3 command to set spindle speed (M3 P0 S{value} sets speed for spindle 0)
+          sendGcode(`M3 P0 S${speedNum}`); // run spindle clockwise at slider rpm
+          spindleSpeed = updatedSpindleSpeed;
+          lastSpindlePostTime = now;
+          console.log(`Spindle speed posted: ${speedNum} RPM (interval: ${spindlePostInterval}ms)`);
+        }
         spindleOff == false;
 
       } else {
@@ -1239,6 +1252,10 @@ const POLL_INTERVAL = 1000; // 1 second - faster updates for better responsivene
 const POLL_INTERVAL_SLOW = 5000; // 5 seconds - when errors occur
 const POLL_INTERVAL_FAST = 500; // 0.5 seconds - when actively monitoring (optional)
 
+// Spindle speed posting rate (matches polling rate by default)
+let spindlePostInterval = POLL_INTERVAL;
+let lastSpindlePostTime = 0;
+
 let currentPollInterval = POLL_INTERVAL;
 let consecutiveErrors = 0;
 let updateIntervalId = null;
@@ -1380,6 +1397,7 @@ async function update() {
     if (currentPollInterval !== POLL_INTERVAL) {
       console.log("Connection stable, returning to normal polling interval");
       currentPollInterval = POLL_INTERVAL;
+      spindlePostInterval = POLL_INTERVAL; // Sync spindle posting rate with polling rate
       restartPolling();
     }
     
@@ -1391,6 +1409,7 @@ async function update() {
     if (consecutiveErrors >= 3 && currentPollInterval !== POLL_INTERVAL_SLOW) {
       console.log(`${consecutiveErrors} consecutive errors, slowing polling to ${POLL_INTERVAL_SLOW}ms`);
       currentPollInterval = POLL_INTERVAL_SLOW;
+      spindlePostInterval = POLL_INTERVAL_SLOW; // Sync spindle posting rate with polling rate
       restartPolling();
     }
   }
