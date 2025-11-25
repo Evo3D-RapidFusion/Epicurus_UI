@@ -295,18 +295,24 @@ async function fetchData(url, options = {}, retryCount = 0) {
 
     return await parseResponse(response);
   } catch (error) {
-    // Implement retry logic for network errors
+    // Implement retry logic for network errors with exponential backoff
     if (retryCount < MAX_RETRIES && (
       error.name === 'TypeError' || 
       error.message.includes('timeout') ||
       error.message.includes('ERR_CONNECTION_RESET') ||
-      error.message.includes('Failed to fetch')
+      error.message.includes('Failed to fetch') ||
+      error.message.includes('unreachable')
     )) {
       const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
       console.warn(`Network error (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
       
       await new Promise(resolve => setTimeout(resolve, delay));
-      return await fetchData(url, options, retryCount + 1);
+      const result = await fetchData(url, options, retryCount + 1);
+      // On successful reconnection, ensure UI shows connected
+      if (isConnected) {
+        updateConnectionStatusUI('connected');
+      }
+      return result;
     }
 
     // Log specific error types
@@ -399,14 +405,27 @@ async function fetchObjectModelByKeys() {
   try {
     console.log("Fetching object model using key-specific requests (Standalone mode)");
     
-    // Define the keys we need and fetch them in parallel
+    // Space out requests over 1 second to prevent overwhelming the controller
+    // 6 requests spaced ~166ms apart (1000ms / 6)
+    const REQUEST_SPACING = 166; // milliseconds between requests
+    
+    // Helper function to create a delayed fetch promise
+    const delayedFetch = (url, delay) => {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve(fetchData(url));
+        }, delay);
+      });
+    };
+    
+    // Start requests with staggered delays
     const keyRequests = [
-      fetchData(`${activeStatusURL}?key=heat&flags=vn`),
-      fetchData(`${activeStatusURL}?key=global&flags=vn`), 
-      fetchData(`${activeStatusURL}?key=state&flags=vn`),
-      fetchData(`${activeStatusURL}?key=boards&flags=vn`),
-      fetchData(`${activeStatusURL}?key=fans&flags=vn`),
-      fetchData(`${activeStatusURL}?key=spindles`) // Removed flags for spindles
+      delayedFetch(`${activeStatusURL}?key=heat&flags=vn`, 0),
+      delayedFetch(`${activeStatusURL}?key=global&flags=vn`, REQUEST_SPACING * 1), 
+      delayedFetch(`${activeStatusURL}?key=state&flags=vn`, REQUEST_SPACING * 2),
+      delayedFetch(`${activeStatusURL}?key=boards&flags=vn`, REQUEST_SPACING * 3),
+      delayedFetch(`${activeStatusURL}?key=fans&flags=vn`, REQUEST_SPACING * 4),
+      delayedFetch(`${activeStatusURL}?key=spindles`, REQUEST_SPACING * 5) // Removed flags for spindles
     ];
     
     const [heatResponse, globalResponse, stateResponse, boardsResponse, fansResponse, spindlesResponse] = 
