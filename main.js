@@ -1517,15 +1517,34 @@ function saveSettings() {
 
 // FUNCTION: load temperature settings from localStorage
 function loadSettings() {
-  const storedSettings = localStorage.getItem("temperatureSettings") || "{}";
+  const storedSettings = localStorage.getItem("temperatureSettings");
 
-  // If temperatureSettings is not set, initialize with default values
-  if (!storedSettings) {
+  // If temperatureSettings is not set or is empty, initialize with default values
+  if (!storedSettings || storedSettings === "{}" || storedSettings === "null") {
     const defaultSettings = initializeDefaultSettings();
     localStorage.setItem(
       "temperatureSettings",
       JSON.stringify(defaultSettings)
     );
+    
+    const setValuesInForm = (category) => {
+      const popupElement = document.querySelector(
+        `.tab-pane-${category} .temp-popup-user-input`
+      );
+      if (popupElement) {
+        popupElement.textContent = defaultSettings[category].popup;
+      }
+      const activeElement = document.getElementById(`user-input-active-${category}`);
+      if (activeElement) {
+        activeElement.textContent = defaultSettings[category].active;
+      }
+      const preheatElement = document.getElementById(`user-input-preheat-${category}`);
+      if (preheatElement) {
+        preheatElement.textContent = defaultSettings[category].preheat;
+      }
+    };
+
+    Object.keys(defaultSettings).forEach(setValuesInForm);
     return defaultSettings;
   }
 
@@ -1541,15 +1560,30 @@ function loadSettings() {
     {}
   );
 
+  // Ensure all default categories exist (merge with defaults to fill missing ones)
+  const defaultSettings = initializeDefaultSettings();
+  Object.keys(defaultSettings).forEach((category) => {
+    if (!settings[category]) {
+      settings[category] = defaultSettings[category];
+    }
+  });
+
   const setValuesInForm = (category) => {
-    document.querySelector(
+    const popupElement = document.querySelector(
       `.tab-pane-${category} .temp-popup-user-input`
-    ).textContent = settings[category].popup;
+    );
+    if (popupElement) {
+      popupElement.textContent = settings[category].popup;
+    }
     // Uncomment to display stored active and preheat values in dropdowns
-    document.getElementById(`user-input-active-${category}`).textContent =
-      settings[category].active;
-    document.getElementById(`user-input-preheat-${category}`).textContent =
-      settings[category].preheat;
+    const activeElement = document.getElementById(`user-input-active-${category}`);
+    if (activeElement) {
+      activeElement.textContent = settings[category].active;
+    }
+    const preheatElement = document.getElementById(`user-input-preheat-${category}`);
+    if (preheatElement) {
+      preheatElement.textContent = settings[category].preheat;
+    }
   };
 
   Object.keys(settings).forEach(setValuesInForm);
@@ -2126,13 +2160,31 @@ function numPadClick(tabpane, buttonIndex) {
   let inputValue = tempInput.textContent;
   let heaters = tabpane.match(/[^-]+$/)[0];
 
+  // Ensure settings exists and has the heater configuration
+  if (!settings) {
+    console.warn("Settings not loaded, attempting to load...");
+    settings = loadSettings();
+  }
+  
+  // Ensure the specific heater exists in settings
+  if (!settings || !settings[heaters]) {
+    console.warn(`Settings for heater '${heaters}' not found, using defaults`);
+    if (!settings) settings = {};
+    if (!settings[heaters]) {
+      settings[heaters] = { popup: "0", active: "0", preheat: "0" };
+    }
+  }
+
+  // Get saved popup value safely
+  const savedPopupValue = settings[heaters]?.popup || "0";
+
   // default value = 0
   if (inputValue === 0) {
     inputValue = inputValue.slice(0, -1);
   }
 
   if (buttonIndex <= 8) {
-    if (inputValue === settings[heaters].popup) {
+    if (inputValue === savedPopupValue) {
       //saved value in local storage
       inputValue = buttonIndex + 1;
     } else {
@@ -2142,7 +2194,7 @@ function numPadClick(tabpane, buttonIndex) {
     // Clear input
     inputValue = 0; // reset default value
   } else if (buttonIndex === 10) {
-    if (inputValue === settings[heaters].popup) {
+    if (inputValue === savedPopupValue) {
       //saved value in local storage
       inputValue = 0;
     } else {
