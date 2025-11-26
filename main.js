@@ -19,7 +19,7 @@ let selectedBarrelFan = "0";
 // Configuration for Duet connection - can be modified via UI or localStorage
 // Static version string - update this when you want to clear cache for all users
 // Only clears cache when version actually changes, not on every reload
-const STORAGE_VERSION = 'v3.2';
+const STORAGE_VERSION = 'v3.3';
 const CURRENT_STORAGE_VERSION = localStorage.getItem('storageVersion');
 
 // Clear localStorage only on version change (not on every reload)
@@ -33,18 +33,50 @@ if (CURRENT_STORAGE_VERSION && CURRENT_STORAGE_VERSION !== STORAGE_VERSION) {
   localStorage.setItem('storageVersion', STORAGE_VERSION);
 }
 
-let duetIP = localStorage.getItem('duetIP') || "192.168.1.100";
-// let duetExpansionIP = localStorage.getItem('duetExpansionIP') || "192.168.1.101";
+// IP fallback system: default 192.168.1.100 with fallback to 10.10.10.100
+const DEFAULT_IP_PRIMARY = "192.168.1.100";
+const DEFAULT_IP_FALLBACK = "10.10.10.100";
+let duetIP = localStorage.getItem('duetIP') || DEFAULT_IP_PRIMARY;
+
+// Helper function to rebuild URLs when IP changes
+function rebuildURLs() {
+  activeStatusURL = `http://${duetIP}/rr_model`;
+  activeCodeURL = `http://${duetIP}/rr_gcode`;
+  activeConnectURL = `http://${duetIP}/rr_connect`;
+}
+
 let activeStatusURL = `http://${duetIP}/rr_model`;
 let activeCodeURL = `http://${duetIP}/rr_gcode`;
 let activeConnectURL = `http://${duetIP}/rr_connect`;
-// let expansionStatusURL = `http://${duetExpansionIP}/rr_model`;
-// let expansionCodeURL = `http://${duetExpansionIP}/rr_gcode`;
-// let expansionConnectURL = `http://${duetExpansionIP}/rr_connect`;
+
+// Bed expansion controller variables - conditionally initialized based on toggle state
+let duetExpansionIP = null;
+let expansionStatusURL = null;
+let expansionCodeURL = null;
+let expansionConnectURL = null;
+
+// Initialize expansion variables if bed expansion is enabled
+function initializeExpansionVariables() {
+  const bedExpansionEnabled = localStorage.getItem("bedExpansionState") === "on";
+  if (bedExpansionEnabled) {
+    duetExpansionIP = localStorage.getItem('duetExpansionIP') || "192.168.1.101";
+    expansionStatusURL = `http://${duetExpansionIP}/rr_model`;
+    expansionCodeURL = `http://${duetExpansionIP}/rr_gcode`;
+    expansionConnectURL = `http://${duetExpansionIP}/rr_connect`;
+  } else {
+    duetExpansionIP = null;
+    expansionStatusURL = null;
+    expansionCodeURL = null;
+    expansionConnectURL = null;
+  }
+}
+
+// Initialize expansion variables on load
+initializeExpansionVariables();
 
 // Session management
 let isConnected = false;
-// let isExpansionConnected = false;
+let isExpansionConnected = false;
 
 // Network configuration
 const NETWORK_TIMEOUT = 5000; // 5 seconds timeout for requests
@@ -247,7 +279,7 @@ window.forceDuetMode = forceDuetMode;
 // ========================================== HTTP requests with Duet Mainboard ========================================
 
 // FUNCTION: Establish connection to RRF with timeout and exponential retry
-async function connectToRRF(password = "reprap", retryCount = 0) {
+async function connectToRRF(password = "reprap", retryCount = 0, tryFallback = true) {
   try {
     console.log(`Attempting to connect to RRF at ${duetIP}...`);
     const response = await fetchWithTimeout(`${activeConnectURL}?password=${encodeURIComponent(password)}`, {}, NETWORK_TIMEOUT);
@@ -262,6 +294,8 @@ async function connectToRRF(password = "reprap", retryCount = 0) {
       console.log("Successfully connected to RRF");
       isConnected = true;
       updateConnectionStatusUI('connected');
+      // Save working IP to localStorage
+      localStorage.setItem('duetIP', duetIP);
       return data;
     } else {
       console.error(`RRF connection failed with error code: ${data.err}`);
@@ -270,6 +304,21 @@ async function connectToRRF(password = "reprap", retryCount = 0) {
       throw new Error(`RRF connection failed: ${data.err}`);
     }
   } catch (error) {
+    // Try fallback IP if primary IP fails and we haven't tried fallback yet
+    if (tryFallback && duetIP === DEFAULT_IP_PRIMARY && (
+      error.name === 'TypeError' || 
+      error.message.includes('timeout') ||
+      error.message.includes('Failed to fetch') ||
+      error.message.includes('ERR_CONNECTION_RESET') ||
+      error.message.includes('unreachable')
+    )) {
+      console.log(`Primary IP ${DEFAULT_IP_PRIMARY} failed, trying fallback IP ${DEFAULT_IP_FALLBACK}...`);
+      duetIP = DEFAULT_IP_FALLBACK;
+      rebuildURLs();
+      updateConnectionStatusUI('connecting', `Trying fallback IP ${DEFAULT_IP_FALLBACK}...`);
+      return await connectToRRF(password, 0, false); // Try fallback without retry count
+    }
+    
     // Retry with exponential backoff for unreachable device errors
     if (retryCount < MAX_RETRIES && (
       error.name === 'TypeError' || 
@@ -283,7 +332,7 @@ async function connectToRRF(password = "reprap", retryCount = 0) {
       updateConnectionStatusUI('connecting', `Retrying connection... (${retryCount + 1}/${MAX_RETRIES + 1})`);
       
       await new Promise(resolve => setTimeout(resolve, delay));
-      return await connectToRRF(password, retryCount + 1);
+      return await connectToRRF(password, retryCount + 1, false); // Don't try fallback again
     }
     
     console.error("Failed to connect to RRF:", error);
@@ -375,107 +424,136 @@ async function parseResponse(response) {
 }
 
 // FUNCTION: Establish connection to expansion controller with timeout and exponential retry
-// COMMENTED OUT - Expansion controller not available in this setup
-// async function connectToExpansionRRF(password = "reprap", retryCount = 0) {
-//   try {
-//     console.log(`Attempting to connect to expansion controller at ${duetExpansionIP}...`);
-//     const response = await fetchWithTimeout(`${expansionConnectURL}?password=${encodeURIComponent(password)}`, {}, NETWORK_TIMEOUT);
-//     
-//     if (!response.ok) {
-//       throw new Error(`HTTP error! Status: ${response.status}`);
-//     }
-//     
-//     const data = await response.json();
-//     
-//     if (data.err === 0) {
-//       console.log("Successfully connected to expansion controller");
-//       isExpansionConnected = true;
-//       return data;
-//     } else {
-//       console.error(`Expansion controller connection failed with error code: ${data.err}`);
-//       isExpansionConnected = false;
-//       throw new Error(`Expansion controller connection failed: ${data.err}`);
-//     }
-//   } catch (error) {
-//     // Retry with exponential backoff for unreachable device errors
-//     if (retryCount < MAX_RETRIES && (
-//       error.name === 'TypeError' || 
-//       error.message.includes('timeout') ||
-//       error.message.includes('Failed to fetch') ||
-//       error.message.includes('ERR_CONNECTION_RESET') ||
-//       error.message.includes('unreachable')
-//     )) {
-//       const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
-//       console.warn(`Expansion device unreachable (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
-//       
-//       await new Promise(resolve => setTimeout(resolve, delay));
-//       return await connectToExpansionRRF(password, retryCount + 1);
-//     }
-//     
-//     console.error("Failed to connect to expansion controller:", error);
-//     isExpansionConnected = false;
-//     throw error;
-//   }
-// }
+async function connectToExpansionRRF(password = "reprap", retryCount = 0) {
+  // Guard check: only proceed if bed expansion is enabled
+  if (localStorage.getItem("bedExpansionState") !== "on") {
+    console.log("Bed expansion disabled, skipping expansion controller connection");
+    isExpansionConnected = false;
+    return null;
+  }
+  
+  // Ensure expansion variables are initialized
+  if (!expansionConnectURL) {
+    initializeExpansionVariables();
+    if (!expansionConnectURL) {
+      console.warn("Expansion controller URLs not initialized");
+      return null;
+    }
+  }
+  
+  try {
+    console.log(`Attempting to connect to expansion controller at ${duetExpansionIP}...`);
+    const response = await fetchWithTimeout(`${expansionConnectURL}?password=${encodeURIComponent(password)}`, {}, NETWORK_TIMEOUT);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.err === 0) {
+      console.log("Successfully connected to expansion controller");
+      isExpansionConnected = true;
+      return data;
+    } else {
+      console.error(`Expansion controller connection failed with error code: ${data.err}`);
+      isExpansionConnected = false;
+      throw new Error(`Expansion controller connection failed: ${data.err}`);
+    }
+  } catch (error) {
+    // Retry with exponential backoff for unreachable device errors
+    if (retryCount < MAX_RETRIES && (
+      error.name === 'TypeError' || 
+      error.message.includes('timeout') ||
+      error.message.includes('Failed to fetch') ||
+      error.message.includes('ERR_CONNECTION_RESET') ||
+      error.message.includes('unreachable')
+    )) {
+      const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
+      console.warn(`Expansion device unreachable (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
+      
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return await connectToExpansionRRF(password, retryCount + 1);
+    }
+    
+    console.error("Failed to connect to expansion controller:", error);
+    isExpansionConnected = false;
+    throw error;
+  }
+}
 
 // FUNCTION: Enhanced async GET/POST requests to expansion controller with timeouts and retry logic
-// COMMENTED OUT - Expansion controller not available in this setup
-// async function fetchExpansionData(url, options = {}, retryCount = 0) {
-//   try {
-//     // Ensure we're connected before making requests
-//     if (!isExpansionConnected && !url.includes('rr_connect')) {
-//       await connectToExpansionRRF();
-//     }
-//     
-//     // Use timeout-enabled fetch
-//     const response = await fetchWithTimeout(url, options, NETWORK_TIMEOUT);
+async function fetchExpansionData(url, options = {}, retryCount = 0) {
+  // Guard check: only proceed if bed expansion is enabled
+  if (localStorage.getItem("bedExpansionState") !== "on") {
+    console.log("Bed expansion disabled, skipping expansion data fetch");
+    return null;
+  }
+  
+  // Ensure expansion variables are initialized
+  if (!expansionStatusURL) {
+    initializeExpansionVariables();
+    if (!expansionStatusURL) {
+      console.warn("Expansion controller URLs not initialized");
+      return null;
+    }
+  }
+  
+  try {
+    // Ensure we're connected before making requests
+    if (!isExpansionConnected && !url.includes('rr_connect')) {
+      await connectToExpansionRRF();
+    }
+    
+    // Use timeout-enabled fetch
+    const response = await fetchWithTimeout(url, options, NETWORK_TIMEOUT);
 
-//     // Handle 401 Unauthorized - need to reconnect
-//     if (response.status === 401) {
-//       console.warn("Expansion controller received 401 Unauthorized, attempting to reconnect...");
-//       isExpansionConnected = false;
-//       await connectToExpansionRRF();
-//       // Retry the original request
-//       const retryResponse = await fetchWithTimeout(url, options, NETWORK_TIMEOUT);
-//       if (!retryResponse.ok) {
-//         console.error(`Expansion controller error: Network response was not ok. Status: ${retryResponse.status}`);
-//         throw new Error(`HTTP error! Status: ${retryResponse.status}`);
-//       }
-//       return await parseResponse(retryResponse);
-//     }
+    // Handle 401 Unauthorized - need to reconnect
+    if (response.status === 401) {
+      console.warn("Expansion controller received 401 Unauthorized, attempting to reconnect...");
+      isExpansionConnected = false;
+      await connectToExpansionRRF();
+      // Retry the original request
+      const retryResponse = await fetchWithTimeout(url, options, NETWORK_TIMEOUT);
+      if (!retryResponse.ok) {
+        console.error(`Expansion controller error: Network response was not ok. Status: ${retryResponse.status}`);
+        throw new Error(`HTTP error! Status: ${retryResponse.status}`);
+      }
+      return await parseResponse(retryResponse);
+    }
 
-//     if (!response.ok) {
-//       console.error(`Expansion controller error: Network response was not ok. Status: ${response.status}`);
-//       throw new Error(`HTTP error! Status: ${response.status}`);
-//     }
+    if (!response.ok) {
+      console.error(`Expansion controller error: Network response was not ok. Status: ${response.status}`);
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
 
-//     return await parseResponse(response);
-//   } catch (error) {
-//     // Implement retry logic for network errors with exponential backoff
-//     if (retryCount < MAX_RETRIES && (
-//         error.name === 'TypeError' ||
-//         error.message.includes('timeout') ||
-//         error.message.includes('fetch') ||
-//         error.message.includes('NetworkError') ||
-//         error.message.includes('Failed to fetch') ||
-//         error.message.includes('ERR_CONNECTION_RESET') ||
-//         error.message.includes('unreachable')
-//     )) {
-//       const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
-//       console.warn(`Expansion controller request failed (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
-//       await new Promise(resolve => setTimeout(resolve, delay));
-//       const result = await fetchExpansionData(url, options, retryCount + 1);
-//       // On successful reconnection, ensure UI shows connected if main connection is also active
-//       if (isConnected) {
-//         updateConnectionStatusUI('connected');
-//       }
-//       return result;
-//     } else {
-//       console.error("Network or SSL error with expansion controller, unable to fetch data. Please check your connection or SSL settings.");
-//       throw error;
-//     }
-//   }
-// }
+    return await parseResponse(response);
+  } catch (error) {
+    // Implement retry logic for network errors with exponential backoff
+    if (retryCount < MAX_RETRIES && (
+        error.name === 'TypeError' ||
+        error.message.includes('timeout') ||
+        error.message.includes('fetch') ||
+        error.message.includes('NetworkError') ||
+        error.message.includes('Failed to fetch') ||
+        error.message.includes('ERR_CONNECTION_RESET') ||
+        error.message.includes('unreachable')
+    )) {
+      const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
+      console.warn(`Expansion controller request failed (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      const result = await fetchExpansionData(url, options, retryCount + 1);
+      // On successful reconnection, ensure UI shows connected if main connection is also active
+      if (isConnected) {
+        updateConnectionStatusUI('connected');
+      }
+      return result;
+    } else {
+      console.error("Network or SSL error with expansion controller, unable to fetch data. Please check your connection or SSL settings.");
+      throw error;
+    }
+  }
+}
 
 
 
@@ -540,14 +618,27 @@ async function fetchObjectModelByKeys() {
   try {
     console.log("Fetching object model using key-specific requests (Standalone mode)");
     
-    // Define the keys we need and fetch them in parallel
+    // Space out requests over 1 second to prevent overwhelming the controller
+    // 6 requests spaced ~166ms apart (1000ms / 6)
+    const REQUEST_SPACING = 166; // milliseconds between requests
+    
+    // Helper function to create a delayed fetch promise
+    const delayedFetch = (url, delay) => {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve(fetchData(url));
+        }, delay);
+      });
+    };
+    
+    // Start requests with staggered delays
     const keyRequests = [
-      fetchData(`${activeStatusURL}?key=heat&flags=vn`),
-      fetchData(`${activeStatusURL}?key=global&flags=vn`), 
-      fetchData(`${activeStatusURL}?key=state&flags=vn`),
-      fetchData(`${activeStatusURL}?key=boards&flags=vn`),
-      fetchData(`${activeStatusURL}?key=fans&flags=vn`),
-      fetchData(`${activeStatusURL}?key=spindles`) // Removed flags for spindles
+      delayedFetch(`${activeStatusURL}?key=heat&flags=vn`, 0),
+      delayedFetch(`${activeStatusURL}?key=global&flags=vn`, REQUEST_SPACING * 1), 
+      delayedFetch(`${activeStatusURL}?key=state&flags=vn`, REQUEST_SPACING * 2),
+      delayedFetch(`${activeStatusURL}?key=boards&flags=vn`, REQUEST_SPACING * 3),
+      delayedFetch(`${activeStatusURL}?key=fans&flags=vn`, REQUEST_SPACING * 4),
+      delayedFetch(`${activeStatusURL}?key=spindles`, REQUEST_SPACING * 5) // Removed flags for spindles
     ];
     
     const [heatResponse, globalResponse, stateResponse, boardsResponse, fansResponse, spindlesResponse] = 
@@ -604,11 +695,16 @@ function updateObjectModel() {
         mainDataPromise = fetchData(activeStatusURL);
       }
       
-      // COMMENTED OUT - Expansion controller not available in this setup
-      // // Expansion controller only needs heat data - always use the specific heat endpoint
-      // expansionDataPromise = fetchExpansionData(`${expansionStatusURL}?key=heat&flags=vn`);
+      // Conditionally fetch expansion controller data if bed expansion is enabled
+      const bedExpansionEnabled = localStorage.getItem("bedExpansionState") === "on";
+      let expansionDataPromise = null;
       
-      // Fetch data from main controller only
+      if (bedExpansionEnabled) {
+        // Expansion controller only needs heat data - always use the specific heat endpoint
+        expansionDataPromise = fetchExpansionData(`${expansionStatusURL}?key=heat&flags=vn`);
+      }
+      
+      // Fetch data from main controller
       let mainData;
       try {
         mainData = await mainDataPromise;
@@ -617,15 +713,37 @@ function updateObjectModel() {
         throw mainError;
       }
       
-      console.log(`Fetched main data using ${mainMode} mode`);
+      // Fetch expansion data if enabled
+      let expansionData = null;
+      if (bedExpansionEnabled && expansionDataPromise) {
+        try {
+          expansionData = await expansionDataPromise;
+        } catch (expansionError) {
+          console.warn("Expansion controller data fetch failed:", expansionError);
+          // Create empty expansion heat data if expansion controller failed
+          expansionData = { 
+            key: "heat", 
+            flags: "vn", 
+            result: { 
+              heaters: [],
+              bedHeaters: [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
+            } 
+          };
+        }
+      }
+      
+      console.log(`Fetched main data using ${mainMode} mode${bedExpansionEnabled ? ', expansion data using heat endpoint' : ''}`);
 
-      // Extract data from main controller
+      // Extract data from controllers
       const mainActualData = mainData.result || mainData;
+      const expansionActualData = expansionData ? (expansionData.result || expansionData) : null;
       
-      // Use main controller heating data only
+      // Merge heating data - combine main controller (extruders + beds 0-3) with expansion (beds 4-9)
       const mainHeatData = mainActualData.heat || {};
+      // Expansion controller returns heat data directly in result, no nested heat property
+      const expansionHeatData = expansionActualData;
       
-      // Create heater arrays from main controller only
+      // Create heater arrays from main controller
       const mergedHeaters = [...(mainHeatData.heaters || [])]; // Start with all main heaters
       const mergedBedHeaters = [...(mainHeatData.bedHeaters || [])]; // Start with main bed heaters (0-3)
       
@@ -634,27 +752,26 @@ function updateObjectModel() {
         mergedBedHeaters.push(-1); // Initialize unused slots with -1
       }
       
-      // COMMENTED OUT - Expansion controller not available in this setup
-      // // Add expansion bed heaters (4-9) from heater indices 8-13
-      // if (expansionHeatData.heaters && expansionHeatData.heaters.length > 8) {
-      //   // Expansion controller has bed heaters at indices 8-13 (mapping to beds 4-9)
-      //   for (let i = 8; i < Math.min(14, expansionHeatData.heaters.length); i++) {
-      //     const expansionHeater = expansionHeatData.heaters[i];
-      //     
-      //     // Check if this is a valid heater (not null and has properties)
-      //     if (expansionHeater !== null && expansionHeater !== undefined) {
-      //       // Add to merged heaters array (append to main heaters)
-      //       const mergedHeaterIndex = mergedHeaters.length;
-      //       mergedHeaters.push(expansionHeater);
-      //       
-      //       // Map expansion heater index 8-13 to bed positions 4-9
-      //       const bedHeaterIndex = i - 4; // 8->4, 9->5, 10->6, 11->7, 12->8, 13->9
-      //       if (bedHeaterIndex < 10) { // Maximum 10 bed heaters supported
-      //         mergedBedHeaters[bedHeaterIndex] = mergedHeaterIndex;
-      //       }
-      //     }
-      //   }
-      // }
+      // Add expansion bed heaters (4-9) from heater indices 8-13 if expansion is enabled
+      if (bedExpansionEnabled && expansionHeatData && expansionHeatData.heaters && expansionHeatData.heaters.length > 8) {
+        // Expansion controller has bed heaters at indices 8-13 (mapping to beds 4-9)
+        for (let i = 8; i < Math.min(14, expansionHeatData.heaters.length); i++) {
+          const expansionHeater = expansionHeatData.heaters[i];
+          
+          // Check if this is a valid heater (not null and has properties)
+          if (expansionHeater !== null && expansionHeater !== undefined) {
+            // Add to merged heaters array (append to main heaters)
+            const mergedHeaterIndex = mergedHeaters.length;
+            mergedHeaters.push(expansionHeater);
+            
+            // Map expansion heater index 8-13 to bed positions 4-9
+            const bedHeaterIndex = i - 4; // 8->4, 9->5, 10->6, 11->7, 12->8, 13->9
+            if (bedHeaterIndex < 10) { // Maximum 10 bed heaters supported
+              mergedBedHeaters[bedHeaterIndex] = mergedHeaterIndex;
+            }
+          }
+        }
+      }
       
       
       // Create merged heat data structure
@@ -1144,7 +1261,9 @@ function updateObjectModel() {
             console.log(`User chose to reset faults for heaters ${heaterList}`);
             sendGcode(`M292`); // Clear all messages first
             sendGcode("M562"); // Reset all heater faults on main controller
-            // sendExpansionGcode("M562"); // Reset all heater faults on expansion controller - COMMENTED OUT
+            if (localStorage.getItem("bedExpansionState") === "on") {
+              sendExpansionGcode("M562"); // Reset all heater faults on expansion controller
+            }
             
             // Mark all pending heaters as handled
             pendingFaultHeaters.forEach((heaterNumber) => {
@@ -1726,34 +1845,48 @@ async function sendGcode(gcode) {
 }
 
 // Function to send individual G-code command to expansion controller with retry logic
-// COMMENTED OUT - Expansion controller not available in this setup
-// async function sendExpansionGcode(gcode) {
-//   while (true) {
-//     try {
-//       const response = await fetchExpansionData(`${expansionCodeURL}?gcode=${encodeURIComponent(gcode)}`);
+async function sendExpansionGcode(gcode) {
+  // Guard check: only proceed if bed expansion is enabled
+  if (localStorage.getItem("bedExpansionState") !== "on") {
+    console.log("Bed expansion disabled, skipping expansion G-code:", gcode);
+    return null;
+  }
+  
+  // Ensure expansion variables are initialized
+  if (!expansionCodeURL) {
+    initializeExpansionVariables();
+    if (!expansionCodeURL) {
+      console.warn("Expansion controller URLs not initialized");
+      return null;
+    }
+  }
+  
+  while (true) {
+    try {
+      const response = await fetchExpansionData(`${expansionCodeURL}?gcode=${encodeURIComponent(gcode)}`);
 
-//       if (response.status && response.status === 503) {
-//         console.warn("503 Service Unavailable while sending G-code to expansion controller. Retrying...");
-//         await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
-//         continue; // Retry if server returns 503 error
-//       }
+      if (response && response.status && response.status === 503) {
+        console.warn("503 Service Unavailable while sending G-code to expansion controller. Retrying...");
+        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+        continue; // Retry if server returns 503 error
+      }
 
-//       // Check for unknown variable error in the response text
-//       if (typeof response === "string" && response.includes("Error: unknown variable")) {
-//         console.warn(`Unknown variable error detected in expansion controller response. Retrying G-code '${gcode}'...`);
-//         await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
-//         continue; // Retry if unknown variable error is present
-//       }
+      // Check for unknown variable error in the response text
+      if (response && typeof response === "string" && response.includes("Error: unknown variable")) {
+        console.warn(`Unknown variable error detected in expansion controller response. Retrying G-code '${gcode}'...`);
+        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+        continue; // Retry if unknown variable error is present
+      }
 
-//       console.log(`Response from expansion controller sending G-code '${gcode}': ${response}`);
-//       return response; // Exit loop on successful command execution without errors
+      console.log(`Response from expansion controller sending G-code '${gcode}': ${response}`);
+      return response; // Exit loop on successful command execution without errors
 
-//     } catch (error) {
-//       console.error(`Error sending G-code to expansion controller '${gcode}': ${error}`);
-//       await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL)); // Delay before retrying
-//     }
-//   }
-// }
+    } catch (error) {
+      console.error(`Error sending G-code to expansion controller '${gcode}': ${error}`);
+      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL)); // Delay before retrying
+    }
+  }
+}
 
 // Start the continuous polling process
 pollServerAndSendOnceOnStateChange();
@@ -2004,17 +2137,14 @@ function toggleHeaterStates(heaterState, heaterIndex) {
   let sendFunction = sendGcode;
   let targetHeaterIndex = heaterIndex;
   
-  // COMMENTED OUT - Expansion controller not available in this setup
-  // // Route bed heaters 8-13 (bed4-bed9) to expansion controller
-  // if (heaterIndex >= 8 && heaterIndex <= 13) {
-  //   sendFunction = sendExpansionGcode;
-  //   targetHeaterIndex = heaterIndex; // Use direct P8-P13 addressing on expansion controller
-  //   console.log(`Routing heater ${heaterIndex} (${heaterType[heaterIndex] || `bed${heaterIndex-4}`}) to expansion controller as heater P${targetHeaterIndex}`);
-  // }
-  
-  // Guard: Prevent sending commands for expansion bed heaters (indices 8-13) since expansion controller is not available
-  if (heaterIndex >= 8 && heaterIndex <= 13) {
-    console.warn(`Bed heaters 4-9 (indices 8-13) are not available - expansion controller is not configured`);
+  // Route bed heaters 8-13 (bed4-bed9) to expansion controller if bed expansion is enabled
+  const bedExpansionEnabled = localStorage.getItem("bedExpansionState") === "on";
+  if (bedExpansionEnabled && heaterIndex >= 8 && heaterIndex <= 13) {
+    sendFunction = sendExpansionGcode;
+    targetHeaterIndex = heaterIndex; // Use direct P8-P13 addressing on expansion controller
+    console.log(`Routing heater ${heaterIndex} (${heaterType[heaterIndex] || `bed${heaterIndex-4}`}) to expansion controller as heater P${targetHeaterIndex}`);
+  } else if (!bedExpansionEnabled && heaterIndex >= 8 && heaterIndex <= 13) {
+    console.warn(`Bed heaters 4-9 (indices 8-13) are not available - bed expansion is disabled`);
     return; // Exit early to prevent sending invalid commands
   }
   
@@ -2101,27 +2231,25 @@ function configureBedHeaters(mode, configuredBedHeaters) {
         mainGcodeString += `M568 P${
           index + configuredExtruderHeaters.length
         } S${activeTemp} R${preheatTemp} A${mode} `;
+      } else if (localStorage.getItem("bedExpansionState") === "on") {
+        // Expansion controller: bed heaters 4-9 (map to expansion heater indices 8-13)
+        const expansionHeaterIndex = index + 4; // Map index 4->P8, 5->P9, 6->P10, 7->P11, 8->P12, 9->P13
+        expansionGcodeString += `M568 P${expansionHeaterIndex} S${activeTemp} R${preheatTemp} A${mode} `;
       }
-      // COMMENTED OUT - Expansion controller not available in this setup
-      // else {
-      //   // Expansion controller: bed heaters 4-9 (map to expansion heater indices 8-13)
-      //   const expansionHeaterIndex = index + 4; // Map index 4->P8, 5->P9, 6->P10, 7->P11, 8->P12, 9->P13
-      //   expansionGcodeString += `M568 P${expansionHeaterIndex} S${activeTemp} R${preheatTemp} A${mode} `;
-      // }
     }
   });
   
-  // Send commands to main controller only
+  // Send commands to main controller
   if (mainGcodeString.trim()) {
     console.log(`Sending bed heater commands to main controller: ${mainGcodeString.trim()}`);
     sendGcode(mainGcodeString);
   }
   
-  // COMMENTED OUT - Expansion controller not available in this setup
-  // if (expansionGcodeString.trim()) {
-  //   console.log(`Sending bed heater commands to expansion controller: ${expansionGcodeString.trim()}`);
-  //   sendExpansionGcode(expansionGcodeString);
-  // }
+  // Send commands to expansion controller if bed expansion is enabled
+  if (localStorage.getItem("bedExpansionState") === "on" && expansionGcodeString.trim()) {
+    console.log(`Sending bed heater commands to expansion controller: ${expansionGcodeString.trim()}`);
+    sendExpansionGcode(expansionGcodeString);
+  }
 }
 // =====================================================================================================================
 
@@ -2166,15 +2294,34 @@ function saveSettings() {
 
 // FUNCTION: load temperature settings from localStorage
 function loadSettings() {
-  const storedSettings = localStorage.getItem("temperatureSettings") || "{}";
+  const storedSettings = localStorage.getItem("temperatureSettings");
 
-  // If temperatureSettings is not set, initialize with default values
-  if (!storedSettings) {
+  // If temperatureSettings is not set or is empty, initialize with default values
+  if (!storedSettings || storedSettings === "{}" || storedSettings === "null") {
     const defaultSettings = initializeDefaultSettings();
     localStorage.setItem(
       "temperatureSettings",
       JSON.stringify(defaultSettings)
     );
+    
+    const setValuesInForm = (category) => {
+      const popupElement = document.querySelector(
+        `.tab-pane-${category} .temp-popup-user-input`
+      );
+      if (popupElement) {
+        popupElement.textContent = defaultSettings[category].popup;
+      }
+      const activeElement = document.getElementById(`user-input-active-${category}`);
+      if (activeElement) {
+        activeElement.textContent = defaultSettings[category].active;
+      }
+      const preheatElement = document.getElementById(`user-input-preheat-${category}`);
+      if (preheatElement) {
+        preheatElement.textContent = defaultSettings[category].preheat;
+      }
+    };
+
+    Object.keys(defaultSettings).forEach(setValuesInForm);
     return defaultSettings;
   }
 
@@ -2190,15 +2337,30 @@ function loadSettings() {
     {}
   );
 
+  // Ensure all default categories exist (merge with defaults to fill missing ones)
+  const defaultSettings = initializeDefaultSettings();
+  Object.keys(defaultSettings).forEach((category) => {
+    if (!settings[category]) {
+      settings[category] = defaultSettings[category];
+    }
+  });
+
   const setValuesInForm = (category) => {
-    document.querySelector(
+    const popupElement = document.querySelector(
       `.tab-pane-${category} .temp-popup-user-input`
-    ).textContent = settings[category].popup;
+    );
+    if (popupElement) {
+      popupElement.textContent = settings[category].popup;
+    }
     // Uncomment to display stored active and preheat values in dropdowns
-    document.getElementById(`user-input-active-${category}`).textContent =
-      settings[category].active;
-    document.getElementById(`user-input-preheat-${category}`).textContent =
-      settings[category].preheat;
+    const activeElement = document.getElementById(`user-input-active-${category}`);
+    if (activeElement) {
+      activeElement.textContent = settings[category].active;
+    }
+    const preheatElement = document.getElementById(`user-input-preheat-${category}`);
+    if (preheatElement) {
+      preheatElement.textContent = settings[category].preheat;
+    }
   };
 
   Object.keys(settings).forEach(setValuesInForm);
@@ -2297,7 +2459,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // Set software version
-document.getElementById('software-version').textContent = 'v3.2';
+document.getElementById('software-version').textContent = 'v3.3';
 
 // ================================================ Developer Settings =================================================
 
@@ -2420,6 +2582,35 @@ window.addEventListener("load", () => {
 
       // Note: cncState, aisyncState, and toolDetectionState are restored by the system family button handlers above
       // No need for separate restoration here as the button click handlers check localStorage and restore all dependent states
+      
+      // Initialize Controller IP dropdown
+      const ipSelect = document.getElementById("controller-ip-select");
+      if (ipSelect) {
+        ipSelect.value = duetIP;
+        ipSelect.addEventListener("change", function() {
+          const newIP = this.value;
+          if (newIP !== duetIP) {
+            console.log(`Changing controller IP from ${duetIP} to ${newIP}`);
+            duetIP = newIP;
+            rebuildURLs();
+            localStorage.setItem('duetIP', duetIP);
+            // Disconnect and reconnect with new IP
+            isConnected = false;
+            updateConnectionStatusUI('connecting', `Connecting to ${newIP}...`);
+            connectToRRF().catch(error => {
+              console.error("Failed to connect with new IP:", error);
+            });
+          }
+        });
+      }
+      
+      // Restore bed expansion state
+      const bedExpansionState = localStorage.getItem("bedExpansionState");
+      if (bedExpansionState === "on") {
+        document.getElementById("bed-expansion-on").click();
+      } else {
+        document.getElementById("bed-expansion-off").click();
+      }
     }, 100); // Increased delay to ensure Webflow tabs are initialized
   });
 
@@ -2457,7 +2648,9 @@ function showResetAllHeaterFaultsPopup() {
   if (popup) {
     console.log("User confirmed reset of all heater faults");
     sendGcode("M562"); // Reset all heater faults on main controller
-    // sendExpansionGcode("M562"); // Reset all heater faults on expansion controller - COMMENTED OUT
+    if (localStorage.getItem("bedExpansionState") === "on") {
+      sendExpansionGcode("M562"); // Reset all heater faults on expansion controller
+    }
     
     // Suspend fault detection to prevent duplicate popups after reset
     suspendFaultDetection("Reset all heater faults command");
@@ -2514,6 +2707,8 @@ const buttonIds = [
   "system-zeus",
   "tool-detection-on",
   "tool-detection-off",
+  "bed-expansion-on",
+  "bed-expansion-off",
   "bed-fixture-plate-on",
   "bed-fixture-plate-on-icon",
   "bed-fixture-plate-off",
@@ -2555,9 +2750,10 @@ buttonIds.forEach((buttonId) => {
         // Main controller: Turn off bed heaters P4-P7 (beds 0-3)
         sendGcode("M568 P4 S0 R0 A0 M568 P5 S0 R0 A0 M568 P6 S0 R0 A0 M568 P7 S0 R0 A0");
         
-        // COMMENTED OUT - Expansion controller not available in this setup
-        // // Expansion controller: Turn off bed heaters P8-P13 (beds 4-9)
-        // sendExpansionGcode("M568 P8 S0 R0 A0 M568 P9 S0 R0 A0 M568 P10 S0 R0 A0 M568 P11 S0 R0 A0 M568 P12 S0 R0 A0 M568 P13 S0 R0 A0");
+        // Expansion controller: Turn off bed heaters P8-P13 (beds 4-9) if bed expansion is enabled
+        if (localStorage.getItem("bedExpansionState") === "on") {
+          sendExpansionGcode("M568 P8 S0 R0 A0 M568 P9 S0 R0 A0 M568 P10 S0 R0 A0 M568 P11 S0 R0 A0 M568 P12 S0 R0 A0 M568 P13 S0 R0 A0");
+        }
         break;
       case "preheat-bed":
         // Use the existing configureBedHeaters function (main controller only)
@@ -2569,6 +2765,9 @@ buttonIds.forEach((buttonId) => {
         break;
       case "emergency-stop":
         sendGcode("M112");
+        if (localStorage.getItem("bedExpansionState") === "on") {
+          sendExpansionGcode("M112");
+        }
         // sendExpansionGcode("M112"); // COMMENTED OUT - Expansion controller not available
         break;
       case "part-cooling-on":
@@ -2782,6 +2981,26 @@ buttonIds.forEach((buttonId) => {
         document.getElementById("connected-tool-container").style.display = "none";
         // Save state to local storage
         localStorage.setItem("toolDetectionState", "off");
+        break;
+      case "bed-expansion-on":
+        document.getElementById("bed-expansion-on").style.backgroundColor = ""; // Pressed State (default)
+        document.getElementById("bed-expansion-off").style.backgroundColor = "#a8a8a8"; // Inactive State
+        localStorage.setItem("bedExpansionState", "on");
+        // Initialize expansion variables and attempt connection
+        initializeExpansionVariables();
+        connectToExpansionRRF().catch(error => {
+          console.warn("Failed to connect to expansion controller:", error);
+        });
+        console.log("Bed expansion enabled");
+        break;
+      case "bed-expansion-off":
+        document.getElementById("bed-expansion-on").style.backgroundColor = "#a8a8a8"; // Inactive State
+        document.getElementById("bed-expansion-off").style.backgroundColor = ""; // Pressed State (default)
+        localStorage.setItem("bedExpansionState", "off");
+        // Disconnect from expansion controller and clear state
+        isExpansionConnected = false;
+        initializeExpansionVariables(); // Clear expansion URLs
+        console.log("Bed expansion disabled");
         break;
       case "bed-fixture-plate-on":
       case "bed-fixture-plate-on-icon":

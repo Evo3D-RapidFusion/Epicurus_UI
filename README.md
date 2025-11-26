@@ -1,4 +1,4 @@
-# Epicurus UI v3.2
+# Epicurus UI v3.3
 
 A comprehensive offline user interface for the Epicurus Controller, supporting multiple system families with advanced temperature control, CNC milling capabilities, and automated cache management.
 
@@ -30,10 +30,15 @@ A comprehensive offline user interface for the Epicurus Controller, supporting m
 
 ### **Advanced Features**
 - **Dual controller support**: Main controller (192.168.1.100) and expansion controller (192.168.1.101)
+- **Bed expansion toggle**: Enable/disable expansion controller via Developer Settings
+- **IP fallback system**: Automatic fallback from 192.168.1.100 to 10.10.10.100
+- **Manual IP selection**: Dropdown in Developer Settings to manually select controller IP
 - **Part cooling control**: Variable fan speed control
 - **Bed fixture plate**: Optional heated fixture plate support
 - **Tool detection**: Automatic extruder and CNC tool detection
 - **Developer settings**: Advanced configuration options (7 clicks on software version)
+- **Enhanced settings loading**: Improved default value initialization for numpad
+- **Staggered HTTP requests**: Prevents controller overload in standalone mode
 
 ### **Offline Operation**
 - **Complete offline functionality**: No internet connection required
@@ -90,9 +95,12 @@ Epicurus_UI/
 ## ⚙️ Configuration
 
 ### **Duet Controller IPs**
-- **Main Controller**: `192.168.1.100` (configurable)
-- **Expansion Controller**: `192.168.1.101` (configurable)
+- **Main Controller**: `192.168.1.100` (default, with automatic fallback to `10.10.10.100`)
+- **Expansion Controller**: `192.168.1.101` (configurable, requires bed expansion toggle enabled)
+- **IP Fallback**: Automatically tries `10.10.10.100` if `192.168.1.100` is unreachable
 - **Change IPs**: Access Developer Settings (7 clicks on software version)
+  - Use Controller IP dropdown to manually select IP address
+  - IP selection persists across sessions
 
 ### **System Family Selection**
 - **PE320**: Default extruder system
@@ -101,7 +109,12 @@ Epicurus_UI/
 
 ### **Developer Settings**
 - **Access**: Click software version 7 times within 5 seconds
-- **Features**: System family selection, tool detection, cache management
+- **Features**: 
+  - System family selection (PE320, Apollo, Zeus)
+  - Tool detection toggle (On/Off)
+  - Bed expansion toggle (On/Off) - Enable/disable expansion controller
+  - Controller IP selection (192.168.1.100 or 10.10.10.100)
+  - Cache management
 - **Cache clearing**: Manual cache clear and reload option
 
 ## 🚨 Safety Features
@@ -167,6 +180,6 @@ For technical support and documentation, contact Rapid Fusion development team.
 
 ---
 
-**Version**: v3.2  
+**Version**: v3.3  
 **Last Updated**: 2024  
 **Compatibility**: Duet 3D Printer Controllers

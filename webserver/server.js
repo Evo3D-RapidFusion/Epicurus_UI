@@ -4,7 +4,7 @@ const path = require('path');
 
 const PORT = 8080;
 const DUET_IP = process.env.DUET_IP || '192.168.1.100';
-// const DUET_EXPANSION_IP = process.env.DUET_EXPANSION_IP || '192.168.1.101'; // COMMENTED OUT - Expansion controller not available
+const DUET_EXPANSION_IP = process.env.DUET_EXPANSION_IP || '192.168.1.101';
 const CONTENT_TYPES = {
   '.html': 'text/html',
   '.css': 'text/css',
@@ -89,15 +89,14 @@ const server = http.createServer((req, res) => {
     return;
   }
   
-  // COMMENTED OUT - Expansion controller not available in this setup
-  // // Proxy requests to expansion controller
-  // if (req.url.startsWith('/expansion/rr_model') || req.url.startsWith('/expansion/rr_gcode') || req.url.startsWith('/expansion/rr_connect')) {
-  //   const expansionUrl = req.url.replace('/expansion', '');
-  //   const modifiedReq = Object.create(req);
-  //   modifiedReq.url = expansionUrl;
-  //   proxyToDuet(modifiedReq, res, DUET_EXPANSION_IP);
-  //   return;
-  // }
+  // Proxy requests to expansion controller
+  if (req.url.startsWith('/expansion/rr_model') || req.url.startsWith('/expansion/rr_gcode') || req.url.startsWith('/expansion/rr_connect')) {
+    const expansionUrl = req.url.replace('/expansion', '');
+    const modifiedReq = Object.create(req);
+    modifiedReq.url = expansionUrl;
+    proxyToDuet(modifiedReq, res, DUET_EXPANSION_IP);
+    return;
+  }
   
   // Normalize file path, making paths like /fonts/roboto.css point to ../fonts/roboto.css
   let filePath = req.url;
