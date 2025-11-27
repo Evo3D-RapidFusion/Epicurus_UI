@@ -74,19 +74,14 @@ To make changes to the project:
 
 ## Testing
 
-Testing checklists are available in the `testing_docs` folder:
+For deployment testing procedures, see the **[Deployment Testing Checklist](testing_docs/DEPLOYMENT_TESTING_CHECKLIST.md)**.
 
-- **[Deployment Testing Checklist](testing_docs/DEPLOYMENT_TESTING_CHECKLIST.md)** - Comprehensive testing checklist for internal deployment and testing
-- **[Reseller Testing Checklist](testing_docs/RESELLER_TESTING_CHECKLIST.md)** - User-friendly testing checklist for resellers
-
-These checklists cover:
-- Deployment/update procedures
-- Core functionality testing
-- Emergency and safety features
-- Network and offline scenarios
-- UI/UX elements
-- Performance testing
-- Common issues and edge cases
+The checklist covers:
+- UI deployment and update procedures
+- Tab functionality testing (Extruder, Bed, Material Profiles, Spindle, Settings)
+- Emergency stop and safety features
+- Network connectivity and offline operation
+- UI/UX elements and performance validation
 
 ## Troubleshooting
 
