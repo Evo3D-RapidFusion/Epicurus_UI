@@ -1043,8 +1043,11 @@ async function sendCommandsOnce() {
 }
 
 // Function to send individual G-code command with retry logic for 503 and unknown variable errors using fetchData
-async function sendGcode(gcode) {
-  while (true) {
+async function sendGcode(gcode, maxRetries = 3, isEmergencyStop = false) {
+  let retryCount = 0;
+  const maxAttempts = isEmergencyStop ? 1 : maxRetries; // Emergency stop: try once, don't block
+  
+  while (retryCount <= maxAttempts) {
     try {
       const response = await fetchData(activeCodeURL, {
         method: "POST",
@@ -1055,15 +1058,33 @@ async function sendGcode(gcode) {
       });
 
       if (response.status && response.status === 503) {
+        if (retryCount >= maxAttempts) {
+          console.warn(`Max retries reached for G-code '${gcode}'. Service unavailable.`);
+          if (isEmergencyStop) {
+            console.warn("Emergency stop command failed but UI remains responsive.");
+            return null; // Don't block UI for emergency stop
+          }
+          throw new Error("Service unavailable after max retries");
+        }
         console.warn("503 Service Unavailable while sending G-code. Retrying...");
         updateConnectionStatusUI('connecting', 'Service unavailable, retrying...');
+        retryCount++;
         await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
         continue; // Retry if server returns 503 error
       }
 
       // Check for unknown variable error in the response text
       if (typeof response === "string" && response.includes("Error: unknown variable")) {
+        if (retryCount >= maxAttempts) {
+          console.warn(`Max retries reached for G-code '${gcode}'. Unknown variable error.`);
+          if (isEmergencyStop) {
+            console.warn("Emergency stop command failed but UI remains responsive.");
+            return null;
+          }
+          throw new Error("Unknown variable error after max retries");
+        }
         console.warn(`Unknown variable error detected in response. Retrying G-code '${gcode}'...`);
+        retryCount++;
         await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
         continue; // Retry if unknown variable error is present
       }
@@ -1076,11 +1097,23 @@ async function sendGcode(gcode) {
       return response; // Exit loop on successful command execution without errors
 
     } catch (error) {
-      console.error(`Error sending G-code '${gcode}': ${error}`);
+      if (retryCount >= maxAttempts) {
+        console.error(`Max retries reached for G-code '${gcode}': ${error.message}`);
+        // For emergency stop, don't throw - just log and return to keep UI responsive
+        if (isEmergencyStop) {
+          console.warn("Emergency stop command failed but UI remains responsive.");
+          updateConnectionStatusUI('disconnected', 'Offline - Emergency stop may not have reached machine');
+          return null;
+        }
+        throw error;
+      }
+      
+      console.error(`Error sending G-code '${gcode}' (attempt ${retryCount + 1}/${maxAttempts + 1}): ${error.message}`);
       // Update connection status on error
       if (error.name === 'TypeError' || error.message.includes('timeout')) {
         updateConnectionStatusUI('disconnected', 'Connection lost');
       }
+      retryCount++;
       await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL)); // Delay before retrying
     }
   }
@@ -1581,7 +1614,10 @@ buttonIds.forEach((buttonId) => {
         configureBedHeaters(1, configuredBedHeaters); // mode 1 == preheat (standby)
         break;
       case "emergency-stop":
-        sendGcode("M112");
+        // Fire and forget - don't block UI waiting for response
+        sendGcode("M112", 2, true).catch(err => {
+          console.warn("Emergency stop command failed:", err);
+        });
         break;
       case "part-cooling-on":
       case "part-cooling-on-icon":
