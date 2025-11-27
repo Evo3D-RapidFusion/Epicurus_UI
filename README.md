@@ -72,6 +72,22 @@ To make changes to the project:
 2. Restart the local server if changes are made to local.js
 3. Refresh your browser to see the changes
 
+## Testing
+
+Testing checklists are available in the `testing_docs` folder:
+
+- **[Deployment Testing Checklist](testing_docs/DEPLOYMENT_TESTING_CHECKLIST.md)** - Comprehensive testing checklist for internal deployment and testing
+- **[Reseller Testing Checklist](testing_docs/RESELLER_TESTING_CHECKLIST.md)** - User-friendly testing checklist for resellers
+
+These checklists cover:
+- Deployment/update procedures
+- Core functionality testing
+- Emergency and safety features
+- Network and offline scenarios
+- UI/UX elements
+- Performance testing
+- Common issues and edge cases
+
 ## Troubleshooting
 
 If you encounter issues:
