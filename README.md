@@ -92,6 +92,19 @@ Epicurus_UI/
 2. **Commit changes**: Cache busting updates automatically
 3. **Test locally**: Use `npm start` for development server
 
+## 🚀 Deployment
+
+### **Deployment Testing Checklist**
+For comprehensive deployment testing procedures, see: [`testing_docs/DEPLOYMENT_TESTING_CHECKLIST.md`](testing_docs/DEPLOYMENT_TESTING_CHECKLIST.md)
+
+The checklist includes:
+- UI update procedures
+- Pre-testing setup steps
+- Tab functionality testing
+- Emergency & safety feature verification
+- Network & connectivity testing
+- Performance validation
+
 ## ⚙️ Configuration
 
 ### **Duet Controller IPs**
