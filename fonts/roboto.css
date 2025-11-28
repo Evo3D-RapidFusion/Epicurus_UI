@@ -48,9 +48,16 @@
   font-display: swap;
 }
 
-/* Note: All font-family declarations should include fallbacks like:
-   font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+/* Note: All font-family declarations should include fallbacks optimized for Raspberry Pi/Linux:
+   font-family: 'Roboto', 'DejaVu Sans', 'Liberation Sans', 'Ubuntu', Arial, Helvetica, sans-serif;
    
    If Roboto fails to load, browsers will automatically use the next available font in the list.
    The font-display: swap property ensures fallback fonts are shown immediately while Roboto loads.
+   
+   Fallback order optimized for Raspberry Pi 5 (Linux):
+   - DejaVu Sans: Common on most Linux distributions including Raspberry Pi OS
+   - Liberation Sans: Common on Red Hat/Fedora-based systems
+   - Ubuntu: If Ubuntu-based system
+   - Arial/Helvetica: Universal fallbacks
+   - sans-serif: Generic system fallback
 */ 
