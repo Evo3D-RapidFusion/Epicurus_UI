@@ -1245,7 +1245,7 @@ function saveSettings() {
     "bed3",
   ];
 
-  const settings = categories.reduce((acc, category) => {
+  const newSettings = categories.reduce((acc, category) => {
     acc[category] = {
       popup:
         document.querySelector(`.tab-pane-${category} .temp-popup-user-input`)
@@ -1260,20 +1260,35 @@ function saveSettings() {
     return acc;
   }, {});
 
-  localStorage.setItem("temperatureSettings", JSON.stringify(settings));
+  localStorage.setItem("temperatureSettings", JSON.stringify(newSettings));
+  // Update global settings variable to keep it in sync
+  settings = newSettings;
 }
 
 // FUNCTION: load temperature settings from localStorage
 function loadSettings() {
-  const storedSettings = localStorage.getItem("temperatureSettings") || "{}";
+  const storedSettings = localStorage.getItem("temperatureSettings");
 
-  // If temperatureSettings is not set, initialize with default values
-  if (!storedSettings) {
+  // If temperatureSettings is not set or is empty, initialize with default values
+  if (!storedSettings || storedSettings === "{}") {
     const defaultSettings = initializeDefaultSettings();
     localStorage.setItem(
       "temperatureSettings",
       JSON.stringify(defaultSettings)
     );
+    
+    const setValuesInForm = (category) => {
+      document.querySelector(
+        `.tab-pane-${category} .temp-popup-user-input`
+      ).textContent = defaultSettings[category].popup;
+      // Uncomment to display stored active and preheat values in dropdowns
+      document.getElementById(`user-input-active-${category}`).textContent =
+        defaultSettings[category].active;
+      document.getElementById(`user-input-preheat-${category}`).textContent =
+        defaultSettings[category].preheat;
+    };
+
+    Object.keys(defaultSettings).forEach(setValuesInForm);
     return defaultSettings;
   }
 
@@ -1288,6 +1303,14 @@ function loadSettings() {
     },
     {}
   );
+
+  // Ensure all categories exist in settings (merge with defaults if missing)
+  const defaultSettings = initializeDefaultSettings();
+  Object.keys(defaultSettings).forEach((category) => {
+    if (!settings[category]) {
+      settings[category] = defaultSettings[category];
+    }
+  });
 
   const setValuesInForm = (category) => {
     document.querySelector(
@@ -1908,6 +1931,14 @@ function numPadClick(tabpane, buttonIndex) {
   let tempInput = document.querySelector(`${tabpane} .temp-popup-user-input`);
   let inputValue = tempInput.textContent;
   let heaters = tabpane.match(/[^-]+$/)[0];
+
+  // Ensure settings is initialized and has the heater category
+  if (!settings) {
+    settings = loadSettings();
+  }
+  if (!settings[heaters]) {
+    settings[heaters] = { popup: "0", active: "0", preheat: "0" };
+  }
 
   // default value = 0
   if (inputValue === 0) {
