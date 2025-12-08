@@ -98,6 +98,87 @@ const server = http.createServer((req, res) => {
     return;
   }
   
+  // Settings API endpoints
+  if (req.url === '/api/settings') {
+    const settingsPath = path.join(__dirname, '..', 'settings.json');
+    
+    if (req.method === 'GET') {
+      // Read settings from file
+      fs.readFile(settingsPath, 'utf8', (err, data) => {
+        if (err) {
+          if (err.code === 'ENOENT') {
+            // File doesn't exist, return empty object
+            res.writeHead(200, {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*'
+            });
+            res.end(JSON.stringify({}));
+          } else {
+            console.error(`Error reading settings: ${err.message}`);
+            res.writeHead(500, {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*'
+            });
+            res.end(JSON.stringify({ error: 'Failed to read settings' }));
+          }
+        } else {
+          try {
+            const settings = JSON.parse(data);
+            res.writeHead(200, {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*'
+            });
+            res.end(JSON.stringify(settings));
+          } catch (parseError) {
+            console.error(`Error parsing settings: ${parseError.message}`);
+            res.writeHead(500, {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*'
+            });
+            res.end(JSON.stringify({ error: 'Failed to parse settings' }));
+          }
+        }
+      });
+      return;
+    } else if (req.method === 'POST') {
+      // Write settings to file
+      let body = '';
+      req.on('data', chunk => {
+        body += chunk.toString();
+      });
+      req.on('end', () => {
+        try {
+          const settings = JSON.parse(body);
+          fs.writeFile(settingsPath, JSON.stringify(settings, null, 2), 'utf8', (err) => {
+            if (err) {
+              console.error(`Error writing settings: ${err.message}`);
+              res.writeHead(500, {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+              });
+              res.end(JSON.stringify({ error: 'Failed to save settings' }));
+            } else {
+              console.log(`Settings saved to ${settingsPath}`);
+              res.writeHead(200, {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+              });
+              res.end(JSON.stringify({ success: true }));
+            }
+          });
+        } catch (parseError) {
+          console.error(`Error parsing request body: ${parseError.message}`);
+          res.writeHead(400, {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          });
+          res.end(JSON.stringify({ error: 'Invalid JSON in request body' }));
+        }
+      });
+      return;
+    }
+  }
+  
   // Normalize file path, making paths like /fonts/roboto.css point to ../fonts/roboto.css
   let filePath = req.url;
   

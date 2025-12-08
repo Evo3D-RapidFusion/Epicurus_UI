@@ -16,27 +16,162 @@ let selectedHeatsinkFan = "0";
 let selectedBarrelFan = "0";
 // let spindleRunning = false; // already declared in embedded code
 
-// Configuration for Duet connection - can be modified via UI or localStorage
-// Static version string - update this when you want to clear cache for all users
-// Only clears cache when version actually changes, not on every reload
-const STORAGE_VERSION = 'v3.3';
-const CURRENT_STORAGE_VERSION = localStorage.getItem('storageVersion');
+// ============================================= Settings Manager ==================================================
+// Centralized settings management with server-side storage and localStorage fallback
 
-// Clear localStorage only on version change (not on every reload)
-if (CURRENT_STORAGE_VERSION && CURRENT_STORAGE_VERSION !== STORAGE_VERSION) {
-  console.log(`Auto-clearing cache for version update (${CURRENT_STORAGE_VERSION} -> ${STORAGE_VERSION})`);
-  localStorage.clear();
-  sessionStorage.clear();
-  localStorage.setItem('storageVersion', STORAGE_VERSION);
-} else if (!CURRENT_STORAGE_VERSION) {
-  // First time setup - set version without clearing
-  localStorage.setItem('storageVersion', STORAGE_VERSION);
-}
+const STORAGE_VERSION = 'v3.3';
+let settingsCache = null;
+let settingsInitialized = false;
+let useServerStorage = true;
+
+// Settings Manager API
+const SettingsManager = {
+  // Initialize settings from server (or localStorage fallback)
+  async init() {
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        settingsCache = await response.json();
+        useServerStorage = true;
+        console.log('Settings loaded from server');
+      } else {
+        throw new Error('Server settings unavailable');
+      }
+    } catch (error) {
+      console.warn('Failed to load settings from server, using localStorage fallback:', error.message);
+      useServerStorage = false;
+      settingsCache = this.loadFromLocalStorage();
+    }
+    
+    // Handle version migration
+    const currentVersion = this.get('storageVersion');
+    if (currentVersion && currentVersion !== STORAGE_VERSION) {
+      console.log(`Migrating settings from ${currentVersion} to ${STORAGE_VERSION}`);
+      settingsCache = {};
+      this.set('storageVersion', STORAGE_VERSION);
+    } else if (!currentVersion) {
+      this.set('storageVersion', STORAGE_VERSION);
+    }
+    
+    settingsInitialized = true;
+    return settingsCache;
+  },
+
+  // Get a setting value
+  get(key, defaultValue = null) {
+    if (!settingsInitialized) {
+      console.warn('Settings not initialized, using localStorage fallback for get:', key);
+      return localStorage.getItem(key) || defaultValue;
+    }
+    return settingsCache && settingsCache[key] !== undefined ? settingsCache[key] : defaultValue;
+  },
+
+  // Set a setting value
+  async set(key, value) {
+    if (!settingsInitialized) {
+      settingsCache = this.loadFromLocalStorage();
+      settingsInitialized = true;
+    }
+    
+    if (!settingsCache) {
+      settingsCache = {};
+    }
+    
+    settingsCache[key] = value;
+    
+    // Save to localStorage immediately for fallback
+    try {
+      localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+    } catch (e) {
+      console.warn('Failed to save to localStorage:', e);
+    }
+    
+    // Save to server if available
+    if (useServerStorage) {
+      try {
+        const response = await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(settingsCache)
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(`Server save failed: ${response.status} ${errorData.error || ''}`);
+        }
+        console.log(`Settings saved to server: ${key}`);
+      } catch (error) {
+        console.warn('Failed to save settings to server, using localStorage only:', error.message);
+        useServerStorage = false;
+      }
+    }
+  },
+
+  // Get all settings
+  getAll() {
+    if (!settingsInitialized) {
+      return this.loadFromLocalStorage();
+    }
+    return settingsCache || {};
+  },
+
+  // Load from localStorage (fallback)
+  loadFromLocalStorage() {
+    const local = {};
+    try {
+      // Load known settings from localStorage
+      const keys = [
+        'storageVersion', 'duetIP', 'duetExpansionIP', 'bedExpansionState',
+        'temperatureSettings', 'HeatingProfiles', 'systemFamily',
+        'toolDetectionState', 'aisyncState', 'cncState',
+        'partCoolingState', 'bedFixturePlateState'
+      ];
+      
+      keys.forEach(key => {
+        const value = localStorage.getItem(key);
+        if (value !== null) {
+          try {
+            local[key] = JSON.parse(value);
+          } catch {
+            local[key] = value;
+          }
+        }
+      });
+    } catch (e) {
+      console.error('Error loading from localStorage:', e);
+    }
+    return local;
+  },
+
+  // Clear all settings
+  async clear() {
+    settingsCache = {};
+    localStorage.clear();
+    if (useServerStorage) {
+      try {
+        await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+      } catch (error) {
+        console.warn('Failed to clear server settings:', error.message);
+      }
+    }
+  }
+};
+
+// Initialize settings on load (will be awaited where needed)
+let settingsInitPromise = SettingsManager.init();
 
 // IP fallback system: default 10.10.10.100 with fallback to 192.168.1.100
 const DEFAULT_IP_PRIMARY = "10.10.10.100";
 const DEFAULT_IP_FALLBACK = "192.168.1.100";
-let duetIP = localStorage.getItem('duetIP') || DEFAULT_IP_PRIMARY;
+let duetIP = DEFAULT_IP_PRIMARY; // Will be set after settings load
 
 // Expansion controller IP fallback system: default 10.10.10.101 with fallback to 192.168.1.101
 const DEFAULT_EXPANSION_IP_PRIMARY = "10.10.10.101";
@@ -70,9 +205,9 @@ function rebuildExpansionURLs() {
 
 // Initialize expansion variables if bed expansion is enabled
 function initializeExpansionVariables() {
-  const bedExpansionEnabled = localStorage.getItem("bedExpansionState") === "on";
+  const bedExpansionEnabled = SettingsManager.get("bedExpansionState") === "on";
   if (bedExpansionEnabled) {
-    duetExpansionIP = localStorage.getItem('duetExpansionIP') || DEFAULT_EXPANSION_IP_PRIMARY;
+    duetExpansionIP = SettingsManager.get('duetExpansionIP') || DEFAULT_EXPANSION_IP_PRIMARY;
     rebuildExpansionURLs();
   } else {
     duetExpansionIP = null;
@@ -82,8 +217,15 @@ function initializeExpansionVariables() {
   }
 }
 
-// Initialize expansion variables on load
-initializeExpansionVariables();
+// Initialize variables after settings load
+settingsInitPromise.then(() => {
+  duetIP = SettingsManager.get('duetIP') || DEFAULT_IP_PRIMARY;
+  initializeExpansionVariables();
+}).catch(err => {
+  console.error('Settings initialization failed:', err);
+  duetIP = DEFAULT_IP_PRIMARY;
+  initializeExpansionVariables();
+});
 
 // Session management
 let isConnected = false;
@@ -148,12 +290,12 @@ function resetDuetModeDetection() {
 }
 
 // FUNCTION: Update Duet IP address and reset connection
-function updateDuetIP(newIP) {
+async function updateDuetIP(newIP) {
   if (!newIP || newIP === duetIP) return;
   
   console.log(`Updating Duet IP from ${duetIP} to ${newIP}`);
   duetIP = newIP;
-  localStorage.setItem('duetIP', newIP);
+  await SettingsManager.set('duetIP', newIP);
   
   // Update all URLs
   const baseURL = window.location.origin;
@@ -307,8 +449,8 @@ async function connectToRRF(password = "reprap", retryCount = 0) {
       console.log("Successfully connected to RRF");
       isConnected = true;
       updateConnectionStatusUI('connected');
-      // Save working IP to localStorage
-      localStorage.setItem('duetIP', duetIP);
+      // Save working IP to settings
+      SettingsManager.set('duetIP', duetIP);
       return data;
     } else {
       console.error(`RRF connection failed with error code: ${data.err}`);
@@ -434,7 +576,7 @@ async function parseResponse(response) {
 // FUNCTION: Establish connection to expansion controller with timeout and exponential retry
 async function connectToExpansionRRF(password = "reprap", retryCount = 0, tryFallback = true) {
   // Guard check: only proceed if bed expansion is enabled
-  if (localStorage.getItem("bedExpansionState") !== "on") {
+  if (SettingsManager.get("bedExpansionState") !== "on") {
     console.log("Bed expansion disabled, skipping expansion controller connection");
     isExpansionConnected = false;
     return null;
@@ -480,7 +622,7 @@ async function connectToExpansionRRF(password = "reprap", retryCount = 0, tryFal
       console.log(`Expansion primary IP ${DEFAULT_EXPANSION_IP_PRIMARY} failed, trying fallback IP ${DEFAULT_EXPANSION_IP_FALLBACK}...`);
       duetExpansionIP = DEFAULT_EXPANSION_IP_FALLBACK;
       rebuildExpansionURLs();
-      localStorage.setItem('duetExpansionIP', duetExpansionIP);
+      SettingsManager.set('duetExpansionIP', duetExpansionIP);
       return await connectToExpansionRRF(password, 0, false); // Try fallback without retry count
     }
     
@@ -508,7 +650,7 @@ async function connectToExpansionRRF(password = "reprap", retryCount = 0, tryFal
 // FUNCTION: Enhanced async GET/POST requests to expansion controller with timeouts and retry logic
 async function fetchExpansionData(url, options = {}, retryCount = 0) {
   // Guard check: only proceed if bed expansion is enabled
-  if (localStorage.getItem("bedExpansionState") !== "on") {
+  if (SettingsManager.get("bedExpansionState") !== "on") {
     console.log("Bed expansion disabled, skipping expansion data fetch");
     return null;
   }
@@ -749,7 +891,7 @@ function updateObjectModel() {
       }
       
       // Conditionally fetch expansion controller data if bed expansion is enabled
-      const bedExpansionEnabled = localStorage.getItem("bedExpansionState") === "on";
+      const bedExpansionEnabled = SettingsManager.get("bedExpansionState") === "on";
       let expansionDataPromise = null;
       
       if (bedExpansionEnabled) {
@@ -1314,7 +1456,7 @@ function updateObjectModel() {
             console.log(`User chose to reset faults for heaters ${heaterList}`);
             sendGcode(`M292`); // Clear all messages first
             sendGcode("M562"); // Reset all heater faults on main controller
-            if (localStorage.getItem("bedExpansionState") === "on") {
+            if (SettingsManager.get("bedExpansionState") === "on") {
               sendExpansionGcode("M562"); // Reset all heater faults on expansion controller
             }
             
@@ -1597,7 +1739,7 @@ function updateObjectModel() {
           document.getElementById("extruder-state-container").style.pointerEvents = "none";
           // document.getElementById("cnc-state-container").style.pointerEvents = "none"; // DISABLED: Allow free CNC toggle
 
-          if (localStorage.getItem("toolDetectionState") === "on") {
+          if (SettingsManager.get("toolDetectionState") === "on") {
             document.getElementById("extruder-state-container").style.opacity = 0.6;
             document.getElementById("cnc-state-container").style.opacity = 0.6;
           } else {
@@ -1833,7 +1975,7 @@ async function pollServerAndSendOnceOnStateChange() {
 // Function to send G-code commands based on states in localStorage using fetchData
 async function sendCommandsOnce() {
   try {
-    const partCoolingState = localStorage.getItem("partCoolingState") || "off";
+    const partCoolingState = SettingsManager.get("partCoolingState") || "off";
     console.log(`Sending G-code for partCoolingState: ${partCoolingState}`);
 
     if (partCoolingState === "on") {
@@ -1847,7 +1989,7 @@ async function sendCommandsOnce() {
       await sendGcode('M98 P"Part cooling off.g"');
     }
 
-    const bedFixturePlateState = localStorage.getItem("bedFixturePlateState") || "off";
+    const bedFixturePlateState = SettingsManager.get("bedFixturePlateState") || "off";
     console.log(`Sending G-code for bedFixturePlateState: ${bedFixturePlateState}`);
 
     if (bedFixturePlateState === "on") {
@@ -1900,7 +2042,7 @@ async function sendGcode(gcode) {
 // Function to send individual G-code command to expansion controller with retry logic
 async function sendExpansionGcode(gcode) {
   // Guard check: only proceed if bed expansion is enabled
-  if (localStorage.getItem("bedExpansionState") !== "on") {
+  if (SettingsManager.get("bedExpansionState") !== "on") {
     console.log("Bed expansion disabled, skipping expansion G-code:", gcode);
     return null;
   }
@@ -2191,7 +2333,7 @@ function toggleHeaterStates(heaterState, heaterIndex) {
   let targetHeaterIndex = heaterIndex;
   
   // Route bed heaters 8-13 (bed4-bed9) to expansion controller if bed expansion is enabled
-  const bedExpansionEnabled = localStorage.getItem("bedExpansionState") === "on";
+  const bedExpansionEnabled = SettingsManager.get("bedExpansionState") === "on";
   if (bedExpansionEnabled && heaterIndex >= 8 && heaterIndex <= 13) {
     sendFunction = sendExpansionGcode;
     targetHeaterIndex = heaterIndex; // Use direct P8-P13 addressing on expansion controller
@@ -2284,7 +2426,7 @@ function configureBedHeaters(mode, configuredBedHeaters) {
         mainGcodeString += `M568 P${
           index + configuredExtruderHeaters.length
         } S${activeTemp} R${preheatTemp} A${mode} `;
-      } else if (localStorage.getItem("bedExpansionState") === "on") {
+      } else if (SettingsManager.get("bedExpansionState") === "on") {
         // Expansion controller: bed heaters 4-9 (map to expansion heater indices 8-13)
         const expansionHeaterIndex = index + 4; // Map index 4->P8, 5->P9, 6->P10, 7->P11, 8->P12, 9->P13
         expansionGcodeString += `M568 P${expansionHeaterIndex} S${activeTemp} R${preheatTemp} A${mode} `;
@@ -2299,7 +2441,7 @@ function configureBedHeaters(mode, configuredBedHeaters) {
   }
   
   // Send commands to expansion controller if bed expansion is enabled
-  if (localStorage.getItem("bedExpansionState") === "on" && expansionGcodeString.trim()) {
+  if (SettingsManager.get("bedExpansionState") === "on" && expansionGcodeString.trim()) {
     console.log(`Sending bed heater commands to expansion controller: ${expansionGcodeString.trim()}`);
     sendExpansionGcode(expansionGcodeString);
   }
@@ -2308,8 +2450,8 @@ function configureBedHeaters(mode, configuredBedHeaters) {
 
 // ================================================ LOCALSTORAGE =======================================================
 
-// FUNCTION: save temperature settings to localStorage
-function saveSettings() {
+// FUNCTION: save temperature settings to server
+async function saveSettings() {
   const categories = [
     "top",
     "middle",
@@ -2342,20 +2484,17 @@ function saveSettings() {
     return acc;
   }, {});
 
-  localStorage.setItem("temperatureSettings", JSON.stringify(settings));
+  await SettingsManager.set("temperatureSettings", settings);
 }
 
-// FUNCTION: load temperature settings from localStorage
+// FUNCTION: load temperature settings from server
 function loadSettings() {
-  const storedSettings = localStorage.getItem("temperatureSettings");
+  const storedSettings = SettingsManager.get("temperatureSettings");
 
   // If temperatureSettings is not set or is empty, initialize with default values
-  if (!storedSettings || storedSettings === "{}" || storedSettings === "null") {
+  if (!storedSettings || (typeof storedSettings === 'object' && Object.keys(storedSettings).length === 0)) {
     const defaultSettings = initializeDefaultSettings();
-    localStorage.setItem(
-      "temperatureSettings",
-      JSON.stringify(defaultSettings)
-    );
+    SettingsManager.set("temperatureSettings", defaultSettings);
     
     const setValuesInForm = (category) => {
       const popupElement = document.querySelector(
@@ -2378,7 +2517,7 @@ function loadSettings() {
     return defaultSettings;
   }
 
-  const settings = Object.entries(JSON.parse(storedSettings)).reduce(
+  const settings = Object.entries(storedSettings).reduce(
     (acc, [category, values]) => {
       acc[category] = {
         popup: values.popup || "0",
@@ -2443,8 +2582,15 @@ function initializeDefaultSettings() {
 
 // ================================================ Page Load Settings =================================================
 
-// Load temperature settings on page load
-settings = loadSettings();
+// Load temperature settings on page load (after settings manager is initialized)
+settingsInitPromise.then(() => {
+  settings = loadSettings();
+  heatProfiles = loadHeatingProfiles();
+}).catch(err => {
+  console.error('Failed to initialize settings:', err);
+  settings = loadSettings(); // Fallback to localStorage
+  heatProfiles = loadHeatingProfiles();
+});
 
 // Hide all bed temp popup tabs on startup - visibility will be determined by detection
 var elements = document.querySelectorAll(".temp-tab-link.heater");
@@ -2495,10 +2641,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
   document.getElementById("fault-warning-container").classList.add("flash");  // Add flashing effect
 
-  // Initialise heating profiles on startup
-  heatProfiles = loadHeatingProfiles();
-  updateHeatingProfiles();
-  loadTempsOnEdit();
+  // Initialise heating profiles on startup (after settings load)
+  settingsInitPromise.then(() => {
+    heatProfiles = loadHeatingProfiles();
+    updateHeatingProfiles();
+    loadTempsOnEdit();
+  }).catch(err => {
+    console.error('Failed to load heating profiles:', err);
+    heatProfiles = loadHeatingProfiles();
+    updateHeatingProfiles();
+    loadTempsOnEdit();
+  });
 
   sendGcode(`M5`);
   
@@ -2557,7 +2710,7 @@ function resetCNCUI() {
 
 // Function to restore system family state directly (bypasses Webflow tab click issues)
 function restoreSystemFamilyState() {
-  const systemFamilyState = localStorage.getItem("systemFamily");
+  const systemFamilyState = SettingsManager.get("systemFamily");
   if (!systemFamilyState) {
     return false; // No saved state
   }
@@ -2646,7 +2799,7 @@ window.addEventListener("load", () => {
             console.log(`Changing controller IP from ${duetIP} to ${newIP}`);
             duetIP = newIP;
             rebuildURLs();
-            localStorage.setItem('duetIP', duetIP);
+            SettingsManager.set('duetIP', duetIP);
             // Disconnect and reconnect with new IP
             isConnected = false;
             updateConnectionStatusUI('connecting', `Connecting to ${newIP}...`);
@@ -2658,7 +2811,7 @@ window.addEventListener("load", () => {
       }
       
       // Restore bed expansion state
-      const bedExpansionState = localStorage.getItem("bedExpansionState");
+      const bedExpansionState = SettingsManager.get("bedExpansionState");
       if (bedExpansionState === "on") {
         document.getElementById("bed-expansion-on").click();
       } else {
@@ -2701,7 +2854,7 @@ function showResetAllHeaterFaultsPopup() {
   if (popup) {
     console.log("User confirmed reset of all heater faults");
     sendGcode("M562"); // Reset all heater faults on main controller
-    if (localStorage.getItem("bedExpansionState") === "on") {
+    if (SettingsManager.get("bedExpansionState") === "on") {
       sendExpansionGcode("M562"); // Reset all heater faults on expansion controller
     }
     
@@ -2804,7 +2957,7 @@ buttonIds.forEach((buttonId) => {
         sendGcode("M568 P4 S0 R0 A0 M568 P5 S0 R0 A0 M568 P6 S0 R0 A0 M568 P7 S0 R0 A0");
         
         // Expansion controller: Turn off bed heaters P8-P13 (beds 4-9) if bed expansion is enabled
-        if (localStorage.getItem("bedExpansionState") === "on") {
+        if (SettingsManager.get("bedExpansionState") === "on") {
           sendExpansionGcode("M568 P8 S0 R0 A0 M568 P9 S0 R0 A0 M568 P10 S0 R0 A0 M568 P11 S0 R0 A0 M568 P12 S0 R0 A0 M568 P13 S0 R0 A0");
         }
         break;
@@ -2818,7 +2971,7 @@ buttonIds.forEach((buttonId) => {
         break;
       case "emergency-stop":
         sendGcode("M112");
-        if (localStorage.getItem("bedExpansionState") === "on") {
+        if (SettingsManager.get("bedExpansionState") === "on") {
           sendExpansionGcode("M112");
         }
         // sendExpansionGcode("M112"); // COMMENTED OUT - Expansion controller not available
@@ -2827,13 +2980,13 @@ buttonIds.forEach((buttonId) => {
       case "part-cooling-on-icon":
         sendGcode('set global.partCooling = false');
         sendGcode('M98 P"Part cooling off.g"');
-        localStorage.setItem("partCoolingState", "off");
+        SettingsManager.set("partCoolingState", "off");
         break;
       case "part-cooling-off":
       case "part-cooling-off-icon":
         sendGcode('set global.partCooling = true');
         sendGcode('M98 P"Part cooling on.g"');
-        localStorage.setItem("partCoolingState", "on");
+        SettingsManager.set("partCoolingState", "on");
         break;
       case "reset-machine":
         sendGcode("M999");
@@ -2860,15 +3013,15 @@ buttonIds.forEach((buttonId) => {
         document.getElementById("aisync-off").style.backgroundColor = "#a8a8a8"; // Inactive State
         document.getElementById("aisync-slicer").click();
         // Save state to local storage
-        localStorage.setItem("aisyncState", "on");
+        SettingsManager.set("aisyncState", "on");
         break;
       case "aisync-off":
         const elementOff = document.getElementById("aisync-slicer");
         elementOff.style.display = "none";
         document.getElementById("aisync-on").style.backgroundColor = "#a8a8a8"; // Inactive State
         document.getElementById("aisync-off").style.backgroundColor = ""; // Pressed State (default)
-        // Save state to local storage
-        localStorage.setItem("aisyncState", "off");
+        // Save state to settings
+        SettingsManager.set("aisyncState", "off");
         document.getElementById("default-tab").click();
         break;
       case "open-settings":
@@ -2907,11 +3060,11 @@ buttonIds.forEach((buttonId) => {
         document.querySelectorAll(".popup-action-container").forEach((element) => {
             element.style.width = "310px";
         });
-        // Save state to local storage
-        localStorage.setItem("cncState", "on");
+        // Save state to settings
+        SettingsManager.set("cncState", "on");
         document.getElementById("cnc-state-container").style.display = "flex";
         // Only hide tool-detection-off if not Zeus system
-        const systemFamily = localStorage.getItem("systemFamily");
+        const systemFamily = SettingsManager.get("systemFamily");
         if (systemFamily !== "zeus") {
           document.getElementById("tool-detection-off").style.display = "none";
         }
@@ -2941,14 +3094,14 @@ buttonIds.forEach((buttonId) => {
         document.querySelectorAll(".popup-action-container").forEach((element) => {
             element.style.width = "220px";
         });
-        // Save state to local storage
-        localStorage.setItem("cncState", "off");
+        // Save state to settings
+        SettingsManager.set("cncState", "off");
         document.getElementById("default-tab").click();
         document.getElementById("cnc-state-container").style.display = "none";
         document.getElementById("tool-detection-off").style.display = "flex";
         break;
       case "system-pe320":
-        localStorage.setItem("systemFamily", "pe320");
+        SettingsManager.set("systemFamily", "pe320");
         document.getElementById("logo-text").textContent = "- PE320";
         document.getElementById("logo-text").style.display = "flex";
         document.getElementById("aisync-slicer-option").style.display = "none"; // no AiSync
@@ -2956,7 +3109,7 @@ buttonIds.forEach((buttonId) => {
         document.getElementById("aisync-off").click();
         document.getElementById("cnc-off").click();
         document.getElementById("default-tab").click();
-        if (localStorage.getItem("toolDetectionState") === "on") {
+        if (SettingsManager.get("toolDetectionState") === "on") {
           document.getElementById("tool-detection-on").click();
         } else {
           document.getElementById("tool-detection-off").click();
@@ -2966,17 +3119,17 @@ buttonIds.forEach((buttonId) => {
         document.getElementById("product-family-tools").textContent = "PE320 Pellet Extruder";
         break;
       case "system-apollo":
-        localStorage.setItem("systemFamily", "apollo");
+        SettingsManager.set("systemFamily", "apollo");
         document.getElementById("logo-text").textContent = "- APOLLO";
         document.getElementById("logo-text").style.display = "flex";
         document.getElementById("aisync-slicer-option").style.display = "flex"; // AiSync option
         document.getElementById("cnc-mill-option").style.display = "none"; // no CNC
-        if (localStorage.getItem("toolDetectionState") === "on") {
+        if (SettingsManager.get("toolDetectionState") === "on") {
           document.getElementById("tool-detection-on").click();
         } else {
           document.getElementById("tool-detection-off").click();
         }
-        if (localStorage.getItem("aisyncState") === "on") {
+        if (SettingsManager.get("aisyncState") === "on") {
           document.getElementById("aisync-on").click();
         } else {
           document.getElementById("aisync-off").click();
@@ -2988,24 +3141,24 @@ buttonIds.forEach((buttonId) => {
         document.getElementById("product-family-tools").textContent = "PE320 Pellet Extruder";
         break;
       case "system-zeus":
-        localStorage.setItem("systemFamily", "zeus");
+        SettingsManager.set("systemFamily", "zeus");
         document.getElementById("logo-text").textContent = "- ZEUS";
         document.getElementById("logo-text").style.display = "flex";
         document.getElementById("aisync-slicer-option").style.display = "flex"; // AiSync option
         document.getElementById("cnc-mill-option").style.display = "flex"; // CNC option
         // For Zeus, always show tool-detection-off button
         document.getElementById("tool-detection-off").style.display = "flex";
-        if (localStorage.getItem("toolDetectionState") === "on") {
+        if (SettingsManager.get("toolDetectionState") === "on") {
           document.getElementById("tool-detection-on").click();
         } else {
           document.getElementById("tool-detection-off").click();
         }
-        if (localStorage.getItem("aisyncState") === "on") {
+        if (SettingsManager.get("aisyncState") === "on") {
           document.getElementById("aisync-on").click();
         } else {
           document.getElementById("aisync-off").click();
         }
-        if (localStorage.getItem("cncState") === "on") {
+        if (SettingsManager.get("cncState") === "on") {
           document.getElementById("cnc-on").click();
         } else {
           document.getElementById("cnc-off").click();
@@ -3022,8 +3175,8 @@ buttonIds.forEach((buttonId) => {
         document.getElementById("tool-detection-on").style.backgroundColor = ""; // Pressed State (default)
         document.getElementById("tool-detection-off").style.backgroundColor = "#a8a8a8"; // Inactive State
         document.getElementById("connected-tool-container").style.display = "flex";
-        // Save state to local storage
-        localStorage.setItem("toolDetectionState", "on");
+        // Save state to settings
+        SettingsManager.set("toolDetectionState", "on");
         break;
       case "tool-detection-off":
         document.getElementById("extruder-detection-container").style.display = "none";
@@ -3032,13 +3185,13 @@ buttonIds.forEach((buttonId) => {
         document.getElementById("tool-detection-on").style.backgroundColor = "#a8a8a8"; // Inactive State
         document.getElementById("tool-detection-off").style.backgroundColor = ""; // Pressed State (default)
         document.getElementById("connected-tool-container").style.display = "none";
-        // Save state to local storage
-        localStorage.setItem("toolDetectionState", "off");
+        // Save state to settings
+        SettingsManager.set("toolDetectionState", "off");
         break;
       case "bed-expansion-on":
         document.getElementById("bed-expansion-on").style.backgroundColor = ""; // Pressed State (default)
         document.getElementById("bed-expansion-off").style.backgroundColor = "#a8a8a8"; // Inactive State
-        localStorage.setItem("bedExpansionState", "on");
+        SettingsManager.set("bedExpansionState", "on");
         // Initialize expansion variables and attempt connection
         initializeExpansionVariables();
         connectToExpansionRRF().catch(error => {
@@ -3049,7 +3202,7 @@ buttonIds.forEach((buttonId) => {
       case "bed-expansion-off":
         document.getElementById("bed-expansion-on").style.backgroundColor = "#a8a8a8"; // Inactive State
         document.getElementById("bed-expansion-off").style.backgroundColor = ""; // Pressed State (default)
-        localStorage.setItem("bedExpansionState", "off");
+        SettingsManager.set("bedExpansionState", "off");
         // Disconnect from expansion controller and clear state
         isExpansionConnected = false;
         initializeExpansionVariables(); // Clear expansion URLs
@@ -3059,13 +3212,13 @@ buttonIds.forEach((buttonId) => {
       case "bed-fixture-plate-on-icon":
         sendGcode('set global.bedFixturePlate = false');
         sendGcode('M98 P"Bed_PID_fixture_plate_off.g"');
-        localStorage.setItem("bedFixturePlateState", "off");
+        SettingsManager.set("bedFixturePlateState", "off");
         break;
       case "bed-fixture-plate-off":
       case "bed-fixture-plate-off-icon":
         sendGcode('set global.bedFixturePlate = true');
         sendGcode('M98 P"Bed_PID_fixture_plate_on.g"');
-        localStorage.setItem("bedFixturePlateState", "on");
+        SettingsManager.set("bedFixturePlateState", "on");
         break;
       case "check-for-updates":
         window.alert(`System up to date.`)
@@ -3580,9 +3733,10 @@ document.getElementById("reset-profiles").addEventListener("click", () => {
 });
 
 // Clear Cache button functionality
-document.getElementById("clear-cache").addEventListener("click", () => {
+document.getElementById("clear-cache").addEventListener("click", async () => {
   const clearCache = window.confirm(`Clear all cache and reload? This will reset all settings to defaults.`);
   if (clearCache) {
+    await SettingsManager.clear();
     localStorage.clear();
     sessionStorage.clear();
     // Force reload with cache bypass
@@ -3830,17 +3984,17 @@ function saveHeatingProfileFromUI() {
   return heatingProfiles;
 }
 
-// FUNCTION: Main function to save heating profiles to localStorage
-function saveHeatingProfiles() {
+// FUNCTION: Main function to save heating profiles to server
+async function saveHeatingProfiles() {
   const heatingProfiles = saveHeatingProfileFromUI();
-  localStorage.setItem("HeatingProfiles", JSON.stringify(heatingProfiles));
+  await SettingsManager.set("HeatingProfiles", heatingProfiles);
 }
 
-// FUNCTION: Load heating profiles from localStorage
+// FUNCTION: Load heating profiles from server
 function loadHeatingProfiles() {
-  const storedHeatingProfiles = localStorage.getItem("HeatingProfiles");
-  return storedHeatingProfiles
-    ? JSON.parse(storedHeatingProfiles)
+  const storedHeatingProfiles = SettingsManager.get("HeatingProfiles");
+  return storedHeatingProfiles && Array.isArray(storedHeatingProfiles) && storedHeatingProfiles.length > 0
+    ? storedHeatingProfiles
     : initializeDefaultHeatingProfiles();
 }
 
@@ -3939,10 +4093,7 @@ function initializeDefaultHeatingProfiles() {
       Cnc: 10000,
     },
   ];
-  localStorage.setItem(
-    "HeatingProfiles",
-    JSON.stringify(defaultHeatingProfiles)
-  ); // save default heating profiles to localStorage
+  SettingsManager.set("HeatingProfiles", defaultHeatingProfiles); // save default heating profiles to server
   return defaultHeatingProfiles;
 }
 
@@ -4000,10 +4151,10 @@ function loadTempsOnEdit() {
 }
 // =====================================================================================================================
 
-// ============================================== Reset Local Storage ==================================================
-function resetlocalStorageSettings() {
+// ============================================== Reset Settings ==================================================
+async function resetlocalStorageSettings() {
   defaultSettings = initializeDefaultSettings();
-  localStorage.setItem("temperatureSettings", JSON.stringify(defaultSettings));
+  await SettingsManager.set("temperatureSettings", defaultSettings);
 
   defaultHeatingProfiles = initializeDefaultHeatingProfiles();
 
