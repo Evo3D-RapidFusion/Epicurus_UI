@@ -44,14 +44,14 @@ const DEFAULT_EXPANSION_IP_FALLBACK = "192.168.1.101";
 
 // Helper function to rebuild URLs when IP changes
 function rebuildURLs() {
-  activeStatusURL = `http://${duetIP}/rr_model`;
-  activeCodeURL = `http://${duetIP}/rr_gcode`;
-  activeConnectURL = `http://${duetIP}/rr_connect`;
+  activeStatusURL = `/duet/rr_model`;
+  activeCodeURL = `/duet/rr_gcode`;
+  activeConnectURL = `/duet/rr_connect`;
 }
 
-let activeStatusURL = `http://${duetIP}/rr_model`;
-let activeCodeURL = `http://${duetIP}/rr_gcode`;
-let activeConnectURL = `http://${duetIP}/rr_connect`;
+let activeStatusURL = `/duet/rr_model`;
+let activeCodeURL = `/duet/rr_gcode`;
+let activeConnectURL = `/duet/rr_connect`;
 
 // Bed expansion controller variables - conditionally initialized based on toggle state
 let duetExpansionIP = null;
@@ -119,7 +119,7 @@ function fetchWithTimeout(url, options = {}, timeout = NETWORK_TIMEOUT) {
 // Helper function to validate if an IP is potentially reachable
 async function validateConnection(ip) {
   try {
-    const testUrl = `http://${ip}/rr_connect?password=test`;
+    const testUrl = `/duet/rr_connect?password=test`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2000); // Quick 2s test
     
@@ -153,9 +153,9 @@ function updateDuetIP(newIP) {
   localStorage.setItem('duetIP', newIP);
   
   // Update all URLs
-  activeStatusURL = `http://${duetIP}/rr_model`;
-  activeCodeURL = `http://${duetIP}/rr_gcode`;
-  activeConnectURL = `http://${duetIP}/rr_connect`;
+  activeStatusURL = `/duet/rr_model`;
+  activeCodeURL = `/duet/rr_gcode`;
+  activeConnectURL = `/duet/rr_connect`;
   
   // Reset connection state
   isConnected = false;
