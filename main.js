@@ -67,11 +67,16 @@ const SettingsManager = {
 
   // Get a setting value
   get(key, defaultValue = null) {
+    // Check cache first if it exists (even during initialization)
+    if (settingsCache && settingsCache[key] !== undefined) {
+      return settingsCache[key];
+    }
+    // Fallback to localStorage if not initialized or key not in cache
     if (!settingsInitialized) {
       console.warn('Settings not initialized, using localStorage fallback for get:', key);
       return localStorage.getItem(key) || defaultValue;
     }
-    return settingsCache && settingsCache[key] !== undefined ? settingsCache[key] : defaultValue;
+    return defaultValue;
   },
 
   // Set a setting value

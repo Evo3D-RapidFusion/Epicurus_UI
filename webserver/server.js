@@ -102,6 +102,7 @@ const server = http.createServer((req, res) => {
   const urlPath = req.url.split('?')[0]; // Remove query string if present
   if (urlPath === '/api/settings') {
     const settingsPath = path.join(__dirname, '..', 'settings.json');
+    const settingsDir = path.dirname(settingsPath);
     
     if (req.method === 'GET') {
       // Read settings from file
@@ -109,18 +110,20 @@ const server = http.createServer((req, res) => {
         if (err) {
           if (err.code === 'ENOENT') {
             // File doesn't exist, return empty object
+            console.log(`Settings file not found at ${settingsPath}, returning empty object`);
             res.writeHead(200, {
               'Content-Type': 'application/json',
               'Access-Control-Allow-Origin': '*'
             });
             res.end(JSON.stringify({}));
           } else {
-            console.error(`Error reading settings: ${err.message}`);
+            console.error(`Error reading settings from ${settingsPath}:`, err);
+            console.error(`Error code: ${err.code}, Error message: ${err.message}`);
             res.writeHead(500, {
               'Content-Type': 'application/json',
               'Access-Control-Allow-Origin': '*'
             });
-            res.end(JSON.stringify({ error: 'Failed to read settings' }));
+            res.end(JSON.stringify({ error: `Failed to read settings: ${err.message}`, code: err.code }));
           }
         } else {
           try {
@@ -131,12 +134,12 @@ const server = http.createServer((req, res) => {
             });
             res.end(JSON.stringify(settings));
           } catch (parseError) {
-            console.error(`Error parsing settings: ${parseError.message}`);
+            console.error(`Error parsing settings from ${settingsPath}:`, parseError);
             res.writeHead(500, {
               'Content-Type': 'application/json',
               'Access-Control-Allow-Origin': '*'
             });
-            res.end(JSON.stringify({ error: 'Failed to parse settings' }));
+            res.end(JSON.stringify({ error: `Failed to parse settings: ${parseError.message}` }));
           }
         }
       });
@@ -150,30 +153,46 @@ const server = http.createServer((req, res) => {
       req.on('end', () => {
         try {
           const settings = JSON.parse(body);
-          fs.writeFile(settingsPath, JSON.stringify(settings, null, 2), 'utf8', (err) => {
-            if (err) {
-              console.error(`Error writing settings: ${err.message}`);
+          
+          // Ensure directory exists and is writable
+          fs.mkdir(settingsDir, { recursive: true }, (mkdirErr) => {
+            if (mkdirErr && mkdirErr.code !== 'EEXIST') {
+              console.error(`Error creating settings directory ${settingsDir}:`, mkdirErr);
               res.writeHead(500, {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
               });
-              res.end(JSON.stringify({ error: 'Failed to save settings' }));
-            } else {
-              console.log(`Settings saved to ${settingsPath}`);
-              res.writeHead(200, {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-              });
-              res.end(JSON.stringify({ success: true }));
+              res.end(JSON.stringify({ error: `Failed to create directory: ${mkdirErr.message}`, code: mkdirErr.code }));
+              return;
             }
+            
+            // Write settings file
+            fs.writeFile(settingsPath, JSON.stringify(settings, null, 2), 'utf8', (writeErr) => {
+              if (writeErr) {
+                console.error(`Error writing settings to ${settingsPath}:`, writeErr);
+                console.error(`Error code: ${writeErr.code}, Error message: ${writeErr.message}`);
+                res.writeHead(500, {
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*'
+                });
+                res.end(JSON.stringify({ error: `Failed to save settings: ${writeErr.message}`, code: writeErr.code }));
+              } else {
+                console.log(`Settings saved successfully to ${settingsPath}`);
+                res.writeHead(200, {
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*'
+                });
+                res.end(JSON.stringify({ success: true }));
+              }
+            });
           });
         } catch (parseError) {
-          console.error(`Error parsing request body: ${parseError.message}`);
+          console.error(`Error parsing request body:`, parseError);
           res.writeHead(400, {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*'
           });
-          res.end(JSON.stringify({ error: 'Invalid JSON in request body' }));
+          res.end(JSON.stringify({ error: `Invalid JSON in request body: ${parseError.message}` }));
         }
       });
       return;
