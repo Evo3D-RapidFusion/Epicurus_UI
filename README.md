@@ -29,9 +29,9 @@ A comprehensive offline user interface for the Epicurus Controller, supporting m
 - **Custom profiles**: User-defined material settings with save/load functionality
 
 ### **Advanced Features**
-- **Dual controller support**: Main controller (192.168.1.100) and expansion controller (192.168.1.101)
+- **Dual controller support**: Main controller (10.10.10.100) and expansion controller (10.10.10.101)
 - **Bed expansion toggle**: Enable/disable expansion controller via Developer Settings
-- **IP fallback system**: Automatic fallback from 192.168.1.100 to 10.10.10.100
+- **IP fallback system**: Automatic fallback from 10.10.10.100 to 192.168.1.100
 - **Manual IP selection**: Dropdown in Developer Settings to manually select controller IP
 - **Part cooling control**: Variable fan speed control
 - **Bed fixture plate**: Optional heated fixture plate support
@@ -108,9 +108,9 @@ The checklist includes:
 ## ⚙️ Configuration
 
 ### **Duet Controller IPs**
-- **Main Controller**: `192.168.1.100` (default, with automatic fallback to `10.10.10.100`)
-- **Expansion Controller**: `192.168.1.101` (configurable, requires bed expansion toggle enabled)
-- **IP Fallback**: Automatically tries `10.10.10.100` if `192.168.1.100` is unreachable
+- **Main Controller**: `10.10.10.100` (default, with automatic fallback to `192.168.1.100`)
+- **Expansion Controller**: `10.10.10.101` (default, with automatic fallback to `192.168.1.101`, requires bed expansion toggle enabled)
+- **IP Fallback**: Automatically tries `192.168.1.100` if `10.10.10.100` is unreachable
 - **Change IPs**: Access Developer Settings (7 clicks on software version)
   - Use Controller IP dropdown to manually select IP address
   - IP selection persists across sessions

@@ -33,10 +33,14 @@ if (CURRENT_STORAGE_VERSION && CURRENT_STORAGE_VERSION !== STORAGE_VERSION) {
   localStorage.setItem('storageVersion', STORAGE_VERSION);
 }
 
-// IP fallback system: default 192.168.1.100 with fallback to 10.10.10.100
-const DEFAULT_IP_PRIMARY = "192.168.1.100";
-const DEFAULT_IP_FALLBACK = "10.10.10.100";
+// IP fallback system: default 10.10.10.100 with fallback to 192.168.1.100
+const DEFAULT_IP_PRIMARY = "10.10.10.100";
+const DEFAULT_IP_FALLBACK = "192.168.1.100";
 let duetIP = localStorage.getItem('duetIP') || DEFAULT_IP_PRIMARY;
+
+// Expansion controller IP fallback system: default 10.10.10.101 with fallback to 192.168.1.101
+const DEFAULT_EXPANSION_IP_PRIMARY = "10.10.10.101";
+const DEFAULT_EXPANSION_IP_FALLBACK = "192.168.1.101";
 
 // Helper function to rebuild URLs when IP changes
 function rebuildURLs() {
@@ -55,14 +59,19 @@ let expansionStatusURL = null;
 let expansionCodeURL = null;
 let expansionConnectURL = null;
 
+// Helper function to rebuild expansion URLs when IP changes
+function rebuildExpansionURLs() {
+  expansionStatusURL = `http://${duetExpansionIP}/rr_model`;
+  expansionCodeURL = `http://${duetExpansionIP}/rr_gcode`;
+  expansionConnectURL = `http://${duetExpansionIP}/rr_connect`;
+}
+
 // Initialize expansion variables if bed expansion is enabled
 function initializeExpansionVariables() {
   const bedExpansionEnabled = localStorage.getItem("bedExpansionState") === "on";
   if (bedExpansionEnabled) {
-    duetExpansionIP = localStorage.getItem('duetExpansionIP') || "192.168.1.101";
-    expansionStatusURL = `http://${duetExpansionIP}/rr_model`;
-    expansionCodeURL = `http://${duetExpansionIP}/rr_gcode`;
-    expansionConnectURL = `http://${duetExpansionIP}/rr_connect`;
+    duetExpansionIP = localStorage.getItem('duetExpansionIP') || DEFAULT_EXPANSION_IP_PRIMARY;
+    rebuildExpansionURLs();
   } else {
     duetExpansionIP = null;
     expansionStatusURL = null;
@@ -424,7 +433,7 @@ async function parseResponse(response) {
 }
 
 // FUNCTION: Establish connection to expansion controller with timeout and exponential retry
-async function connectToExpansionRRF(password = "reprap", retryCount = 0) {
+async function connectToExpansionRRF(password = "reprap", retryCount = 0, tryFallback = true) {
   // Guard check: only proceed if bed expansion is enabled
   if (localStorage.getItem("bedExpansionState") !== "on") {
     console.log("Bed expansion disabled, skipping expansion controller connection");
@@ -461,6 +470,21 @@ async function connectToExpansionRRF(password = "reprap", retryCount = 0) {
       throw new Error(`Expansion controller connection failed: ${data.err}`);
     }
   } catch (error) {
+    // Try fallback IP if primary IP fails and we haven't tried fallback yet
+    if (tryFallback && duetExpansionIP === DEFAULT_EXPANSION_IP_PRIMARY && (
+      error.name === 'TypeError' || 
+      error.message.includes('timeout') ||
+      error.message.includes('Failed to fetch') ||
+      error.message.includes('ERR_CONNECTION_RESET') ||
+      error.message.includes('unreachable')
+    )) {
+      console.log(`Expansion primary IP ${DEFAULT_EXPANSION_IP_PRIMARY} failed, trying fallback IP ${DEFAULT_EXPANSION_IP_FALLBACK}...`);
+      duetExpansionIP = DEFAULT_EXPANSION_IP_FALLBACK;
+      rebuildExpansionURLs();
+      localStorage.setItem('duetExpansionIP', duetExpansionIP);
+      return await connectToExpansionRRF(password, 0, false); // Try fallback without retry count
+    }
+    
     // Retry with exponential backoff for unreachable device errors
     if (retryCount < MAX_RETRIES && (
       error.name === 'TypeError' || 
@@ -473,7 +497,7 @@ async function connectToExpansionRRF(password = "reprap", retryCount = 0) {
       console.warn(`Expansion device unreachable (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
       
       await new Promise(resolve => setTimeout(resolve, delay));
-      return await connectToExpansionRRF(password, retryCount + 1);
+      return await connectToExpansionRRF(password, retryCount + 1, false); // Don't try fallback again
     }
     
     console.error("Failed to connect to expansion controller:", error);

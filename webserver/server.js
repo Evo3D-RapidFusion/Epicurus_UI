@@ -3,8 +3,8 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = 8080;
-const DUET_IP = process.env.DUET_IP || '192.168.1.100';
-const DUET_EXPANSION_IP = process.env.DUET_EXPANSION_IP || '192.168.1.101';
+const DUET_IP = process.env.DUET_IP || '10.10.10.100';
+const DUET_EXPANSION_IP = process.env.DUET_EXPANSION_IP || '10.10.10.101';
 const CONTENT_TYPES = {
   '.html': 'text/html',
   '.css': 'text/css',
