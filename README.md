@@ -57,11 +57,14 @@ A comprehensive offline user interface for the Epicurus Controller, supporting m
    ```
 3. **Open browser** to `http://localhost:8080`
 
-### **Alternative Setup (Apache)**
+### **Alternative Setup (Apache with Node.js API)**
 
-1. **Enable Apache modules**: `mod_rewrite`, `mod_headers`
-2. **Place files** in Apache document root
-3. **Navigate** to `http://localhost/path-to-epicurus-ui/`
+1. **Install Node.js** on Raspberry Pi (see `DEPLOYMENT_NODEJS_SETUP.md`)
+2. **Enable Apache modules**: `mod_rewrite`, `mod_headers`, `mod_proxy`, `mod_proxy_http`
+3. **Place files** in Apache document root (`/var/www/html/Epicurus_UI`)
+4. **Start Node.js API server** (runs on port 3000, proxied through Apache)
+5. **Navigate** to `http://localhost:8080`
+6. **See** `DEPLOYMENT_NODEJS_SETUP.md` for complete setup instructions
 
 ## 📁 Project Structure
 

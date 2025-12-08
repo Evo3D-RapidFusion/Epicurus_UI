@@ -1,5 +1,10 @@
-# Enable RewriteEngine
+# Enable RewriteEngine and Proxy modules
 RewriteEngine On
+
+# Proxy /api/settings requests to Node.js server (running on port 3000)
+# Requires: sudo a2enmod proxy proxy_http rewrite
+RewriteCond %{REQUEST_URI} ^/api/settings
+RewriteRule ^api/settings$ http://localhost:3000/api/settings [P,L]
 
 # Handle /machine/status requests
 RewriteRule ^machine/status$ /mock-endpoints/status.json [L]

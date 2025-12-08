@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const PORT = 8080;
+const PORT = process.env.PORT || 3000; // Default to 3000 when proxied through Apache (Apache uses 8080)
 const DUET_IP = process.env.DUET_IP || '10.10.10.100';
 const DUET_EXPANSION_IP = process.env.DUET_EXPANSION_IP || '10.10.10.101';
 const CONTENT_TYPES = {
