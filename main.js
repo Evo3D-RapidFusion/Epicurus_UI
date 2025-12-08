@@ -366,6 +366,15 @@ async function fetchData(url, options = {}, retryCount = 0) {
     }
 
     if (!response.ok) {
+      // Retry 5xx server errors (502 Bad Gateway, 503 Service Unavailable, etc.)
+      if (response.status >= 500 && response.status < 600 && retryCount < MAX_RETRIES) {
+        const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
+        console.warn(`Server error ${response.status} (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms`);
+        
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return await fetchData(url, options, retryCount + 1);
+      }
+      
       console.error(`Error: Network response was not ok. Status: ${response.status}`);
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
@@ -378,7 +387,8 @@ async function fetchData(url, options = {}, retryCount = 0) {
       error.message.includes('timeout') ||
       error.message.includes('ERR_CONNECTION_RESET') ||
       error.message.includes('Failed to fetch') ||
-      error.message.includes('unreachable')
+      error.message.includes('unreachable') ||
+      error.message.includes('HTTP error! Status: 50') // Catch 5xx errors from thrown errors
     )) {
       const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
       console.warn(`Network error (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
@@ -536,6 +546,15 @@ async function fetchExpansionData(url, options = {}, retryCount = 0) {
     }
 
     if (!response.ok) {
+      // Retry 5xx server errors (502 Bad Gateway, 503 Service Unavailable, etc.)
+      if (response.status >= 500 && response.status < 600 && retryCount < MAX_RETRIES) {
+        const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
+        console.warn(`Expansion controller server error ${response.status} (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms`);
+        
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return await fetchExpansionData(url, options, retryCount + 1);
+      }
+      
       console.error(`Expansion controller error: Network response was not ok. Status: ${response.status}`);
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
@@ -550,7 +569,8 @@ async function fetchExpansionData(url, options = {}, retryCount = 0) {
         error.message.includes('NetworkError') ||
         error.message.includes('Failed to fetch') ||
         error.message.includes('ERR_CONNECTION_RESET') ||
-        error.message.includes('unreachable')
+        error.message.includes('unreachable') ||
+        error.message.includes('HTTP error! Status: 50') // Catch 5xx errors from thrown errors
     )) {
       const delay = RETRY_DELAY * Math.pow(2, retryCount); // Exponential backoff
       console.warn(`Expansion controller request failed (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms:`, error.message);
@@ -635,11 +655,16 @@ async function fetchObjectModelByKeys() {
     // 6 requests spaced ~166ms apart (1000ms / 6)
     const REQUEST_SPACING = 166; // milliseconds between requests
     
-    // Helper function to create a delayed fetch promise
+    // Helper function to create a delayed fetch promise with error handling
     const delayedFetch = (url, delay) => {
       return new Promise(resolve => {
-        setTimeout(() => {
-          resolve(fetchData(url));
+        setTimeout(async () => {
+          try {
+            const result = await fetchData(url);
+            resolve({ status: 'fulfilled', value: result });
+          } catch (error) {
+            resolve({ status: 'rejected', reason: error });
+          }
         }, delay);
       });
     };
@@ -654,18 +679,33 @@ async function fetchObjectModelByKeys() {
       delayedFetch(`${activeStatusURL}?key=spindles`, REQUEST_SPACING * 5) // Removed flags for spindles
     ];
     
-    const [heatResponse, globalResponse, stateResponse, boardsResponse, fansResponse, spindlesResponse] = 
-      await Promise.all(keyRequests);
+    const results = await Promise.all(keyRequests);
     
-    // Construct the consolidated data structure
+    // Extract responses, handling individual failures gracefully
+    const heatResponse = results[0].status === 'fulfilled' ? results[0].value : null;
+    const globalResponse = results[1].status === 'fulfilled' ? results[1].value : null;
+    const stateResponse = results[2].status === 'fulfilled' ? results[2].value : null;
+    const boardsResponse = results[3].status === 'fulfilled' ? results[3].value : null;
+    const fansResponse = results[4].status === 'fulfilled' ? results[4].value : null;
+    const spindlesResponse = results[5].status === 'fulfilled' ? results[5].value : null;
+    
+    // Log any individual failures
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        const keyNames = ['heat', 'global', 'state', 'boards', 'fans', 'spindles'];
+        console.warn(`Failed to fetch ${keyNames[index]} data:`, result.reason.message);
+      }
+    });
+    
+    // Construct the consolidated data structure with fallback to empty objects/arrays
     const consolidatedData = {
       result: {
-        heat: heatResponse.result || {},
-        global: globalResponse.result || {},
-        state: stateResponse.result || {},
-        boards: boardsResponse.result || [],
-        fans: fansResponse.result || [],
-        spindles: spindlesResponse.result || []
+        heat: heatResponse?.result || {},
+        global: globalResponse?.result || {},
+        state: stateResponse?.result || {},
+        boards: boardsResponse?.result || [],
+        fans: fansResponse?.result || [],
+        spindles: spindlesResponse?.result || []
       }
     };
     
