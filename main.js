@@ -3820,21 +3820,21 @@ function initializeDefaultHeatingProfiles() {
   // Example default values, modify as needed
   defaultHeatingProfiles = [
     {
-      Material: "Airtech PC-GF",
+      Material: "Airtech PC-CF",
       Top: 110,
       Middle: 200,
-      Bottom: 250,
-      Nozzle: 270,
+      Bottom: 270,
+      Nozzle: 305,
       Bed: 100,
       Cnc: 10000,
     },
     {
-      Material: "Airtech PP-GF",
+      Material: "Airtech PC-GF",
       Top: 110,
-      Middle: 190,
-      Bottom: 220,
-      Nozzle: 250,
-      Bed: 90,
+      Middle: 200,
+      Bottom: 270,
+      Nozzle: 305,
+      Bed: 100,
       Cnc: 10000,
     },
     {
