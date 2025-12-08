@@ -450,7 +450,7 @@ async function connectToRRF(password = "reprap", retryCount = 0) {
       isConnected = true;
       updateConnectionStatusUI('connected');
       // Save working IP to settings
-      SettingsManager.set('duetIP', duetIP);
+      await SettingsManager.set('duetIP', duetIP);
       return data;
     } else {
       console.error(`RRF connection failed with error code: ${data.err}`);
@@ -622,7 +622,7 @@ async function connectToExpansionRRF(password = "reprap", retryCount = 0, tryFal
       console.log(`Expansion primary IP ${DEFAULT_EXPANSION_IP_PRIMARY} failed, trying fallback IP ${DEFAULT_EXPANSION_IP_FALLBACK}...`);
       duetExpansionIP = DEFAULT_EXPANSION_IP_FALLBACK;
       rebuildExpansionURLs();
-      SettingsManager.set('duetExpansionIP', duetExpansionIP);
+      await SettingsManager.set('duetExpansionIP', duetExpansionIP);
       return await connectToExpansionRRF(password, 0, false); // Try fallback without retry count
     }
     
@@ -2271,9 +2271,9 @@ window.epicurusDebug = {
     });
     return settings;
   },
-  reloadSettings: () => {
+  reloadSettings: async () => {
     console.log("🔄 Reloading settings...");
-    settings = loadSettings();
+    settings = await loadSettings();
     console.log("Settings reloaded:", settings);
     return settings;
   },
@@ -2488,13 +2488,13 @@ async function saveSettings() {
 }
 
 // FUNCTION: load temperature settings from server
-function loadSettings() {
+async function loadSettings() {
   const storedSettings = SettingsManager.get("temperatureSettings");
 
   // If temperatureSettings is not set or is empty, initialize with default values
   if (!storedSettings || (typeof storedSettings === 'object' && Object.keys(storedSettings).length === 0)) {
     const defaultSettings = initializeDefaultSettings();
-    SettingsManager.set("temperatureSettings", defaultSettings);
+    await SettingsManager.set("temperatureSettings", defaultSettings);
     
     const setValuesInForm = (category) => {
       const popupElement = document.querySelector(
@@ -2583,13 +2583,13 @@ function initializeDefaultSettings() {
 // ================================================ Page Load Settings =================================================
 
 // Load temperature settings on page load (after settings manager is initialized)
-settingsInitPromise.then(() => {
-  settings = loadSettings();
-  heatProfiles = loadHeatingProfiles();
-}).catch(err => {
+settingsInitPromise.then(async () => {
+  settings = await loadSettings();
+  heatProfiles = await loadHeatingProfiles();
+}).catch(async err => {
   console.error('Failed to initialize settings:', err);
-  settings = loadSettings(); // Fallback to localStorage
-  heatProfiles = loadHeatingProfiles();
+  settings = await loadSettings(); // Fallback to localStorage
+  heatProfiles = await loadHeatingProfiles();
 });
 
 // Hide all bed temp popup tabs on startup - visibility will be determined by detection
@@ -2642,13 +2642,13 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("fault-warning-container").classList.add("flash");  // Add flashing effect
 
   // Initialise heating profiles on startup (after settings load)
-  settingsInitPromise.then(() => {
-    heatProfiles = loadHeatingProfiles();
+  settingsInitPromise.then(async () => {
+    heatProfiles = await loadHeatingProfiles();
     updateHeatingProfiles();
     loadTempsOnEdit();
-  }).catch(err => {
+  }).catch(async err => {
     console.error('Failed to load heating profiles:', err);
-    heatProfiles = loadHeatingProfiles();
+    heatProfiles = await loadHeatingProfiles();
     updateHeatingProfiles();
     loadTempsOnEdit();
   });
@@ -2793,13 +2793,13 @@ window.addEventListener("load", () => {
       const ipSelect = document.getElementById("controller-ip-select");
       if (ipSelect) {
         ipSelect.value = duetIP;
-        ipSelect.addEventListener("change", function() {
+        ipSelect.addEventListener("change", async function() {
           const newIP = this.value;
           if (newIP !== duetIP) {
             console.log(`Changing controller IP from ${duetIP} to ${newIP}`);
             duetIP = newIP;
             rebuildURLs();
-            SettingsManager.set('duetIP', duetIP);
+            await SettingsManager.set('duetIP', duetIP);
             // Disconnect and reconnect with new IP
             isConnected = false;
             updateConnectionStatusUI('connecting', `Connecting to ${newIP}...`);
@@ -3318,7 +3318,7 @@ function heaterTabSwitch(className) {
 // load saved temps on popup exit
 document
   .querySelector(".temp-popup-space")
-  .addEventListener("click", () => (settings = loadSettings()));
+  .addEventListener("click", async () => (settings = await loadSettings()));
 
 // FUNCTION: NumPad Click
 function numPadClick(tabpane, buttonIndex) {
@@ -3329,7 +3329,10 @@ function numPadClick(tabpane, buttonIndex) {
   // Ensure settings exists and has the heater configuration
   if (!settings) {
     console.warn("Settings not loaded, attempting to load...");
-    settings = loadSettings();
+    // Note: loadSettings is async but called synchronously here - settings will be loaded on next access
+    loadSettings().then(s => { settings = s; });
+    // Initialize with empty object to prevent errors
+    if (!settings) settings = {};
   }
   
   // Ensure the specific heater exists in settings
@@ -3919,7 +3922,7 @@ $(document).ready(function () {
     setTimeout(() => keyboards[0].$keyboard.show(), 100);
     document.getElementById("material-name-input").click();
   });
-  $(".save-profile-edit").click(function () {
+  $(".save-profile-edit").click(async function () {
     let row = document.querySelectorAll(
       ".heating-profiles-content .heating-profile-material"
     )[save_index];
@@ -3938,8 +3941,8 @@ $(document).ready(function () {
     row.querySelector(".heating-profiles-text.cnc").textContent =
       document.getElementById("cnc-input").value;
 
-    saveHeatingProfiles();
-    heatProfiles = loadHeatingProfiles();
+    await saveHeatingProfiles();
+    heatProfiles = await loadHeatingProfiles();
     updateHeatingProfiles();
     loadTempsOnEdit();
     keyboards.forEach((keyboard) => keyboard.$keyboard.hide());
@@ -3991,15 +3994,15 @@ async function saveHeatingProfiles() {
 }
 
 // FUNCTION: Load heating profiles from server
-function loadHeatingProfiles() {
+async function loadHeatingProfiles() {
   const storedHeatingProfiles = SettingsManager.get("HeatingProfiles");
   return storedHeatingProfiles && Array.isArray(storedHeatingProfiles) && storedHeatingProfiles.length > 0
     ? storedHeatingProfiles
-    : initializeDefaultHeatingProfiles();
+    : await initializeDefaultHeatingProfiles();
 }
 
 // FUNCTION: Initialize default heating profiles
-function initializeDefaultHeatingProfiles() {
+async function initializeDefaultHeatingProfiles() {
   // Example default values, modify as needed
   defaultHeatingProfiles = [
     {
@@ -4093,7 +4096,7 @@ function initializeDefaultHeatingProfiles() {
       Cnc: 10000,
     },
   ];
-  SettingsManager.set("HeatingProfiles", defaultHeatingProfiles); // save default heating profiles to server
+  await SettingsManager.set("HeatingProfiles", defaultHeatingProfiles); // save default heating profiles to server
   return defaultHeatingProfiles;
 }
 
@@ -4156,7 +4159,7 @@ async function resetlocalStorageSettings() {
   defaultSettings = initializeDefaultSettings();
   await SettingsManager.set("temperatureSettings", defaultSettings);
 
-  defaultHeatingProfiles = initializeDefaultHeatingProfiles();
+  defaultHeatingProfiles = await initializeDefaultHeatingProfiles();
 
   window.location.reload();
 }
