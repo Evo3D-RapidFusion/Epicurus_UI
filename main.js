@@ -44,14 +44,16 @@ const DEFAULT_EXPANSION_IP_FALLBACK = "192.168.1.101";
 
 // Helper function to rebuild URLs when IP changes
 function rebuildURLs() {
-  activeStatusURL = `/duet/rr_model`;
-  activeCodeURL = `/duet/rr_gcode`;
-  activeConnectURL = `/duet/rr_connect`;
+  const baseURL = window.location.origin;
+  activeStatusURL = `${baseURL}/duet/rr_model`;
+  activeCodeURL = `${baseURL}/duet/rr_gcode`;
+  activeConnectURL = `${baseURL}/duet/rr_connect`;
 }
 
-let activeStatusURL = `/duet/rr_model`;
-let activeCodeURL = `/duet/rr_gcode`;
-let activeConnectURL = `/duet/rr_connect`;
+const baseURL = window.location.origin;
+let activeStatusURL = `${baseURL}/duet/rr_model`;
+let activeCodeURL = `${baseURL}/duet/rr_gcode`;
+let activeConnectURL = `${baseURL}/duet/rr_connect`;
 
 // Bed expansion controller variables - conditionally initialized based on toggle state
 let duetExpansionIP = null;
@@ -119,7 +121,8 @@ function fetchWithTimeout(url, options = {}, timeout = NETWORK_TIMEOUT) {
 // Helper function to validate if an IP is potentially reachable
 async function validateConnection(ip) {
   try {
-    const testUrl = `/duet/rr_connect?password=test`;
+    const baseURL = window.location.origin;
+    const testUrl = `${baseURL}/duet/rr_connect?password=test`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2000); // Quick 2s test
     
@@ -153,9 +156,10 @@ function updateDuetIP(newIP) {
   localStorage.setItem('duetIP', newIP);
   
   // Update all URLs
-  activeStatusURL = `/duet/rr_model`;
-  activeCodeURL = `/duet/rr_gcode`;
-  activeConnectURL = `/duet/rr_connect`;
+  const baseURL = window.location.origin;
+  activeStatusURL = `${baseURL}/duet/rr_model`;
+  activeCodeURL = `${baseURL}/duet/rr_gcode`;
+  activeConnectURL = `${baseURL}/duet/rr_connect`;
   
   // Reset connection state
   isConnected = false;
@@ -288,7 +292,7 @@ window.forceDuetMode = forceDuetMode;
 // ========================================== HTTP requests with Duet Mainboard ========================================
 
 // FUNCTION: Establish connection to RRF with timeout and exponential retry
-async function connectToRRF(password = "reprap", retryCount = 0, tryFallback = true) {
+async function connectToRRF(password = "reprap", retryCount = 0) {
   try {
     console.log(`Attempting to connect to RRF at ${duetIP}...`);
     const response = await fetchWithTimeout(`${activeConnectURL}?password=${encodeURIComponent(password)}`, {}, NETWORK_TIMEOUT);
@@ -313,21 +317,6 @@ async function connectToRRF(password = "reprap", retryCount = 0, tryFallback = t
       throw new Error(`RRF connection failed: ${data.err}`);
     }
   } catch (error) {
-    // Try fallback IP if primary IP fails and we haven't tried fallback yet
-    if (tryFallback && duetIP === DEFAULT_IP_PRIMARY && (
-      error.name === 'TypeError' || 
-      error.message.includes('timeout') ||
-      error.message.includes('Failed to fetch') ||
-      error.message.includes('ERR_CONNECTION_RESET') ||
-      error.message.includes('unreachable')
-    )) {
-      console.log(`Primary IP ${DEFAULT_IP_PRIMARY} failed, trying fallback IP ${DEFAULT_IP_FALLBACK}...`);
-      duetIP = DEFAULT_IP_FALLBACK;
-      rebuildURLs();
-      updateConnectionStatusUI('connecting', `Trying fallback IP ${DEFAULT_IP_FALLBACK}...`);
-      return await connectToRRF(password, 0, false); // Try fallback without retry count
-    }
-    
     // Retry with exponential backoff for unreachable device errors
     if (retryCount < MAX_RETRIES && (
       error.name === 'TypeError' || 
@@ -341,7 +330,7 @@ async function connectToRRF(password = "reprap", retryCount = 0, tryFallback = t
       updateConnectionStatusUI('connecting', `Retrying connection... (${retryCount + 1}/${MAX_RETRIES + 1})`);
       
       await new Promise(resolve => setTimeout(resolve, delay));
-      return await connectToRRF(password, retryCount + 1, false); // Don't try fallback again
+      return await connectToRRF(password, retryCount + 1);
     }
     
     console.error("Failed to connect to RRF:", error);
