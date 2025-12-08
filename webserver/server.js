@@ -98,8 +98,9 @@ const server = http.createServer((req, res) => {
     return;
   }
   
-  // Settings API endpoints
-  if (req.url === '/api/settings') {
+  // Settings API endpoints - handle with or without query strings for tunneling compatibility
+  const urlPath = req.url.split('?')[0]; // Remove query string if present
+  if (urlPath === '/api/settings') {
     const settingsPath = path.join(__dirname, '..', 'settings.json');
     
     if (req.method === 'GET') {

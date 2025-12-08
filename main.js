@@ -39,10 +39,14 @@ const SettingsManager = {
         useServerStorage = true;
         console.log('Settings loaded from server');
       } else {
-        throw new Error('Server settings unavailable');
+        throw new Error(`Server responded with status ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
-      console.warn('Failed to load settings from server, using localStorage fallback:', error.message);
+      // Check if it's a network error (tunneling/connection issue) vs server error
+      const isNetworkError = error.message.includes('Failed to fetch') || 
+                            error.message.includes('NetworkError') ||
+                            error.message.includes('404');
+      console.warn(`Failed to load settings from server (${isNetworkError ? 'network/tunneling issue' : 'server error'}), using localStorage fallback:`, error.message);
       useServerStorage = false;
       settingsCache = this.loadFromLocalStorage();
     }
@@ -2644,11 +2648,19 @@ document.addEventListener("DOMContentLoaded", function () {
   // Initialise heating profiles on startup (after settings load)
   settingsInitPromise.then(async () => {
     heatProfiles = await loadHeatingProfiles();
+    if (!Array.isArray(heatProfiles)) {
+      console.warn('heatProfiles is not an array, initializing as empty array');
+      heatProfiles = [];
+    }
     updateHeatingProfiles();
     loadTempsOnEdit();
   }).catch(async err => {
     console.error('Failed to load heating profiles:', err);
     heatProfiles = await loadHeatingProfiles();
+    if (!Array.isArray(heatProfiles)) {
+      console.warn('heatProfiles is not an array, initializing as empty array');
+      heatProfiles = [];
+    }
     updateHeatingProfiles();
     loadTempsOnEdit();
   });
@@ -3995,10 +4007,23 @@ async function saveHeatingProfiles() {
 
 // FUNCTION: Load heating profiles from server
 async function loadHeatingProfiles() {
-  const storedHeatingProfiles = SettingsManager.get("HeatingProfiles");
-  return storedHeatingProfiles && Array.isArray(storedHeatingProfiles) && storedHeatingProfiles.length > 0
-    ? storedHeatingProfiles
-    : await initializeDefaultHeatingProfiles();
+  try {
+    const storedHeatingProfiles = SettingsManager.get("HeatingProfiles");
+    if (storedHeatingProfiles && Array.isArray(storedHeatingProfiles) && storedHeatingProfiles.length > 0) {
+      return storedHeatingProfiles;
+    }
+    const defaultProfiles = await initializeDefaultHeatingProfiles();
+    return Array.isArray(defaultProfiles) ? defaultProfiles : [];
+  } catch (error) {
+    console.error('Error loading heating profiles:', error);
+    try {
+      const defaultProfiles = await initializeDefaultHeatingProfiles();
+      return Array.isArray(defaultProfiles) ? defaultProfiles : [];
+    } catch (fallbackError) {
+      console.error('Error initializing default heating profiles:', fallbackError);
+      return [];
+    }
+  }
 }
 
 // FUNCTION: Initialize default heating profiles
@@ -4097,12 +4122,14 @@ async function initializeDefaultHeatingProfiles() {
     },
   ];
   await SettingsManager.set("HeatingProfiles", defaultHeatingProfiles); // save default heating profiles to server
-  return defaultHeatingProfiles;
+  // Ensure we always return an array
+  return Array.isArray(defaultHeatingProfiles) ? defaultHeatingProfiles : [];
 }
 
 // FUNCTION: Update heating profiles in UI display
 function updateHeatingProfiles() {
-  const heatingProfiles = loadHeatingProfiles();
+  // Use global heatProfiles variable (already loaded)
+  const heatingProfiles = Array.isArray(heatProfiles) ? heatProfiles : [];
   const tableRows = document.querySelectorAll(
     ".heating-profiles-container .heating-profiles-content .heating-profile-material"
   );
