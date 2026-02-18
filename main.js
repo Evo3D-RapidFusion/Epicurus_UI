@@ -2246,9 +2246,9 @@ function numPadClick(tabpane, buttonIndex) {
     }
   }
 
-  // limit input to 3 digits and less than 400 deg Celcius
+  // limit input to 3 digits and less than 475 deg Celcius
   if (inputValue.length === 4) inputValue = inputValue.slice(0, -1);
-  inputValue = Math.min(parseFloat(inputValue) || 0, 400);
+  inputValue = Math.min(parseFloat(inputValue) || 0, 475);
 
   // Set textContent to the final value
   tempInput.textContent = inputValue;
@@ -2649,9 +2649,9 @@ $(document).ready(function () {
               // if (numericVal < 3000) restrict = "3000";
               if (numericVal > 21000) restrict = "21000";
             } else {
-              // Check if value exceeds 400
-              if (parseFloat(restrict) > 400) {
-                restrict = "400";
+              // Check if value exceeds 475
+              if (parseFloat(restrict) > 475) {
+                restrict = "475";
               }
             }
 
