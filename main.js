@@ -1762,6 +1762,20 @@ function resetCNCUI() {
 
 // Developer Options Toggle
 // Check saved state from local storage on load and initialize
+function setPurgeTabVisibility(isVisible) {
+  const purgeTab = document.getElementById("extruder-purge-tab");
+  const purgeOn = document.getElementById("purge-tab-on");
+  const purgeOff = document.getElementById("purge-tab-off");
+
+  purgeTab.style.display = isVisible ? "block" : "none";
+  purgeOn.style.backgroundColor = isVisible ? "" : "#a8a8a8";
+  purgeOff.style.backgroundColor = isVisible ? "#a8a8a8" : "";
+
+  if (!isVisible && purgeTab.classList.contains("w--current")) {
+    document.getElementById("default-tab").click();
+  }
+}
+
 window.addEventListener("load", () => {
   const savedAisyncState = localStorage.getItem("aisyncState");
   switch (savedAisyncState) {
@@ -1807,6 +1821,9 @@ window.addEventListener("load", () => {
       // This should never happen since we set pe320 as default at script start
       break;
   }
+
+  const purgeTabState = localStorage.getItem("purgeTabState");
+  setPurgeTabVisibility(purgeTabState === "on");
 
   // const partCoolingState = localStorage.getItem("partCoolingState");
   // switch (partCoolingState) {
@@ -1860,6 +1877,8 @@ const buttonIds = [
   "system-zeus",
   "tool-detection-on",
   "tool-detection-off",
+  "purge-tab-on",
+  "purge-tab-off",
   "bed-fixture-plate-on",
   "bed-fixture-plate-on-icon",
   "bed-fixture-plate-off",
@@ -2108,6 +2127,14 @@ buttonIds.forEach((buttonId) => {
         document.getElementById("connected-tool-container").style.display = "none";
         // Save state to local storage
         localStorage.setItem("toolDetectionState", "off");
+        break;
+      case "purge-tab-on":
+        setPurgeTabVisibility(true);
+        localStorage.setItem("purgeTabState", "on");
+        break;
+      case "purge-tab-off":
+        setPurgeTabVisibility(false);
+        localStorage.setItem("purgeTabState", "off");
         break;
       case "bed-fixture-plate-on":
       case "bed-fixture-plate-on-icon":
@@ -2447,14 +2474,18 @@ document
       let bedTemp = document.querySelectorAll(
         ".heating-profiles-text.bed-temp"
       )[index].textContent;
+      const isPe320System =
+        (localStorage.getItem("systemFamily") || "pe320") === "pe320";
 
       // Set Extruder Temps
       document.getElementById("user-input-active-top").textContent = topTemp;
       document.getElementById("user-input-preheat-top").textContent = topTemp;
-      document.getElementById("user-input-active-middle").textContent =
-        middleTemp;
-      document.getElementById("user-input-preheat-middle").textContent =
-        middleTemp;
+      if (!isPe320System) {
+        document.getElementById("user-input-active-middle").textContent =
+          middleTemp;
+        document.getElementById("user-input-preheat-middle").textContent =
+          middleTemp;
+      }
       document.getElementById("user-input-active-bottom").textContent =
         bottomTemp;
       document.getElementById("user-input-preheat-bottom").textContent =
@@ -2474,9 +2505,13 @@ document
       document.getElementById("user-input-active-bed3").textContent = bedTemp;
       document.getElementById("user-input-preheat-bed3").textContent = bedTemp;
 
-      sendGcode(
-        `M568 P0 S${topTemp} R${topTemp} A2 M568 P1 S${middleTemp} R${middleTemp} A2 M568 P2 S${bottomTemp} R${bottomTemp} A2 M568 P3 S${nozzleTemp} R${nozzleTemp} A2`
-      );
+      let extruderGcode = `M568 P0 S${topTemp} R${topTemp} A2 `;
+      if (!isPe320System) {
+        extruderGcode += `M568 P1 S${middleTemp} R${middleTemp} A2 `;
+      }
+      extruderGcode += `M568 P2 S${bottomTemp} R${bottomTemp} A2 `;
+      extruderGcode += `M568 P3 S${nozzleTemp} R${nozzleTemp} A2`;
+      sendGcode(extruderGcode);
       let gcodeString = "";
       configuredBedHeaters.forEach((heater, index) => {
         gcodeString += `M568 P${index + 4} S${bedTemp} R${bedTemp} A2 `;
